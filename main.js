@@ -1,12 +1,21 @@
+// --- THEME: APPLY SAVED THEME BEFORE ANYTHING ---
+if (localStorage.getItem("theme") === "light") {
+  document.body.classList.add("light-mode");
+}
+
 // --- DOM ELEMENTS ---
 const fileInput = document.getElementById("file-input");
 const mediaList = document.getElementById("media-list");
 const previewVideo = document.getElementById("preview-video");
 const mediaPanel = document.getElementById("media-panel");
+
+// --- THEME TOGGLE ---
 document.getElementById("dark-mode-toggle").addEventListener("click", () => {
   document.body.classList.toggle("light-mode");
-});
 
+  const isLight = document.body.classList.contains("light-mode");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+});
 
 // --- PROJECT STATE ---
 const project = {
@@ -42,10 +51,8 @@ mediaPanel.addEventListener("drop", (event) => {
 function handleFiles(fileList) {
   const newFiles = Array.from(fileList);
 
-  // Add to global list
   mediaFiles.push(...newFiles);
 
-  // Add metadata to project.media
   newFiles.forEach(file => {
     project.media.push({
       id: crypto.randomUUID(),
@@ -61,7 +68,7 @@ function handleFiles(fileList) {
 function renderMediaList() {
   mediaList.innerHTML = "";
 
-  mediaFiles.forEach((file, index) => {
+  mediaFiles.forEach((file) => {
     const li = document.createElement("li");
     li.textContent = file.name;
 
@@ -96,40 +103,17 @@ function loadProject(file) {
   reader.onload = () => {
     const data = JSON.parse(reader.result);
     Object.assign(project, data);
-
-    // Timeline will be added later
     renderMediaList();
   };
 
   reader.readAsText(file);
 }
 
-// --- TEMP: EMPTY TIMELINE RENDERER ---
-function renderTimeline() {
-  // placeholder so loadProject() doesn't error
-}
-
-document.getElementById("save-btn").addEventListener("click", () => {
-  saveProject();
-});
-
-document.getElementById("load-btn").addEventListener("click", () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".wasmforge";
-
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) loadProject(file);
-  };
-
-  input.click();
-});
+// --- TEMP TIMELINE ---
+function renderTimeline() {}
 
 // --- SAVE / LOAD BUTTONS ---
-document.getElementById("save-btn").addEventListener("click", () => {
-  saveProject();
-});
+document.getElementById("save-btn").addEventListener("click", saveProject);
 
 document.getElementById("load-btn").addEventListener("click", () => {
   const input = document.createElement("input");
@@ -143,20 +127,3 @@ document.getElementById("load-btn").addEventListener("click", () => {
 
   input.click();
 });
-
-// --- THEME TOGGLE (place here) ---
-
-// On load
-if (localStorage.getItem("theme") === "light") {
-  document.body.classList.add("light-mode");
-}
-
-// On toggle
-document.getElementById("dark-mode-toggle").addEventListener("click", () => {
-  document.body.classList.toggle("light-mode");
-
-  const isLight = document.body.classList.contains("light-mode");
-  localStorage.setItem("theme", isLight ? "light" : "dark");
-});
-
-
