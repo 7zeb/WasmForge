@@ -60,3 +60,14 @@ body {
   font-size: 18px;
 }
 
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: 250px 1fr 350px;
+  height: calc(100vh - 50px); /* subtract top menu height */
+}
+
