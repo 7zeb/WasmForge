@@ -104,3 +104,21 @@ function loadProject(file) {
 function renderTimeline() {
   // placeholder so loadProject() doesn't error
 }
+
+document.getElementById("save-btn").addEventListener("click", () => {
+  saveProject();
+});
+
+document.getElementById("load-btn").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".wasmforge";
+
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) loadProject(file);
+  };
+
+  input.click();
+});
+
