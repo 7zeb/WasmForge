@@ -24,6 +24,7 @@ const project = {
   title: "Untitled Project",
   media: [],      // { id, name, type }
   timeline: []    // later: { id, mediaId, start, end, x, width }
+  aspectRatio: "16:9"
 };
 
 let mediaFiles = []; // actual File objects, parallel to project.media
@@ -115,6 +116,24 @@ function handleFiles(fileList) {
 
   renderMediaList();
 }
+
+// --- ASPECT RATIOS ---
+function applyAspectRatio() {
+  const previewContainer = document.getElementById("preview-container");
+  if (!previewContainer) return;
+
+  const ratio = project.aspectRatio.split(":");
+  const w = parseInt(ratio[0]);
+  const h = parseInt(ratio[1]);
+
+  // Maintain width, adjust height
+  const width = previewContainer.clientWidth;
+  const height = (width * h) / w;
+
+  previewVideo.style.width = width + "px";
+  previewVideo.style.height = height + "px";
+}
+
 
 // --- RENDER MEDIA LIST ---
 function renderMediaList() {
@@ -228,3 +247,4 @@ function renderTimeline() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
