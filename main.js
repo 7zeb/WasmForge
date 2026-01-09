@@ -57,3 +57,30 @@ function renderMediaList() {
     mediaList.appendChild(li);
   });
 }
+
+function saveProject() {
+  const data = JSON.stringify(project, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${project.title}.wasmforge`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function loadProject(file) {
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    const data = JSON.parse(reader.result);
+    Object.assign(project, data);
+    renderMediaList();
+    renderTimeline();
+  };
+
+  reader.readAsText(file);
+}
+
