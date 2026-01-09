@@ -3,6 +3,10 @@ const fileInput = document.getElementById("file-input");
 const mediaList = document.getElementById("media-list");
 const previewVideo = document.getElementById("preview-video");
 const mediaPanel = document.getElementById("media-panel");
+document.getElementById("dark-mode-toggle").addEventListener("click", () => {
+  document.body.classList.toggle("light-mode");
+});
+
 
 // --- PROJECT STATE ---
 const project = {
@@ -120,5 +124,38 @@ document.getElementById("load-btn").addEventListener("click", () => {
   };
 
   input.click();
+});
+
+// --- SAVE / LOAD BUTTONS ---
+document.getElementById("save-btn").addEventListener("click", () => {
+  saveProject();
+});
+
+document.getElementById("load-btn").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".wasmforge";
+
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) loadProject(file);
+  };
+
+  input.click();
+});
+
+// --- THEME TOGGLE (place here) ---
+
+// On load
+if (localStorage.getItem("theme") === "light") {
+  document.body.classList.add("light-mode");
+}
+
+// On toggle
+document.getElementById("theme-toggle").addEventListener("click", () => {
+  document.body.classList.toggle("light-mode");
+
+  const isLight = document.body.classList.contains("light-mode");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
 });
 
