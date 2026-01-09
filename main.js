@@ -26,6 +26,49 @@ const project = {
   timeline: []    
 };
 
+// --- TIMELINE ---
+
+// clip block in timeline
+function addClipToTimeline(media) {
+  const clip = document.createElement("div");
+  clip.className = "timeline-clip";
+  clip.textContent = media.name;
+
+  // temporary position + width
+  clip.style.left = "100px";
+  clip.style.width = "200px";
+
+  document.getElementById("timeline-content").appendChild(clip);
+}
+
+// Make clip draggable
+function makeClipDraggable(clip) {
+  let offsetX = 0;
+
+  clip.addEventListener("mousedown", (e) => {
+    offsetX = e.clientX - clip.offsetLeft;
+    clip.style.cursor = "grabbing";
+
+    function onMouseMove(e) {
+      clip.style.left = `${e.clientX - offsetX}px`;
+    }
+
+    function onMouseUp() {
+      clip.style.cursor = "grab";
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  });
+}
+
+// Calling our functions for the timeline
+addClipToTimeline(project.media[0]);
+makeClipDraggable(clip);
+
+
 let mediaFiles = []; 
 
 // --- FILE IMPORT (INPUT + DRAG/DROP) ---
@@ -163,3 +206,4 @@ function renderTimeline() {}
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
