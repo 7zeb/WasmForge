@@ -103,6 +103,27 @@ body {
   transition: background 0.15s;
 }
 
+#timeline-area {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+#timeline-content {
+  height: 120px;
+  width: 2000px; /* temporary large width */
+  background-image: linear-gradient(
+      to right,
+      var(--border) 1px,
+      transparent 1px
+    );
+  background-size: 40px 100%;
+}
+
 #media-list li:hover {
   background: var(--button-hover);
 }
+
