@@ -8,6 +8,7 @@ const fileInput = document.getElementById("file-input");
 const mediaList = document.getElementById("media-list");
 const previewVideo = document.getElementById("preview-video");
 const mediaPanel = document.getElementById("media-panel");
+let projectFileHandle = null;
 
 // --- THEME TOGGLE ---
 document.getElementById("dark-mode-toggle").addEventListener("click", () => {
@@ -21,11 +22,11 @@ document.getElementById("dark-mode-toggle").addEventListener("click", () => {
 const project = {
   version: 1,
   title: "Untitled Project",
-  media: [],      // { id, name, type }
-  timeline: []    // { mediaId, start, end }
+  media: [],      
+  timeline: []    
 };
 
-let mediaFiles = []; // store actual File objects
+let mediaFiles = []; 
 
 // --- FILE IMPORT (INPUT + DRAG/DROP) ---
 fileInput.addEventListener("change", (event) => {
@@ -82,48 +83,83 @@ function renderMediaList() {
   });
 }
 
-// --- SAVE PROJECT ---
-function saveProject() {
+// --- SAVE AS ---
+async function saveProjectAs() {
+  const options = {
+    suggestedName: `${project.title}.wasmforge`,
+    types: [
+      {
+        description: "WasmForge Project",
+        accept: { "application/json": [".wasmforge"] }
+      }
+    ]
+  };
+
+  projectFileHandle = await window.showSaveFilePicker(options);
+  await writeProjectFile(projectFileHandle);
+}
+
+// --- SAVE ---
+async function saveProject() {
+  if (!projectFileHandle) {
+    await saveProjectAs();
+    return;
+  }
+
+  await writeProjectFile(projectFileHandle);
+}
+
+// --- WRITE PROJECT FILE ---
+async function writeProjectFile(handle) {
+  const writable = await handle.createWritable();
   const data = JSON.stringify(project, null, 2);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${project.title}.wasmforge`;
-  a.click();
-
-  URL.revokeObjectURL(url);
+  await writable.write(data);
+  await writable.close();
 }
 
 // --- LOAD PROJECT ---
-function loadProject(file) {
-  const reader = new FileReader();
+async function loadProjectFromDisk() {
+  const [handle] = await window.showOpenFilePicker({
+    types: [
+      {
+        description: "WasmForge Project",
+        accept: { "application/json": [".wasmforge"] }
+      }
+    ],
+    multiple: false
+  });
 
-  reader.onload = () => {
-    const data = JSON.parse(reader.result);
-    Object.assign(project, data);
-    renderMediaList();
-  };
+  projectFileHandle = handle;
 
-  reader.readAsText(file);
+  const file = await handle.getFile();
+  const text = await file.text();
+  const data = JSON.parse(text);
+
+  Object.assign(project, data);
+
+  renderMediaList();
+  renderTimeline();
+  checkMissingMedia();
+}
+
+// --- CHECK MISSING MEDIA ---
+function checkMissingMedia() {
+  const missing = project.media.filter(m => {
+    return !mediaFiles.some(f => f.name === m.name);
+  });
+
+  if (missing.length === 0) return;
+
+  alert(
+    "Some media files are missing:\n\n" +
+    missing.map(m => "- " + m.name).join("\n") +
+    "\n\nPlease re-import them."
+  );
 }
 
 // --- TEMP TIMELINE ---
 function renderTimeline() {}
 
-// --- SAVE / LOAD BUTTONS ---
+// --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
-
-document.getElementById("load-btn").addEventListener("click", () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".wasmforge";
-
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) loadProject(file);
-  };
-
-  input.click();
-});
+document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
