@@ -22,13 +22,14 @@ document.getElementById("dark-mode-toggle").addEventListener("click", () => {
 const project = {
   version: 1,
   title: "Untitled Project",
-  media: [],      
-  timeline: []    
+  media: [],      // { id, name, type }
+  timeline: []    // later: { id, mediaId, start, end, x, width }
 };
 
-// --- TIMELINE ---
+let mediaFiles = []; // actual File objects, parallel to project.media
 
-// clip block in timeline
+// --- TIMELINE ---
+// Create a clip block in the timeline for a given media item
 function addClipToTimeline(media) {
   const clip = document.createElement("div");
   clip.className = "timeline-clip";
@@ -38,10 +39,19 @@ function addClipToTimeline(media) {
   clip.style.left = "100px";
   clip.style.width = "200px";
 
-  document.getElementById("timeline-content").appendChild(clip);
+  const timelineContent = document.getElementById("timeline-content");
+  if (!timelineContent) {
+    console.warn("timeline-content element not found");
+    return null;
+  }
+
+  timelineContent.appendChild(clip);
+  makeClipDraggable(clip);
+
+  return clip;
 }
 
-// Make clip draggable
+// Make a clip draggable horizontally
 function makeClipDraggable(clip) {
   let offsetX = 0;
 
@@ -49,8 +59,8 @@ function makeClipDraggable(clip) {
     offsetX = e.clientX - clip.offsetLeft;
     clip.style.cursor = "grabbing";
 
-    function onMouseMove(e) {
-      clip.style.left = `${e.clientX - offsetX}px`;
+    function onMouseMove(eMove) {
+      clip.style.left = `${eMove.clientX - offsetX}px`;
     }
 
     function onMouseUp() {
@@ -63,13 +73,6 @@ function makeClipDraggable(clip) {
     window.addEventListener("mouseup", onMouseUp);
   });
 }
-
-// Calling our functions for the timeline
-addClipToTimeline(project.media[0]);
-makeClipDraggable(clip);
-
-
-let mediaFiles = []; 
 
 // --- FILE IMPORT (INPUT + DRAG/DROP) ---
 fileInput.addEventListener("change", (event) => {
@@ -98,11 +101,16 @@ function handleFiles(fileList) {
   mediaFiles.push(...newFiles);
 
   newFiles.forEach(file => {
-    project.media.push({
+    const mediaObj = {
       id: crypto.randomUUID(),
       name: file.name,
       type: file.type.startsWith("image") ? "image" : "video"
-    });
+    };
+
+    project.media.push(mediaObj);
+
+    // For now: add one clip per imported media item
+    addClipToTimeline(mediaObj);
   });
 
   renderMediaList();
@@ -178,8 +186,13 @@ async function loadProjectFromDisk() {
   const text = await file.text();
   const data = JSON.parse(text);
 
-  Object.assign(project, data);
+  // Replace current project state
+  project.version = data.version ?? project.version;
+  project.title = data.title ?? project.title;
+  project.media = Array.isArray(data.media) ? data.media : [];
+  project.timeline = Array.isArray(data.timeline) ? data.timeline : [];
 
+  // Re-render UI parts
   renderMediaList();
   renderTimeline();
   checkMissingMedia();
@@ -200,10 +213,18 @@ function checkMissingMedia() {
   );
 }
 
-// --- TEMP TIMELINE ---
-function renderTimeline() {}
+// --- TEMP TIMELINE RENDERER ---
+function renderTimeline() {
+  const timelineContent = document.getElementById("timeline-content");
+  if (!timelineContent) return;
+
+  timelineContent.innerHTML = "";
+
+  project.media.forEach(media => {
+    addClipToTimeline(media);
+  });
+}
 
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
-
