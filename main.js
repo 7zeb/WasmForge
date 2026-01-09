@@ -134,6 +134,12 @@ function applyAspectRatio() {
   previewVideo.style.height = height + "px";
 }
 
+document.getElementById("aspect-select").addEventListener("change", (e) => {
+  project.aspectRatio = e.target.value;
+  applyAspectRatio();
+});
+
+
 
 // --- RENDER MEDIA LIST ---
 function renderMediaList() {
@@ -215,6 +221,7 @@ async function loadProjectFromDisk() {
   renderMediaList();
   renderTimeline();
   checkMissingMedia();
+  applyAspectRatio();
 }
 
 // --- CHECK MISSING MEDIA ---
@@ -247,4 +254,5 @@ function renderTimeline() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
 
