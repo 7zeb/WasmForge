@@ -114,7 +114,7 @@ body {
 
 #timeline-content {
   height: 120px;
-  width: 2000px; /* temporary large width */
+  min-width: 100%; 
   background-image: linear-gradient(
       to right,
       var(--border) 1px,
@@ -138,4 +138,5 @@ body {
   cursor: grab;
   user-select: none;
 }
+
 
