@@ -1,46 +1,59 @@
+// --- DOM ELEMENTS ---
 const fileInput = document.getElementById("file-input");
 const mediaList = document.getElementById("media-list");
 const previewVideo = document.getElementById("preview-video");
 const mediaPanel = document.getElementById("media-panel");
 
-let mediaFiles = []; // store all imported files
+// --- PROJECT STATE ---
+const project = {
+  version: 1,
+  title: "Untitled Project",
+  media: [],      // { id, name, type }
+  timeline: []    // { mediaId, start, end }
+};
 
-// Handle normal file input
+let mediaFiles = []; // store actual File objects
+
+// --- FILE IMPORT (INPUT + DRAG/DROP) ---
 fileInput.addEventListener("change", (event) => {
   handleFiles(event.target.files);
 });
 
-// Handle drag over
 mediaPanel.addEventListener("dragover", (event) => {
   event.preventDefault();
   mediaPanel.classList.add("dragover");
 });
 
-// Handle drag leave
 mediaPanel.addEventListener("dragleave", () => {
   mediaPanel.classList.remove("dragover");
 });
 
-// Handle drop
 mediaPanel.addEventListener("drop", (event) => {
   event.preventDefault();
   mediaPanel.classList.remove("dragover");
-
-  const files = event.dataTransfer.files;
-  handleFiles(files);
+  handleFiles(event.dataTransfer.files);
 });
 
-// Core function that handles multiple files
+// --- CORE FILE HANDLER ---
 function handleFiles(fileList) {
   const newFiles = Array.from(fileList);
 
   // Add to global list
   mediaFiles.push(...newFiles);
 
+  // Add metadata to project.media
+  newFiles.forEach(file => {
+    project.media.push({
+      id: crypto.randomUUID(),
+      name: file.name,
+      type: file.type.startsWith("image") ? "image" : "video"
+    });
+  });
+
   renderMediaList();
 }
 
-// Render media list
+// --- RENDER MEDIA LIST ---
 function renderMediaList() {
   mediaList.innerHTML = "";
 
@@ -58,6 +71,7 @@ function renderMediaList() {
   });
 }
 
+// --- SAVE PROJECT ---
 function saveProject() {
   const data = JSON.stringify(project, null, 2);
   const blob = new Blob([data], { type: "application/json" });
@@ -71,16 +85,22 @@ function saveProject() {
   URL.revokeObjectURL(url);
 }
 
+// --- LOAD PROJECT ---
 function loadProject(file) {
   const reader = new FileReader();
 
   reader.onload = () => {
     const data = JSON.parse(reader.result);
     Object.assign(project, data);
+
+    // Timeline will be added later
     renderMediaList();
-    renderTimeline();
   };
 
   reader.readAsText(file);
 }
 
+// --- TEMP: EMPTY TIMELINE RENDERER ---
+function renderTimeline() {
+  // placeholder so loadProject() doesn't error
+}
