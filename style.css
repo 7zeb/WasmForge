@@ -127,3 +127,15 @@ body {
   background: var(--button-hover);
 }
 
+.timeline-clip {
+  position: absolute;
+  top: 20px;
+  height: 60px;
+  background: var(--accent);
+  color: white;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+}
+
