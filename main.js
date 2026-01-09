@@ -152,10 +152,11 @@ if (localStorage.getItem("theme") === "light") {
 }
 
 // On toggle
-document.getElementById("theme-toggle").addEventListener("click", () => {
+document.getElementById("dark-mode-toggle").addEventListener("click", () => {
   document.body.classList.toggle("light-mode");
 
   const isLight = document.body.classList.contains("light-mode");
   localStorage.setItem("theme", isLight ? "light" : "dark");
 });
+
 
