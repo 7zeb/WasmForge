@@ -29,3 +29,34 @@ body {
   border: 2px dashed #2196f3;
 }
 
+#top-menu {
+  height: 50px;
+  background: #1e1e1e;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #333;
+}
+
+#top-menu button {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+#top-menu button:hover {
+  background: #444;
+}
+
+#app-title {
+  font-weight: bold;
+  font-size: 18px;
+}
+
