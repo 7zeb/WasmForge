@@ -26,10 +26,17 @@
   <div id="app">
 
     <aside id="media-panel">
-      <h2>Media</h2>
-      <input type="file" id="file-input" multiple>
-      <ul id="media-list"></ul>
-    </aside>
+  <h2>Media</h2>
+
+  <label id="file-picker-label">
+    <i class="ms-Icon ms-Icon--Upload"></i>
+    Import Media
+    <input type="file" id="file-input" multiple hidden>
+  </label>
+
+  <ul id="media-list"></ul>
+</aside>
+
 
     <main id="timeline">
       <h2>Timeline</h2>
@@ -62,6 +69,7 @@
   <script src="main.js"></script>
 </body>
 </html>
+
 
 
 
