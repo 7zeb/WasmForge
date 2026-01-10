@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WasmForge</title>
+  <link rel="stylesheet" href="homepage.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/office-ui-fabric-core/11.0.0/css/fabric.min.css">
+</head>
+
+<body>
+
+  <div id="homepage-panel">
+
+    <h1>WasmForge</h1>
+    <p class="subtitle">Online open‑source video editor<br>powered by WASM + JS</p>
+
+    <button class="homepage-button" id="open-project-btn">
+      <i class="ms-Icon ms-Icon--FolderOpen"></i>
+      Open Project
+    </button>
+
+    <button class="homepage-button" id="new-project-btn">
+      <i class="ms-Icon ms-Icon--Add"></i>
+      New Project
+    </button>
+
+    <button class="homepage-button" id="changelog-btn">
+      <i class="ms-Icon ms-Icon--History"></i>
+      Changelog
+    </button>
+
+    <button class="homepage-button" id="about-btn">
+      <i class="ms-Icon ms-Icon--Info"></i>
+      About
+    </button>
+
+    <button class="homepage-button" id="settings-btn">
+      <i class="ms-Icon ms-Icon--Settings"></i>
+      Settings
+    </button>
+
+    <button class="homepage-button" id="github-btn">
+      <i class="ms-Icon ms-Icon--MarkGithub"></i>
+      GitHub
+    </button>
+
+    <div id="footer">
+      © 2026 Rutwik Stuff — created by 7Zeb<br>
+      MIT License
+    </div>
+
+  </div>
+
+  <script>
+    // Navigation logic
+    document.getElementById("new-project-btn").onclick = () => {
+      window.location.href = "editor.html";
+    };
+
+    document.getElementById("open-project-btn").onclick = () => {
+      window.location.href = "editor.html";
+    };
+
+    document.getElementById("github-btn").onclick = () => {
+      window.open("https://github.com/7zeb/WasmForge", "_blank");
+    };
+
+    document.getElementById("changelog-btn").onclick = () => {
+      window.open("https://github.com/7zeb/WasmForge/releases", "_blank");
+    };
+  </script>
+
+</body>
+</html>
