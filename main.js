@@ -22,12 +22,12 @@ document.getElementById("dark-mode-toggle").addEventListener("click", () => {
 const project = {
   version: 1,
   title: "Untitled Project",
-  media: [],      // { id, name, type }
-  timeline: [],    // later: { id, mediaId, start, end, x, width }
+  media: [],      
+  timeline: [],    
   aspectRatio: "16:9"
 };
 
-let mediaFiles = []; // actual File objects, parallel to project.media
+let mediaFiles = []; // actual File objects
 
 // --- OPEN PROJECT FROM HOMEPAGE ---
 const savedProjectText = sessionStorage.getItem("wasmforge-project");
@@ -40,7 +40,6 @@ if (savedProjectText) {
     project.media = Array.isArray(data.media) ? data.media : [];
     project.timeline = Array.isArray(data.timeline) ? data.timeline : [];
 
-    renderMediaList();
     renderTimeline();
     checkMissingMedia();
     applyAspectRatio();
@@ -51,15 +50,12 @@ if (savedProjectText) {
   sessionStorage.removeItem("wasmforge-project");
 }
 
-
 // --- TIMELINE ---
-// Create a clip block in the timeline for a given media item
 function addClipToTimeline(media) {
   const clip = document.createElement("div");
   clip.className = "timeline-clip";
   clip.textContent = media.name;
 
-  // temporary position + width
   clip.style.left = "100px";
   clip.style.width = "200px";
 
@@ -74,6 +70,9 @@ function addClipToTimeline(media) {
 
   return clip;
 }
+
+// expose globally so tiles can call it
+window.addClipToTimeline = addClipToTimeline;
 
 // Make a clip draggable horizontally
 function makeClipDraggable(clip) {
@@ -98,11 +97,7 @@ function makeClipDraggable(clip) {
   });
 }
 
-// --- FILE IMPORT (INPUT + DRAG/DROP) ---
-fileInput.addEventListener("change", (event) => {
-  handleFiles(event.target.files);
-});
-
+// --- DRAG & DROP ---
 mediaPanel.addEventListener("dragover", (event) => {
   event.preventDefault();
   mediaPanel.classList.add("dragover");
@@ -115,30 +110,8 @@ mediaPanel.addEventListener("dragleave", () => {
 mediaPanel.addEventListener("drop", (event) => {
   event.preventDefault();
   mediaPanel.classList.remove("dragover");
-  handleFiles(event.dataTransfer.files);
+  handleImportedFiles(event.dataTransfer.files, mediaList);
 });
-
-// --- CORE FILE HANDLER ---
-function handleFiles(fileList) {
-  const newFiles = Array.from(fileList);
-
-  mediaFiles.push(...newFiles);
-
-  newFiles.forEach(file => {
-    const mediaObj = {
-      id: crypto.randomUUID(),
-      name: file.name,
-      type: file.type.startsWith("image") ? "image" : "video"
-    };
-
-    project.media.push(mediaObj);
-
-    // For now: add one clip per imported media item
-    addClipToTimeline(mediaObj);
-  });
-
-  renderMediaList();
-}
 
 // --- ASPECT RATIOS ---
 function applyAspectRatio() {
@@ -153,29 +126,20 @@ function applyAspectRatio() {
   previewContainer.style.height = height + "px";
 }
 
-
 document.getElementById("aspect-select").addEventListener("change", (e) => {
   project.aspectRatio = e.target.value;
   applyAspectRatio();
 });
 
+// --- TIMELINE RENDERER ---
+function renderTimeline() {
+  const timelineContent = document.getElementById("timeline-content");
+  if (!timelineContent) return;
 
+  timelineContent.innerHTML = "";
 
-// --- RENDER MEDIA LIST ---
-function renderMediaList() {
-  mediaList.innerHTML = "";
-
-  mediaFiles.forEach((file) => {
-    const li = document.createElement("li");
-    li.textContent = file.name;
-
-    li.addEventListener("click", () => {
-      const url = URL.createObjectURL(file);
-      previewVideo.src = url;
-      previewVideo.play();
-    });
-
-    mediaList.appendChild(li);
+  project.media.forEach(media => {
+    addClipToTimeline(media);
   });
 }
 
@@ -231,14 +195,11 @@ async function loadProjectFromDisk() {
   const text = await file.text();
   const data = JSON.parse(text);
 
-  // Replace current project state
   project.version = data.version ?? project.version;
   project.title = data.title ?? project.title;
   project.media = Array.isArray(data.media) ? data.media : [];
   project.timeline = Array.isArray(data.timeline) ? data.timeline : [];
 
-  // Re-render UI parts
-  renderMediaList();
   renderTimeline();
   checkMissingMedia();
   applyAspectRatio();
@@ -259,33 +220,13 @@ function checkMissingMedia() {
   );
 }
 
-// --- TEMP TIMELINE RENDERER ---
-function renderTimeline() {
-  const timelineContent = document.getElementById("timeline-content");
-  if (!timelineContent) return;
-
-  timelineContent.innerHTML = "";
-
-  project.media.forEach(media => {
-    addClipToTimeline(media);
-  });
-}
-
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
 
-// --- TILES ---
+// --- TILE IMPORT SYSTEM ---
 import { handleImportedFiles } from "./core/media.js";
-
-const fileInput = document.getElementById("file-input");
-const mediaList = document.getElementById("media-list");
 
 fileInput.addEventListener("change", (e) => {
   handleImportedFiles(e.target.files, mediaList);
 });
-
-
-
-
-
