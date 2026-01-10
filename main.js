@@ -23,7 +23,7 @@ const project = {
   version: 1,
   title: "Untitled Project",
   media: [],      // { id, name, type }
-  timeline: []    // later: { id, mediaId, start, end, x, width }
+  timeline: [],    // later: { id, mediaId, start, end, x, width }
   aspectRatio: "16:9"
 };
 
@@ -254,5 +254,6 @@ function renderTimeline() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
 
 
