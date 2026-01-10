@@ -29,6 +29,29 @@ const project = {
 
 let mediaFiles = []; // actual File objects, parallel to project.media
 
+// --- OPEN PROJECT FROM HOMEPAGE ---
+const savedProjectText = sessionStorage.getItem("wasmforge-project");
+if (savedProjectText) {
+  try {
+    const data = JSON.parse(savedProjectText);
+
+    project.version = data.version ?? project.version;
+    project.title = data.title ?? project.title;
+    project.media = Array.isArray(data.media) ? data.media : [];
+    project.timeline = Array.isArray(data.timeline) ? data.timeline : [];
+
+    renderMediaList();
+    renderTimeline();
+    checkMissingMedia();
+    applyAspectRatio();
+  } catch (err) {
+    console.error("Failed to load project from homepage:", err);
+  }
+
+  sessionStorage.removeItem("wasmforge-project");
+}
+
+
 // --- TIMELINE ---
 // Create a clip block in the timeline for a given media item
 function addClipToTimeline(media) {
@@ -251,6 +274,7 @@ function renderTimeline() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
 
 
 
