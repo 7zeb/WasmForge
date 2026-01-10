@@ -122,17 +122,14 @@ function applyAspectRatio() {
   const previewContainer = document.getElementById("preview-container");
   if (!previewContainer) return;
 
-  const ratio = project.aspectRatio.split(":");
-  const w = parseInt(ratio[0]);
-  const h = parseInt(ratio[1]);
+  const [w, h] = project.aspectRatio.split(":").map(Number);
 
-  // Maintain width, adjust height
   const width = previewContainer.clientWidth;
   const height = (width * h) / w;
 
-  previewVideo.style.width = width + "px";
-  previewVideo.style.height = height + "px";
+  previewContainer.style.height = height + "px";
 }
+
 
 document.getElementById("aspect-select").addEventListener("change", (e) => {
   project.aspectRatio = e.target.value;
@@ -254,6 +251,7 @@ function renderTimeline() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
 
 
 
