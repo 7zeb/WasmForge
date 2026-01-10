@@ -57,9 +57,7 @@
       window.location.href = "editor.html";
     };
 
-    document.getElementById("open-project-btn").onclick = () => {
-      window.location.href = "editor.html";
-    };
+   document.getElementById("open-project-btn").onclick = async () => { const [handle] = await window.showOpenFilePicker({ types: [ { description: "WasmForge Project", accept: { "application/json": [".wasmforge"] } } ], multiple: false }); const file = await handle.getFile(); const text = await file.text(); w.location.href = "editor.html"; };
 
     document.getElementById("github-btn").onclick = () => {
       window.open("https://github.com/7zeb/WasmForge", "_blank");
