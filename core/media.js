@@ -6,18 +6,28 @@ function formatDuration(seconds) {
 }
 
 export async function generateThumbnail(file) {
+  // IMAGE SUPPORT
+  if (file.type.startsWith("image")) {
+    return {
+      thumbnail: URL.createObjectURL(file),
+      duration: null
+    };
+  }
+
+  // VIDEO SUPPORT
   return new Promise((resolve) => {
     const video = document.createElement("video");
     video.src = URL.createObjectURL(file);
     video.muted = true;
+    video.load(); // important
 
     video.addEventListener("loadedmetadata", () => {
       const duration = video.duration;
 
-      // Seek slightly in to avoid black frame
-      video.currentTime = 0.1;
+      // seek slightly in
+      video.currentTime = Math.min(0.1, duration / 2);
 
-      video.addEventListener("loadeddata", () => {
+      video.addEventListener("seeked", () => {
         const canvas = document.createElement("canvas");
         canvas.width = 160;
         canvas.height = 90;
@@ -27,12 +37,13 @@ export async function generateThumbnail(file) {
 
         resolve({
           thumbnail: canvas.toDataURL("image/png"),
-          duration: formatDuration(duration)
+          duration
         });
       });
     });
   });
 }
+
 
 
 export function createMediaTile(file, thumbnail, duration) {
@@ -63,5 +74,6 @@ export async function handleImportedFiles(files, mediaListElement) {
     mediaListElement.appendChild(tile);
   }
 }
+
 
 
