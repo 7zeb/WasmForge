@@ -4,7 +4,6 @@ export async function generateThumbnail(file) {
     video.src = URL.createObjectURL(file);
     video.muted = true;
 
-    // Seek slightly into the video so we don't get a black frame
     video.currentTime = 0.1;
 
     video.addEventListener("loadeddata", () => {
@@ -37,7 +36,6 @@ export async function handleImportedFiles(files, mediaListElement) {
     const thumb = await generateThumbnail(file);
     const tile = createMediaTile(file, thumb);
 
-    // Optional: click to add to timeline
     tile.onclick = () => {
       window.addClipToTimeline(file, thumb);
     };
