@@ -1,0 +1,64 @@
+:root {
+  --bg-gradient-start: #3ebbf8;
+  --bg-gradient-end: #05d4bb;
+  --panel: #121212;
+  --text: #ffffff;
+  --accent: #3ebbf8;
+  --button-bg: #1e1e1e;
+  --button-hover: #2a2a2a;
+  --border: #333;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at center, var(--bg-gradient-start), var(--bg-gradient-end));
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#homepage-panel {
+  background: var(--panel);
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  width: 400px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+#homepage-panel h1 {
+  margin-top: 0;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.homepage-button {
+  display: block;
+  width: 100%;
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.homepage-button:hover {
+  background: var(--button-hover);
+  border-color: var(--accent);
+}
+
+#footer {
+  margin-top: 24px;
+  font-size: 12px;
+  color: #aaa;
+}
