@@ -139,4 +139,20 @@ body {
   user-select: none;
 }
 
+#preview-container {
+  width: 100%;
+  position: relative;
+  background: black;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+#preview-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  background: black;
+}
+
 
