@@ -275,6 +275,16 @@ function renderTimeline() {
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
 
+// --- TILES ---
+import { handleImportedFiles } from "./core/media.js";
+
+const fileInput = document.getElementById("file-input");
+const mediaList = document.getElementById("media-list");
+
+fileInput.addEventListener("change", (e) => {
+  handleImportedFiles(e.target.files, mediaList);
+});
+
 
 
 
