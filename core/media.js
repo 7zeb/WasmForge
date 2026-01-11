@@ -1,16 +1,17 @@
-// find duration for the different files.
+// Helper: format seconds → mm:ss
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+// Generate thumbnail + duration (videos) or direct thumbnail (images)
 export async function generateThumbnail(file) {
   // IMAGE SUPPORT
   if (file.type.startsWith("image")) {
     return {
       thumbnail: URL.createObjectURL(file),
-      duration: null
+      durationSeconds: null
     };
   }
 
@@ -19,13 +20,13 @@ export async function generateThumbnail(file) {
     const video = document.createElement("video");
     video.src = URL.createObjectURL(file);
     video.muted = true;
-    video.load(); // important
+    video.load();
 
     video.addEventListener("loadedmetadata", () => {
-      const duration = video.duration;
+      const durationSeconds = video.duration;
 
-      // seek slightly in
-      video.currentTime = Math.min(0.1, duration / 2);
+      // seek slightly in (or middle if very short)
+      video.currentTime = Math.min(0.1, durationSeconds / 2 || 0);
 
       video.addEventListener("seeked", () => {
         const canvas = document.createElement("canvas");
@@ -37,43 +38,68 @@ export async function generateThumbnail(file) {
 
         resolve({
           thumbnail: canvas.toDataURL("image/png"),
-          duration
+          durationSeconds
         });
       });
     });
   });
 }
 
-
-
-export function createMediaTile(file, thumbnail, duration) {
+// Create a tile DOM element for a media file
+export function createMediaTile(file, thumbnail, durationSeconds) {
   const tile = document.createElement("div");
   tile.className = "media-tile";
+
+  const hasDuration = typeof durationSeconds === "number" && !isNaN(durationSeconds);
 
   tile.innerHTML = `
     <div class="media-thumb-wrapper">
       <img src="${thumbnail}" class="media-thumb">
-      <span class="media-duration">${duration}</span>
+      ${hasDuration
+        ? `<span class="media-duration">${formatDuration(durationSeconds)}</span>`
+        : ""}
     </div>
     <span class="media-name">${file.name}</span>
   `;
 
+  // Drag support: dragging tile → timeline
+  tile.draggable = true;
+
+  tile.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("wasmforge-media-name", file.name);
+    e.dataTransfer.setData("wasmforge-media-type", file.type);
+  });
+
+  // Click behavior: preview + add to timeline
+  tile.addEventListener("click", () => {
+    if (window.previewMediaFile) {
+      window.previewMediaFile(file);
+    }
+
+    if (window.addClipToTimeline) {
+      window.addClipToTimeline({
+        name: file.name,
+        type: file.type
+      });
+    }
+  });
+
   return tile;
 }
 
+// Main entry: handle imported files, create tiles, register with project
+export async function handleImportedFiles(files, mediaListElement, onMediaRegistered) {
+  const fileArray = Array.from(files);
 
-export async function handleImportedFiles(files, mediaListElement) {
-  for (const file of files) {
-    const { thumbnail, duration } = await generateThumbnail(file);
-    const tile = createMediaTile(file, thumbnail, duration);
+  for (const file of fileArray) {
+    // Let main.js update project/mediaFiles
+    if (typeof onMediaRegistered === "function") {
+      onMediaRegistered(file);
+    }
 
-    tile.onclick = () => {
-      window.addClipToTimeline(file, thumbnail);
-    };
+    const { thumbnail, durationSeconds } = await generateThumbnail(file);
+    const tile = createMediaTile(file, thumbnail, durationSeconds);
 
     mediaListElement.appendChild(tile);
   }
 }
-
-
-
