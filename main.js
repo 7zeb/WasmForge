@@ -1,4 +1,4 @@
-// --- MODULE IMPORTS ---
+// --- MODULE IMPORTS --- 
 import { handleImportedFiles } from "./core/media.js";
 
 // --- THEME: APPLY SAVED THEME BEFORE ANYTHING ---
@@ -292,3 +292,4 @@ function checkMissingMedia() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
