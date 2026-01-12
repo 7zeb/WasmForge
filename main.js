@@ -229,6 +229,15 @@ async function saveProject() {
   await writeProjectFile(projectFileHandle);
 }
 
+window.addEventListener("beforeunload", (e) => {
+  // If there are unsaved changes, show the prompt
+  if (project.timeline.length > 0 || project.media.length > 0) {
+    e.preventDefault();
+    e.returnValue = ""; // Required for Chrome
+  }
+});
+
+
 // --- WRITE PROJECT FILE ---
 async function writeProjectFile(handle) {
   const writable = await handle.createWritable();
