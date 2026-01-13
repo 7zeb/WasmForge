@@ -76,10 +76,11 @@ export function createMediaTile(file, thumbnail, durationSeconds) {
     }
 
     if (window.addClipToTimeline) {
-      window.addClipToTimeline({
-        name: file.name,
-        type: file.type
-      });
+      window.addClipToTimeline = (mediaId) => {
+  const media = project.media.find(m => m.id === mediaId);
+  if (media) addClip(media);
+};
+
     }
   });
 
@@ -102,4 +103,5 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
     mediaListElement.appendChild(tile);
   }
 }
+
 
