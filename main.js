@@ -1,3 +1,7 @@
+// --- DECLARE GLOBAL CONSTANTS ---
+const undoStack = []; // for the undo (Ctrl + Z)
+const redoStack = []; // for the redo (Ctrl + Y)
+
 // --- MODULE IMPORTS --- 
 import { handleImportedFiles } from "./core/media.js";
 
@@ -307,5 +311,74 @@ function checkMissingMedia() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
+// --- UNDO & REDO ---
+// helper function 
+function executeCommand(cmd) {
+  cmd.do();
+  undoStack.push(cmd);
+  redoStack.length = 0; // clear redo on new action
+}
+
+function undo() {
+  const cmd = undoStack.pop();
+  if (!cmd) return;
+  cmd.undo();
+  redoStack.push(cmd);
+}
+
+function redo() {
+  const cmd = redoStack.pop();
+  if (!cmd) return;
+  cmd.do();
+  undoStack.push(cmd);
+}
+
+// keyboard shortcuts for the undo/redo commands
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+  }
+
+  if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "Z")) {
+    e.preventDefault();
+    redo();
+  }
+});
+
+executeCommand({
+  do() {
+    const clip = createClip(media);
+    media._clipElement = clip;
+  },
+  undo() {
+    if (media._clipElement) {
+      media._clipElement.remove();
+    }
+  }
+});
+
+deleteBtn.addEventListener("click", () => {
+  const clip = tile; // or however you reference it
+
+  executeCommand({
+    do() {
+      clip.remove();
+    },
+    undo() {
+      timelineContent.appendChild(clip);
+    }
+  });
+});
+
+executeCommand({
+  do() {
+    clip.style.left = newLeft;
+  },
+  undo() {
+    clip.style.left = oldLeft;
+  }
+});
 
 
