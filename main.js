@@ -30,8 +30,12 @@ function registerImportedFile(file) {
     type: file.type
   };
 
+  // Attach ID to the file so media.js can use it
+  file._id = mediaObj.id;
+
   project.media.push(mediaObj);
 }
+
 
 // --- ADD CLIP FROM TILE ---
 window.addClipToTimeline = (mediaInfo) => {
@@ -74,3 +78,4 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
+
