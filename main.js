@@ -1,8 +1,8 @@
-// --- DECLARE GLOBAL CONSTANTS ---
+// --- GLOBAL UNDO/REDO STACKS ---
 const undoStack = []; // for the undo (Ctrl + Z)
 const redoStack = []; // for the redo (Ctrl + Y)
 
-// --- MODULE IMPORTS --- 
+// --- MODULE IMPORTS ---
 import { handleImportedFiles } from "./core/media.js";
 
 // --- THEME: APPLY SAVED THEME BEFORE ANYTHING ---
@@ -35,7 +35,7 @@ const project = {
   aspectRatio: "16:9"
 };
 
-let mediaFiles = []; // actual File objects, parallel to project.media by name for now
+let mediaFiles = []; // actual File objects, parallel to project.media by name
 
 // --- PREVIEW HELPER (USED BY TILES) ---
 function previewMediaFile(file) {
@@ -58,6 +58,40 @@ function registerImportedFile(file) {
   project.media.push(mediaObj);
 }
 
+// --- UNDO & REDO CORE ---
+function executeCommand(cmd) {
+  cmd.do();
+  undoStack.push(cmd);
+  redoStack.length = 0; // clear redo on new action
+}
+
+function undo() {
+  const cmd = undoStack.pop();
+  if (!cmd) return;
+  cmd.undo();
+  redoStack.push(cmd);
+}
+
+function redo() {
+  const cmd = redoStack.pop();
+  if (!cmd) return;
+  cmd.do();
+  undoStack.push(cmd);
+}
+
+// keyboard shortcuts for the undo/redo commands
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+  }
+
+  if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "Z")) {
+    e.preventDefault();
+    redo();
+  }
+});
+
 // --- OPEN PROJECT FROM HOMEPAGE ---
 const savedProjectText = sessionStorage.getItem("wasmforge-project");
 if (savedProjectText) {
@@ -79,31 +113,20 @@ if (savedProjectText) {
   sessionStorage.removeItem("wasmforge-project");
 }
 
-// --- TIMELINE ---
-// Create a clip block in the timeline for a given media item
-function addClipToTimeline(media) {
+// --- TIMELINE CLIP CREATION (NO UNDO HERE) ---
+function createTimelineClipElement(media) {
   const clip = document.createElement("div");
   clip.className = "timeline-clip";
-  clip.textContent = media.name;
 
-  const deleteBtn = clip.querySelector(".clip-delete");
-
-deleteBtn.addEventListener("click", (e) => {
-  e.stopPropagation(); // prevent dragging or selecting
-  clip.remove();
-});
-
+  // basic structure: label + delete button
+  clip.innerHTML = `
+    <span class="clip-label">${media.name}</span>
+    <button class="clip-delete">×</button>
+  `;
 
   // temporary position + width
   clip.style.left = "100px";
   clip.style.width = "200px";
-
-  // add x button to remove clip
-  clip.innerHTML = `
-  <span class="clip-label">${media.name}</span>
-  <button class="clip-delete">×</button>
-`;
-
 
   if (!timelineContent) {
     console.warn("timeline-content element not found");
@@ -112,29 +135,110 @@ deleteBtn.addEventListener("click", (e) => {
 
   timelineContent.appendChild(clip);
   makeClipDraggable(clip);
+  wireClipDeleteWithUndo(clip);
 
   return clip;
+}
+
+// --- TIMELINE: PUBLIC ADD CLIP (WITH UNDO) ---
+function addClipToTimeline(media) {
+  // Ensure we have some identity to store on the clip
+  const clipMedia = {
+    name: media.name,
+    type: media.type
+  };
+
+  executeCommand({
+    do() {
+      const clip = createTimelineClipElement(clipMedia);
+      clipMedia._clipElement = clip;
+    },
+    undo() {
+      if (clipMedia._clipElement && clipMedia._clipElement.parentElement) {
+        clipMedia._clipElement.parentElement.removeChild(clipMedia._clipElement);
+      }
+    }
+  });
+
+  return clipMedia._clipElement || null;
 }
 
 // expose globally so tiles can call it
 window.addClipToTimeline = addClipToTimeline;
 
-// Make a clip draggable horizontally within the timeline
+// --- CLIP DELETE (WITH UNDO) ---
+function wireClipDeleteWithUndo(clip) {
+  const deleteBtn = clip.querySelector(".clip-delete");
+  if (!deleteBtn) return;
+
+  deleteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const parent = clip.parentElement;
+    if (!parent) return;
+    const nextSibling = clip.nextSibling;
+
+    executeCommand({
+      do() {
+        if (clip.parentElement) {
+          clip.parentElement.removeChild(clip);
+        }
+      },
+      undo() {
+        if (!parent) return;
+        if (nextSibling && nextSibling.parentElement === parent) {
+          parent.insertBefore(clip, nextSibling);
+        } else {
+          parent.appendChild(clip);
+        }
+      }
+    });
+  });
+}
+
+// --- Make a clip draggable horizontally within the timeline ---
 function makeClipDraggable(clip) {
   let offsetX = 0;
+  let startLeftPx = 0;
+  let hasMoved = false;
+
+  clip.style.cursor = "grab";
 
   clip.addEventListener("mousedown", (e) => {
+    // ignore if clicking the delete button
+    if (e.target.closest(".clip-delete")) return;
+
     offsetX = e.clientX - clip.offsetLeft;
+    startLeftPx = clip.offsetLeft;
+    hasMoved = false;
     clip.style.cursor = "grabbing";
 
     function onMouseMove(eMove) {
-      clip.style.left = `${eMove.clientX - offsetX}px`;
+      const newLeft = eMove.clientX - offsetX;
+      clip.style.left = `${newLeft}px`;
+      hasMoved = true;
     }
 
     function onMouseUp() {
       clip.style.cursor = "grab";
+
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+
+      const endLeftPx = clip.offsetLeft;
+      if (!hasMoved || endLeftPx === startLeftPx) return;
+
+      const oldLeft = `${startLeftPx}px`;
+      const newLeft = `${endLeftPx}px`;
+
+      executeCommand({
+        do() {
+          clip.style.left = newLeft;
+        },
+        undo() {
+          clip.style.left = oldLeft;
+        }
+      });
     }
 
     window.addEventListener("mousemove", onMouseMove);
@@ -162,11 +266,7 @@ if (timelineContent) {
 
     if (!name) return;
 
-    const mediaObj = {
-      name,
-      type
-    };
-
+    const mediaObj = { name, type };
     addClipToTimeline(mediaObj);
   });
 }
@@ -217,6 +317,7 @@ function renderTimeline() {
 
   timelineContent.innerHTML = "";
 
+  // For now, just render one clip per media item
   project.media.forEach(media => {
     addClipToTimeline(media);
   });
@@ -248,14 +349,13 @@ async function saveProject() {
   await writeProjectFile(projectFileHandle);
 }
 
+// Warn on close if project has content
 window.addEventListener("beforeunload", (e) => {
-  // If there are unsaved changes, show the prompt
   if (project.timeline.length > 0 || project.media.length > 0) {
     e.preventDefault();
     e.returnValue = ""; // Required for Chrome
   }
 });
-
 
 // --- WRITE PROJECT FILE ---
 async function writeProjectFile(handle) {
@@ -311,74 +411,3 @@ function checkMissingMedia() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
-
-// --- UNDO & REDO ---
-// helper function 
-function executeCommand(cmd) {
-  cmd.do();
-  undoStack.push(cmd);
-  redoStack.length = 0; // clear redo on new action
-}
-
-function undo() {
-  const cmd = undoStack.pop();
-  if (!cmd) return;
-  cmd.undo();
-  redoStack.push(cmd);
-}
-
-function redo() {
-  const cmd = redoStack.pop();
-  if (!cmd) return;
-  cmd.do();
-  undoStack.push(cmd);
-}
-
-// keyboard shortcuts for the undo/redo commands
-window.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
-    e.preventDefault();
-    undo();
-  }
-
-  if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "Z")) {
-    e.preventDefault();
-    redo();
-  }
-});
-
-executeCommand({
-  do() {
-    const clip = createClip(media);
-    media._clipElement = clip;
-  },
-  undo() {
-    if (media._clipElement) {
-      media._clipElement.remove();
-    }
-  }
-});
-
-deleteBtn.addEventListener("click", () => {
-  const clip = tile; // or however you reference it
-
-  executeCommand({
-    do() {
-      clip.remove();
-    },
-    undo() {
-      timelineContent.appendChild(clip);
-    }
-  });
-});
-
-executeCommand({
-  do() {
-    clip.style.left = newLeft;
-  },
-  undo() {
-    clip.style.left = oldLeft;
-  }
-});
-
-
