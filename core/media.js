@@ -66,8 +66,7 @@ export function createMediaTile(file, thumbnail, durationSeconds) {
   tile.draggable = true;
 
   tile.addEventListener("dragstart", (e) => {
-    e.dataTransfer.setData("wasmforge-media-name", file.name);
-    e.dataTransfer.setData("wasmforge-media-type", file.type);
+    e.dataTransfer.setData("wasmforge-media-id", file._id);
   });
 
   // Click behavior: preview + add to timeline
@@ -103,3 +102,4 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
     mediaListElement.appendChild(tile);
   }
 }
+
