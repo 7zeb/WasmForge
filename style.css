@@ -230,3 +230,20 @@ body {
   border-radius: 3px;
 }
 
+.clip-delete {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.clip-delete:hover {
+  background: rgba(255,0,0,0.7);
+}
+
