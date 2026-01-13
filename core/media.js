@@ -71,9 +71,15 @@ export function createMediaTile(file, thumbnail, durationSeconds) {
 
   // Click behavior: preview + add to timeline
   tile.addEventListener("click", () => {
-    if (window.previewMediaFile) {
-      window.previewMediaFile(file);
-    }
+  if (window.previewMediaFile) {
+    window.previewMediaFile(file);
+  }
+
+  if (window.addClipToTimeline) {
+    window.addClipToTimeline(file._id);
+  }
+});
+
 
     if (window.addClipToTimeline) {
       window.addClipToTimeline = (mediaId) => {
@@ -103,5 +109,6 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
     mediaListElement.appendChild(tile);
   }
 }
+
 
 
