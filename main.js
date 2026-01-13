@@ -5,7 +5,7 @@ const redoStack = []; // for the redo (Ctrl + Y)
 // --- MODULE IMPORTS ---
 import { handleImportedFiles } from "./core/media.js";
 
-// --- THEME: APPLY SAVED THEME BEFORE ANYTHING ---
+// --- THEME: APPLY SAVED THEME BEFORE ANYTHING --- 
 if (localStorage.getItem("theme") === "light") {
   document.body.classList.add("light-mode");
 }
@@ -411,3 +411,4 @@ function checkMissingMedia() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
