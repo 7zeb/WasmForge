@@ -82,9 +82,24 @@ function addClipToTimeline(media) {
   clip.className = "timeline-clip";
   clip.textContent = media.name;
 
+  const deleteBtn = clip.querySelector(".clip-delete");
+
+deleteBtn.addEventListener("click", (e) => {
+  e.stopPropagation(); // prevent dragging or selecting
+  clip.remove();
+});
+
+
   // temporary position + width
   clip.style.left = "100px";
   clip.style.width = "200px";
+
+  // add x button to remove clip
+  clip.innerHTML = `
+  <span class="clip-label">${media.name}</span>
+  <button class="clip-delete">×</button>
+`;
+
 
   if (!timelineContent) {
     console.warn("timeline-content element not found");
@@ -292,4 +307,5 @@ function checkMissingMedia() {
 // --- BUTTONS ---
 document.getElementById("save-btn").addEventListener("click", saveProject);
 document.getElementById("load-btn").addEventListener("click", loadProjectFromDisk);
+
 
