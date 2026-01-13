@@ -37,12 +37,6 @@ function registerImportedFile(file) {
 }
 
 
-// --- ADD CLIP FROM TILE ---
-window.addClipToTimeline = (mediaInfo) => {
-  const media = project.media.find(m => m.name === mediaInfo.name);
-  if (media) addClip(media);
-};
-
 // --- FILE IMPORT ---
 fileInput.addEventListener("change", (event) => {
   if (!event.target.files.length) return;
@@ -78,4 +72,5 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
+
 
