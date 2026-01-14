@@ -1,4 +1,4 @@
-import { project } from "/WasmForge/core/project.js";
+import { project } from "/WasmForge/core/projects.js";
 
 let timelineContent = null;
 
@@ -90,3 +90,4 @@ function wireDrag(clip, clipData) {
     window.addEventListener("mouseup", onUp);
   });
 }
+
