@@ -70,5 +70,23 @@
   <!-- Correct module path -->
   <script type="module" src="./main.js"></script>
 
+  <script>
+  window.addEventListener("error", (e) => {
+    const msg = document.createElement("div");
+    msg.style = "position:fixed;bottom:0;left:0;width:100%;background:#f44336;color:white;padding:10px;font-family:sans-serif;z-index:9999";
+    msg.textContent = "JS Error: " + e.message;
+    document.body.appendChild(msg);
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const test = document.createElement("div");
+    test.textContent = "Editor loaded JS successfully.";
+    test.style = "position:fixed;bottom:0;right:0;background:#4caf50;color:white;padding:10px;font-family:sans-serif;z-index:9999";
+    document.body.appendChild(test);
+  });
+</script>
+
+
 </body>
 </html>
+
