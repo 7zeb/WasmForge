@@ -1,4 +1,4 @@
-import { project } from "./core/project.js";
+import { project } from "./core/projects.js";
 import { initTimeline, addClip, loadTimeline } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 
