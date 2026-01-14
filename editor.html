@@ -1,42 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>WasmForge</title>
-  <link rel="stylesheet" href="/WasmForge/style.css">
-  <link rel="apple-touch-icon" href="/WasmForge/core/assets/icons/logo.png">
+
+  <!-- Correct relative path for GitHub Pages -->
+  <link rel="stylesheet" href="./style.css">
+  <link rel="apple-touch-icon" href="./core/assets/icons/logo.png">
   <meta name="theme-color" content="#3ebbf8">
 </head>
+
 <body>
 
   <div id="top-menu">
-  <div class="menu-left">
-    <span id="app-title">WasmForge</span>
-    <a href="https://7zeb.github.io/WasmForge/index.html"><button id="home-menu">Home</button></a>
-  </div>
+    <div class="menu-left">
+      <span id="app-title">WasmForge</span>
+      <a href="./index.html"><button id="home-menu">Home</button></a>
+    </div>
 
-  <div class="menu-right">
-    <button id="file-button">File</button>
-    <button id="save-btn">Save</button>
-    <button id="load-btn">Load</button>
-    <button id="dark-mode-toggle">Dark Mode</button>
+    <div class="menu-right">
+      <button id="file-button">File</button>
+      <button id="save-btn">Save</button>
+      <button id="load-btn">Load</button>
+      <button id="dark-mode-toggle">Dark Mode</button>
+    </div>
   </div>
-</div>
-
 
   <div id="app">
 
-   <aside id="media-panel">
-  <h2>Media</h2>
+    <aside id="media-panel">
+      <h2>Media</h2>
 
-  <label id="file-picker-label">
-    <i class="ms-Icon ms-Icon--Upload"></i>
-    Import Media
-    <input type="file" id="file-input" multiple hidden>
-  </label>
+      <label id="file-picker-label">
+        <i class="ms-Icon ms-Icon--Upload"></i>
+        Import Media
+        <input type="file" id="file-input" multiple hidden>
+      </label>
 
-  <div id="media-list"></div>
-</aside>
+      <div id="media-list"></div>
+    </aside>
 
     <main id="timeline">
       <h2>Timeline</h2>
@@ -45,35 +47,28 @@
       </div>
     </main>
 
-   <section id="preview">
-  <h2>Preview</h2>
+    <section id="preview">
+      <h2>Preview</h2>
 
-  <div id="preview-container">
-    <video id="preview-video" controls></video>
+      <div id="preview-container">
+        <video id="preview-video" controls></video>
+      </div>
+
+      <br><br><br>
+
+      <select id="aspect-select">
+        <option value="16:9">16:9 (Landscape)</option>
+        <option value="9:16">9:16 (Portrait)</option>
+        <option value="1:1">1:1 (Square)</option>
+        <option value="4:5">4:5 (Portrait)</option>
+        <option value="21:9">21:9 (Ultrawide)</option>
+      </select>
+    </section>
+
   </div>
 
-  <br><br><br>
+  <!-- Correct module path -->
+  <script type="module" src="./main.js"></script>
 
-  <select id="aspect-select">
-    <option value="16:9">16:9 (Landscape)</option>
-    <option value="9:16">9:16 (Portrait)</option>
-    <option value="1:1">1:1 (Square)</option>
-    <option value="4:5">4:5 (Portrait)</option>
-    <option value="21:9">21:9 (Ultrawide)</option>
-  </select>
-</section>
-
-
-  </div>
-      <script type="module" src="main.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
