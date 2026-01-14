@@ -1,3 +1,5 @@
+// /WasmForge/core/media.js
+
 // Helper: format seconds → mm:ss
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
@@ -71,22 +73,12 @@ export function createMediaTile(file, thumbnail, durationSeconds) {
 
   // Click behavior: preview + add to timeline
   tile.addEventListener("click", () => {
-  if (window.previewMediaFile) {
-    window.previewMediaFile(file);
-  }
-
-  if (window.addClipToTimeline) {
-    window.addClipToTimeline(file._id);
-  }
-});
-
+    if (window.previewMediaFile) {
+      window.previewMediaFile(file);
+    }
 
     if (window.addClipToTimeline) {
-      window.addClipToTimeline = (mediaId) => {
-  const media = project.media.find(m => m.id === mediaId);
-  if (media) addClip(media);
-};
-
+      window.addClipToTimeline(file._id);
     }
   });
 
@@ -109,6 +101,3 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
     mediaListElement.appendChild(tile);
   }
 }
-
-
-
