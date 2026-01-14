@@ -1,5 +1,3 @@
-// /WasmForge/main.js
-
 import { project } from "./core/project.js";
 import { initTimeline, addClip, loadTimeline } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
@@ -30,12 +28,17 @@ function registerImportedFile(file) {
     type: file.type
   };
 
-  // Attach ID to the file so media.js can use it
+  // Attach ID to the File object so media.js can use it
   file._id = mediaObj.id;
 
   project.media.push(mediaObj);
 }
 
+// --- ADD CLIP FROM TILE OR DRAG ---
+window.addClipToTimeline = (mediaId) => {
+  const media = project.media.find(m => m.id === mediaId);
+  if (media) addClip(media);
+};
 
 // --- FILE IMPORT ---
 fileInput.addEventListener("change", (event) => {
@@ -43,6 +46,7 @@ fileInput.addEventListener("change", (event) => {
   handleImportedFiles(event.target.files, mediaList, registerImportedFile);
 });
 
+// --- DRAG/DROP IMPORT ---
 mediaPanel.addEventListener("dragover", (e) => {
   e.preventDefault();
   mediaPanel.classList.add("dragover");
@@ -72,5 +76,3 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
-
-
