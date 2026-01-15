@@ -63,6 +63,14 @@ mediaPanel.addEventListener("drop", (event) => {
   handleImportedFiles(event.dataTransfer.files, mediaList, registerImportedFile);
 });
 
+// --- ASPECT RATIO LOGIC ---
+function setAspect(ratio) {
+  const container = document.getElementById("preview-container");
+  const [w, h] = ratio.split(":").map(Number);
+  container.style.aspectRatio = `${w} / ${h}`;
+}
+
+
 // --- LOAD PROJECT ---
 export function loadProject(data) {
   project.version = data.version ?? project.version;
@@ -76,3 +84,4 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
+
