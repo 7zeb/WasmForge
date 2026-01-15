@@ -145,6 +145,7 @@ body {
   background: black;
   border-radius: 6px;
   overflow: hidden;
+  aspect-ratio: 16 / 9; /* default */
 }
 
 #preview-video {
@@ -217,7 +218,11 @@ body {
 
 .media-thumb-wrapper {
   position: relative;
+  width: 100%;
+  height: 90px; /* or 100px, or auto with aspect ratio */
+  overflow: hidden;
 }
+
 
 .media-duration {
   position: absolute;
@@ -246,4 +251,5 @@ body {
 .clip-delete:hover {
   background: rgba(255,0,0,0.7);
 }
+
 
