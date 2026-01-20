@@ -28,8 +28,6 @@ function registerImportedFile(file) {
     type: file.type
   };
 
-  // Attach ID to the File object so media.js can use it
-  file._id = mediaObj.id;
 
   project.media.push(mediaObj);
 }
@@ -84,4 +82,5 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
+
 
