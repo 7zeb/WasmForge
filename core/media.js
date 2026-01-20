@@ -48,8 +48,10 @@ export async function generateThumbnail(file) {
 }
 
 // Create a tile DOM element for a media file
-export function createMediaTile(file, thumbnail, durationSeconds) {
+export function createMediaTile(file, thumbnail, durationSeconds, mediaID) {
   const tile = document.createElement("div");
+  const mediaObj = onMediaRegistered(file);
+  const tile = createMediaTile(file, thumbnail, durationSeconds, mediaObj.id);
   tile.className = "media-tile";
 
   const hasDuration = typeof durationSeconds === "number" && !isNaN(durationSeconds);
@@ -101,3 +103,4 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
     mediaListElement.appendChild(tile);
   }
 }
+
