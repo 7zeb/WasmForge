@@ -28,9 +28,10 @@ function registerImportedFile(file) {
     type: file.type
   };
 
-
   project.media.push(mediaObj);
+  return mediaObj;
 }
+
 
 // --- ADD CLIP FROM TILE OR DRAG ---
 window.addClipToTimeline = (mediaId) => {
@@ -82,5 +83,6 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
+
 
 
