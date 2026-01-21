@@ -1,4 +1,4 @@
-import { project } from "./core/projects.js";
+import { project, snapshot, undo, redo } from "./core/projects.js";
 import { initTimeline, addClip, loadTimeline } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 
@@ -33,14 +33,19 @@ function registerImportedFile(file) {
     type: file.type
   };
 
+  snapshot(); // project changes
   project.media.push(mediaObj);
+
   return mediaObj;
 }
 
-// --- ADD CLIP FROM TILE OR DRAG ---
+// --- ADD CLIP TO TIMELINE ---
 window.addClipToTimeline = (mediaId) => {
   const media = project.media.find(m => m.id === mediaId);
-  if (media) addClip(media);
+  if (!media) return;
+
+  snapshot(); // project changes
+  addClip(media);
 };
 
 // --- FILE IMPORT ---
@@ -62,6 +67,7 @@ mediaPanel.addEventListener("dragleave", () => {
 mediaPanel.addEventListener("drop", (event) => {
   event.preventDefault();
   mediaPanel.classList.remove("dragover");
+
   if (!event.dataTransfer.files.length) return;
   handleImportedFiles(event.dataTransfer.files, mediaList, registerImportedFile);
 });
@@ -76,6 +82,7 @@ function setAspect(ratio) {
 }
 
 aspectSelect.addEventListener("change", (e) => {
+  snapshot(); // project changes
   project.aspectRatio = e.target.value;
   setAspect(project.aspectRatio);
 });
@@ -88,22 +95,44 @@ resizeBtn.addEventListener("click", () => {
 
   const [pw, ph] = project.aspectRatio.split(":").map(Number);
   const projectRatio = pw / ph;
-
   const mediaRatio = previewVideo.videoWidth / previewVideo.videoHeight;
 
-  const videoEl = previewVideo;
-
   if (mediaRatio > projectRatio) {
-    // Media is wider → scale by height
-    videoEl.style.height = "100%";
-    videoEl.style.width = "auto";
+    previewVideo.style.height = "100%";
+    previewVideo.style.width = "auto";
   } else {
-    // Media is taller → scale by width
-    videoEl.style.width = "100%";
-    videoEl.style.height = "auto";
+    previewVideo.style.width = "100%";
+    previewVideo.style.height = "auto";
   }
 
-  videoEl.style.transform = "translate(-50%, -50%)";
+  previewVideo.style.transform = "translate(-50%, -50%)";
+});
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener("keydown", (e) => {
+  // Undo
+  if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+    loadTimeline();
+    return;
+  }
+
+  // Redo (Ctrl+Y)
+  if (e.ctrlKey && e.key === "y") {
+    e.preventDefault();
+    redo();
+    loadTimeline();
+    return;
+  }
+
+  // Redo (Ctrl+Shift+Z)
+  if (e.ctrlKey && e.shiftKey && e.key === "Z") {
+    e.preventDefault();
+    redo();
+    loadTimeline();
+    return;
+  }
 });
 
 // --- LOAD PROJECT ---
