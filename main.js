@@ -8,6 +8,7 @@ const mediaList = document.getElementById("media-list");
 const previewVideo = document.getElementById("preview-video");
 const mediaPanel = document.getElementById("media-panel");
 const timelineContent = document.getElementById("timeline-content");
+const aspectSelect = document.getElementById("aspect-select");
 
 // --- INIT TIMELINE ---
 initTimeline(timelineContent);
@@ -29,9 +30,8 @@ function registerImportedFile(file) {
   };
 
   project.media.push(mediaObj);
-  return mediaObj;
+  return mediaObj; // media.js needs this ID
 }
-
 
 // --- ADD CLIP FROM TILE OR DRAG ---
 window.addClipToTimeline = (mediaId) => {
@@ -65,10 +65,20 @@ mediaPanel.addEventListener("drop", (event) => {
 // --- ASPECT RATIO LOGIC ---
 function setAspect(ratio) {
   const container = document.getElementById("preview-container");
+  if (!container) return;
+
   const [w, h] = ratio.split(":").map(Number);
   container.style.aspectRatio = `${w} / ${h}`;
 }
 
+// Dropdown → update aspect ratio
+aspectSelect.addEventListener("change", (e) => {
+  project.aspectRatio = e.target.value;
+  setAspect(project.aspectRatio);
+});
+
+// Apply default aspect ratio on startup
+setAspect(project.aspectRatio);
 
 // --- LOAD PROJECT ---
 export function loadProject(data) {
@@ -76,6 +86,14 @@ export function loadProject(data) {
   project.title = data.title ?? project.title;
   project.media = data.media ?? [];
   project.timeline = data.timeline ?? [];
+
+  // Restore aspect ratio
+  if (data.aspectRatio) {
+    project.aspectRatio = data.aspectRatio;
+    setAspect(project.aspectRatio);
+    aspectSelect.value = project.aspectRatio;
+  }
+
   loadTimeline();
 }
 
@@ -83,6 +101,3 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
-
-
-
