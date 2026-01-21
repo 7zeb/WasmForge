@@ -9,6 +9,7 @@ const previewVideo = document.getElementById("preview-video");
 const mediaPanel = document.getElementById("media-panel");
 const timelineContent = document.getElementById("timeline-content");
 const aspectSelect = document.getElementById("aspect-select");
+const resizeBtn = document.getElementById("resize-media-btn");
 
 // --- INIT TIMELINE ---
 initTimeline(timelineContent);
@@ -17,7 +18,10 @@ initTimeline(timelineContent);
 function previewMediaFile(file) {
   const url = URL.createObjectURL(file);
   previewVideo.src = url;
-  previewVideo.play();
+
+  previewVideo.onloadedmetadata = () => {
+    previewVideo.play();
+  };
 }
 window.previewMediaFile = previewMediaFile;
 
@@ -30,7 +34,7 @@ function registerImportedFile(file) {
   };
 
   project.media.push(mediaObj);
-  return mediaObj; // media.js needs this ID
+  return mediaObj;
 }
 
 // --- ADD CLIP FROM TILE OR DRAG ---
@@ -71,14 +75,36 @@ function setAspect(ratio) {
   container.style.aspectRatio = `${w} / ${h}`;
 }
 
-// Dropdown → update aspect ratio
 aspectSelect.addEventListener("change", (e) => {
   project.aspectRatio = e.target.value;
   setAspect(project.aspectRatio);
 });
 
-// Apply default aspect ratio on startup
 setAspect(project.aspectRatio);
+
+// --- RESIZE MEDIA BUTTON ---
+resizeBtn.addEventListener("click", () => {
+  if (!previewVideo.videoWidth || !previewVideo.videoHeight) return;
+
+  const [pw, ph] = project.aspectRatio.split(":").map(Number);
+  const projectRatio = pw / ph;
+
+  const mediaRatio = previewVideo.videoWidth / previewVideo.videoHeight;
+
+  const videoEl = previewVideo;
+
+  if (mediaRatio > projectRatio) {
+    // Media is wider → scale by height
+    videoEl.style.height = "100%";
+    videoEl.style.width = "auto";
+  } else {
+    // Media is taller → scale by width
+    videoEl.style.width = "100%";
+    videoEl.style.height = "auto";
+  }
+
+  videoEl.style.transform = "translate(-50%, -50%)";
+});
 
 // --- LOAD PROJECT ---
 export function loadProject(data) {
@@ -87,7 +113,6 @@ export function loadProject(data) {
   project.media = data.media ?? [];
   project.timeline = data.timeline ?? [];
 
-  // Restore aspect ratio
   if (data.aspectRatio) {
     project.aspectRatio = data.aspectRatio;
     setAspect(project.aspectRatio);
