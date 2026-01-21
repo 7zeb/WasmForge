@@ -50,7 +50,6 @@ export async function generateThumbnail(file) {
 // Create a tile DOM element for a media file
 export function createMediaTile(file, thumbnail, durationSeconds, mediaID) {
   const tile = document.createElement("div");
-  const mediaObj = onMediaRegistered(file);
   tile.className = "media-tile";
 
   const hasDuration = typeof durationSeconds === "number" && !isNaN(durationSeconds);
@@ -65,42 +64,44 @@ export function createMediaTile(file, thumbnail, durationSeconds, mediaID) {
     <span class="media-name">${file.name}</span>
   `;
 
-  // Drag support: dragging tile → timeline
   tile.draggable = true;
 
   tile.addEventListener("dragstart", (e) => {
-    e.dataTransfer.setData("wasmforge-media-id", file._id);
+    e.dataTransfer.setData("wasmforge-media-id", mediaID);
   });
 
-  // Click behavior: preview + add to timeline
   tile.addEventListener("click", () => {
-    if (window.previewMediaFile) {
-      window.previewMediaFile(file);
-    }
-
-    if (window.addClipToTimeline) {
-      window.addClipToTimeline(file._id);
-    }
+    if (window.previewMediaFile) window.previewMediaFile(file);
+    if (window.addClipToTimeline) window.addClipToTimeline(mediaID);
   });
 
   return tile;
 }
+
 
 // Main entry: handle imported files, create tiles, register with project
 export async function handleImportedFiles(files, mediaListElement, onMediaRegistered) {
   const fileArray = Array.from(files);
 
   for (const file of fileArray) {
-    // Let main.js update project/mediaFiles
+    let mediaObj = null;
+
     if (typeof onMediaRegistered === "function") {
-      onMediaRegistered(file);
+      mediaObj = onMediaRegistered(file);   // MUST return { id, name, type }
     }
 
     const { thumbnail, durationSeconds } = await generateThumbnail(file);
-    const tile = createMediaTile(file, thumbnail, durationSeconds);
+
+    const tile = createMediaTile(
+      file,
+      thumbnail,
+      durationSeconds,
+      mediaObj.id   // ← pass the ID here
+    );
 
     mediaListElement.appendChild(tile);
   }
 }
+
 
 
