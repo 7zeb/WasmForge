@@ -252,4 +252,33 @@ body {
   background: rgba(255,0,0,0.7);
 }
 
+/* --- RESIZE MEDIA SYSTEM --- */
+
+#preview-container {
+  width: 100%;
+  position: relative;
+  background: black;
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+/* New wrapper that handles cropping */
+#preview-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Video is centered and scalable */
+#preview-frame video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  transform: translate(-50%, -50%);
+  background: black;
+}
+
 
