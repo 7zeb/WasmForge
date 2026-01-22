@@ -97,15 +97,20 @@ resizeBtn.addEventListener("click", () => {
   const projectRatio = pw / ph;
   const mediaRatio = previewVideo.videoWidth / previewVideo.videoHeight;
 
+  // Reset styles first
+  previewVideo.style.width = "";
+  previewVideo.style.height = "";
+  previewVideo.style.transform = "translate(-50%, -50%)";
+
   if (mediaRatio > projectRatio) {
+    // Media is wider → fill by height, crop sides
     previewVideo.style.height = "100%";
     previewVideo.style.width = "auto";
   } else {
+    // Media is taller → fill by width, crop top/bottom
     previewVideo.style.width = "100%";
     previewVideo.style.height = "auto";
   }
-
-  previewVideo.style.transform = "translate(-50%, -50%)";
 });
 
 // --- KEYBOARD SHORTCUTS ---
@@ -155,3 +160,4 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
+
