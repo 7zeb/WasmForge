@@ -260,10 +260,10 @@ body {
   background: black;
   border-radius: 6px;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 9; /* default */
 }
 
-/* New wrapper that handles cropping */
+/* Wrapper that handles cropping */
 #preview-frame {
   width: 100%;
   height: 100%;
@@ -280,5 +280,7 @@ body {
   transform: translate(-50%, -50%);
   background: black;
 }
+
+
 
 
