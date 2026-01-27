@@ -12,6 +12,7 @@ const aspectSelect = document.getElementById("aspect-select");
 const projectTitleInput = document.getElementById("project-title-input");
 const loadFileInput = document.getElementById("load-file-input");
 const tracksContainer = document.getElementById("tracks-container");
+const filePickerLabel = document.getElementById("file-picker-label");
 
 // Menu buttons
 const fileButton = document.getElementById("file-button");
@@ -126,6 +127,12 @@ window.addClipToTimeline = (mediaId, trackId = null) => {
   addClip(media, targetTrack);
 };
 
+// --- FILE PICKER LABEL CLICK ---
+filePickerLabel.addEventListener("click", (e) => {
+  e.preventDefault();
+  fileInput.click();
+});
+
 // --- FILE INPUT ---
 fileInput.addEventListener("change", (event) => {
   if (!event.target.files.length) return;
@@ -143,7 +150,9 @@ mediaPanel.addEventListener("dragover", (e) => {
 mediaPanel.addEventListener("dragleave", (e) => {
   e.preventDefault();
   e.stopPropagation();
-  mediaPanel.classList.remove("dragover");
+  if (e.target === mediaPanel) {
+    mediaPanel.classList.remove("dragover");
+  }
 });
 
 mediaPanel.addEventListener("drop", (e) => {
@@ -168,7 +177,9 @@ document.querySelectorAll(".track").forEach(track => {
   track.addEventListener("dragleave", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    track.classList.remove("dragover");
+    if (e.target === track) {
+      track.classList.remove("dragover");
+    }
   });
 
   track.addEventListener("drop", (e) => {
@@ -315,21 +326,43 @@ document.querySelectorAll(".mute-btn").forEach(btn => {
 });
 
 // --- INSPECTOR CONTROLS ---
-propScale.addEventListener("input", () => {
-  document.getElementById("scale-value").textContent = propScale.value + "%";
-});
+if (propScale) {
+  propScale.addEventListener("input", () => {
+    document.getElementById("scale-value").textContent = propScale.value + "%";
+  });
+}
 
-propOpacity.addEventListener("input", () => {
-  document.getElementById("opacity-value").textContent = propOpacity.value + "%";
-});
+if (propOpacity) {
+  propOpacity.addEventListener("input", () => {
+    document.getElementById("opacity-value").textContent = propOpacity.value + "%";
+  });
+}
 
-propSpeed.addEventListener("input", () => {
-  const speed = (propSpeed.value / 100).toFixed(1);
-  document.getElementById("speed-value").textContent = speed + "x";
-});
+if (propSpeed) {
+  propSpeed.addEventListener("input", () => {
+    const speed = (propSpeed.value / 100).toFixed(1);
+    document.getElementById("speed-value").textContent = speed + "x";
+  });
+}
 
-propVolume.addEventListener("input", () => {
-  document.getElementById("volume-value").textContent = propVolume.value + "%";
+if (propVolume) {
+  propVolume.addEventListener("input", () => {
+    document.getElementById("volume-value").textContent = propVolume.value + "%";
+  });
+}
+
+// --- PANEL TABS ---
+document.querySelectorAll(".panel-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const tabName = tab.dataset.tab;
+    const panel = tab.closest("#media-panel, #inspector-panel");
+    
+    panel.querySelectorAll(".panel-tab").forEach(t => t.classList.remove("active"));
+    panel.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    
+    tab.classList.add("active");
+    document.getElementById(`${tabName}-tab`)?.classList.add("active");
+  });
 });
 
 // --- DROPDOWN MENUS ---
@@ -343,7 +376,7 @@ function showMenu(menu, button) {
 }
 
 function hideAllMenus() {
-  [fileMenu, editMenu, viewMenu, helpMenu].forEach(m => m.classList.remove("visible"));
+  [fileMenu, editMenu, viewMenu, helpMenu].forEach(m => m?.classList.remove("visible"));
   activeMenu = null;
 }
 
@@ -418,7 +451,6 @@ editMenu.addEventListener("click", (e) => {
       deleteSelectedClip();
       break;
     case "select-all":
-      // Select all clips
       document.querySelectorAll(".timeline-clip").forEach(clip => {
         clip.classList.add("selected");
       });
@@ -441,4 +473,216 @@ viewMenu.addEventListener("click", (e) => {
       updateZoom(Math.max(20, currentOut - 20));
       break;
     case "fit-timeline":
-      updateZoom(100
+      updateZoom(100);
+      break;
+    case "toggle-snap":
+      btnSnap.click();
+      break;
+  }
+});
+
+helpMenu.addEventListener("click", (e) => {
+  const action = e.target.closest("button")?.dataset.action;
+  if (!action) return;
+  hideAllMenus();
+  
+  switch (action) {
+    case "shortcuts":
+      shortcutsModal.classList.add("visible");
+      break;
+    case "about":
+      alert("WasmForge - Open Source Video Editor\nVersion 3.0\nCreated by 7Zeb");
+      break;
+    case "github":
+      window.open("https://github.com/7zeb/WasmForge", "_blank");
+      break;
+  }
+});
+
+// --- MODAL CLOSE ---
+const modalClose = document.querySelector(".modal-close");
+if (modalClose) {
+  modalClose.addEventListener("click", () => {
+    shortcutsModal.classList.remove("visible");
+  });
+}
+
+shortcutsModal.addEventListener("click", (e) => {
+  if (e.target === shortcutsModal) {
+    shortcutsModal.classList.remove("visible");
+  }
+});
+
+// --- SAVE/LOAD PROJECT ---
+function saveProject() {
+  const data = JSON.stringify(project, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${project.title || "project"}.wasmforge`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+loadFileInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    loadProject(data);
+  } catch (err) {
+    alert("Failed to load project: " + err.message);
+  }
+  
+  loadFileInput.value = "";
+});
+
+function loadProject(data) {
+  project.version = data.version ?? project.version;
+  project.title = data.title ?? project.title;
+  project.media = data.media ?? [];
+  project.timeline = data.timeline ?? [];
+
+  if (data.aspectRatio) {
+    project.aspectRatio = data.aspectRatio;
+    setAspect(project.aspectRatio);
+    aspectSelect.value = project.aspectRatio;
+  }
+
+  projectTitleInput.value = project.title;
+  mediaList.innerHTML = "";
+  loadTimeline();
+}
+
+// --- DARK MODE ---
+function applyDarkMode(isDark) {
+  if (isDark) {
+    document.body.classList.remove("light-mode");
+    darkModeToggle.querySelector(".icon").textContent = "🌙";
+  } else {
+    document.body.classList.add("light-mode");
+    darkModeToggle.querySelector(".icon").textContent = "☀️";
+  }
+  localStorage.setItem("wasmforge-dark-mode", isDark ? "dark" : "light");
+}
+
+const savedMode = localStorage.getItem("wasmforge-dark-mode");
+const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
+applyDarkMode(prefersDark);
+
+darkModeToggle.addEventListener("click", () => {
+  const isDark = !document.body.classList.contains("light-mode");
+  applyDarkMode(!isDark);
+});
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" && e.target.id === "project-title-input") return;
+  
+  // Space - Play/Pause
+  if (e.code === "Space") {
+    e.preventDefault();
+    togglePlay();
+    return;
+  }
+
+  // Arrow keys - Frame navigation
+  if (e.code === "ArrowLeft") {
+    e.preventDefault();
+    btnPrevFrame.click();
+    return;
+  }
+
+  if (e.code === "ArrowRight") {
+    e.preventDefault();
+    btnNextFrame.click();
+    return;
+  }
+
+  // Home/End
+  if (e.code === "Home") {
+    e.preventDefault();
+    btnStart.click();
+    return;
+  }
+
+  if (e.code === "End") {
+    e.preventDefault();
+    btnEnd.click();
+    return;
+  }
+
+  // Delete
+  if (e.code === "Delete" || e.code === "Backspace") {
+    e.preventDefault();
+    snapshot();
+    deleteSelectedClip();
+    return;
+  }
+
+  // Ctrl shortcuts
+  if (e.ctrlKey || e.metaKey) {
+    // Undo
+    if (e.key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+      loadTimeline();
+      return;
+    }
+
+    // Redo
+    if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
+      e.preventDefault();
+      redo();
+      loadTimeline();
+      return;
+    }
+
+    // Save
+    if (e.key === "s") {
+      e.preventDefault();
+      saveProject();
+      return;
+    }
+
+    // Open
+    if (e.key === "o") {
+      e.preventDefault();
+      loadFileInput.click();
+      return;
+    }
+
+    // Import
+    if (e.key === "i") {
+      e.preventDefault();
+      fileInput.click();
+      return;
+    }
+
+    // Select All
+    if (e.key === "a") {
+      e.preventDefault();
+      document.querySelectorAll(".timeline-clip").forEach(clip => {
+        clip.classList.add("selected");
+      });
+      return;
+    }
+  }
+
+  // Tool shortcuts
+  if (e.key === "v" || e.key === "V") {
+    toolSelect.click();
+    return;
+  }
+
+  if (e.key === "c" || e.key === "C") {
+    toolRazor.click();
+    return;
+  }
+});
