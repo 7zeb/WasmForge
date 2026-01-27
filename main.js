@@ -38,7 +38,7 @@ async function loadWasmModules() {
 
 // Core imports
 import { project, snapshot, undo, redo } from "./core/projects.js";
-import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip, renderTracks } from "./core/timeline.js";
+import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip, renderTracks, setActiveTool } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 import { getIcon, createIcon } from "./core/assets/icons/icons.js";
 
@@ -195,6 +195,7 @@ function showStatusDetails() {
   features.push('✓ Drag & Drop');
   features.push('✓ Undo/Redo');
   features.push('✓ Dynamic Tracks');
+  features.push('✓ Clip Splitting');
 
   const modeText = wasmStatus.mode === 'full' ? 'Full (All Features)' : 
                    wasmStatus.mode === 'loading' ? 'Loading...' : 
@@ -366,8 +367,41 @@ function previewMediaFile(file) {
   };
 }
 
-// Expose globally for media tiles
+// Preview clip from timeline
+function previewClipFromTimeline(clipId) {
+  const clip = project.timeline.find(c => c.id === clipId);
+  if (!clip) {
+    console.warn('[Preview] Clip not found:', clipId);
+    return;
+  }
+
+  const media = project.media.find(m => m.id === clip.mediaId);
+  if (!media) {
+    console.warn('[Preview] Media not found for clip:', clipId);
+    return;
+  }
+
+  const file = mediaFileCache.get(media.id);
+  if (!file) {
+    console.warn('[Preview] File not found in cache for media:', media.id);
+    return;
+  }
+
+  // Preview the file
+  previewMediaFile(file);
+  
+  // Set the video to the clip's in point
+  previewVideo.onloadedmetadata = () => {
+    previewVideo.currentTime = clip.inPoint || 0;
+    totalTimeDisplay.textContent = formatTime(previewVideo.duration);
+  };
+  
+  console.log('[Preview] Showing clip:', media.name);
+}
+
+// Expose globally for media tiles and timeline clips
 window.previewMediaFile = previewMediaFile;
+window.previewClipFromTimeline = previewClipFromTimeline;
 
 // Update time display
 previewVideo.addEventListener("timeupdate", () => {
@@ -572,12 +606,16 @@ toolSelect.addEventListener("click", () => {
   currentTool = "select";
   toolSelect.classList.add("active");
   toolRazor.classList.remove("active");
+  setActiveTool("select");
+  console.log('[Tools] Select tool activated');
 });
 
 toolRazor.addEventListener("click", () => {
   currentTool = "razor";
   toolRazor.classList.add("active");
   toolSelect.classList.remove("active");
+  setActiveTool("razor");
+  console.log('[Tools] Razor tool activated');
 });
 
 // ========================================
@@ -827,6 +865,7 @@ shortcutsModal?.addEventListener("click", (e) => {
 
 function createNewProject() {
   if (confirm("Create new project? Unsaved changes will be lost.")) {
+    project.version = 6;
     project.title = "Untitled Project";
     project.media = [];
     project.timeline = [];
@@ -844,11 +883,14 @@ function createNewProject() {
     previewVideo.classList.remove("visible");
     previewPlaceholder.classList.remove("hidden");
     
-    console.log('[WasmForge] New project created');
+    console.log('[WasmForge] New project created (v6)');
   }
 }
 
 function saveProject() {
+  // Ensure version is set to 6
+  project.version = 6;
+  
   const data = JSON.stringify(project, null, 2);
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -861,7 +903,7 @@ function saveProject() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   
-  console.log('[WasmForge] Project saved:', project.title);
+  console.log('[WasmForge] Project saved:', project.title, '(v6)');
 }
 
 loadFileInput.addEventListener("change", async (event) => {
@@ -882,7 +924,7 @@ loadFileInput.addEventListener("change", async (event) => {
 });
 
 function loadProject(data) {
-  project.version = data.version ?? project.version;
+  project.version = data.version ?? 6;
   project.title = data.title ?? project.title;
   project.media = data.media ?? [];
   project.timeline = data.timeline ?? [];
@@ -905,7 +947,7 @@ function loadProject(data) {
   previewVideo.classList.remove("visible");
   previewPlaceholder.classList.remove("hidden");
   
-  console.log('[WasmForge] Project loaded successfully');
+  console.log('[WasmForge] Project loaded successfully (v' + project.version + ')');
 }
 
 async function exportProject() {
@@ -1016,6 +1058,19 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // Tool shortcuts (V and C)
+  if (e.key.toLowerCase() === "v" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    toolSelect.click();
+    return;
+  }
+
+  if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    toolRazor.click();
+    return;
+  }
+
   // Ctrl/Cmd shortcuts
   if (e.ctrlKey || e.metaKey) {
     switch (e.key.toLowerCase()) {
@@ -1068,17 +1123,6 @@ document.addEventListener("keydown", (e) => {
         return;
     }
   }
-
-  // Tool shortcuts
-  if (e.key.toLowerCase() === "v") {
-    toolSelect.click();
-    return;
-  }
-
-  if (e.key.toLowerCase() === "c") {
-    toolRazor.click();
-    return;
-  }
 });
 
 // ========================================
@@ -1103,5 +1147,4 @@ if (document.readyState === 'loading') {
   init();
 }
 
-console.log('[WasmForge] Module loaded');
-
+console.log('[WasmForge] Module loaded (v6.0)');
