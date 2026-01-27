@@ -26,6 +26,9 @@
     </div>
   </div>
 
+  <!-- Hidden file input for loading projects -->
+  <input type="file" id="load-file-input" accept=".wasmforge,.json" hidden>
+
   <div id="app">
 
     <aside id="media-panel">
@@ -51,10 +54,12 @@
       <h2>Preview</h2>
 
       <div id="preview-container">
-        <video id="preview-video" controls></video>
+        <div id="preview-frame">
+          <video id="preview-video" controls></video>
+        </div>
       </div>
 
-      <br><br><br>
+      <br>
 
       <select id="aspect-select">
         <option value="16:9">16:9 (Landscape)</option>
@@ -64,16 +69,8 @@
         <option value="21:9">21:9 (Ultrawide)</option>
       </select>
 
-
-      <div id="preview-container">
-  <div id="preview-frame">
-    <video id="preview-video"></video>
-  </div>
-</div>
-
-<button id="resize-media-btn">Resize Media</button>
+      <button id="resize-media-btn">Resize Media</button>
     </section>
-
 
   </div>
 
@@ -81,8 +78,3 @@
   <script type="module" src="./main.js"></script>
 </body>
 </html>
-
-
-
-
-
