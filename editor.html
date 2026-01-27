@@ -391,6 +391,21 @@
     </div>
   </div>
 
+  <div id="ffmpeg-loading" class="modal">
+  <div class="modal-content loading-modal">
+    <div class="modal-body">
+      <div class="loading-icon" data-icon="video"></div>
+      <h3>Loading Video Engine</h3>
+      <p>Initializing FFmpeg WebAssembly...</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="ffmpeg-progress"></div>
+      </div>
+      <span class="progress-text" id="ffmpeg-progress-text">0%</span>
+    </div>
+  </div>
+</div>
+
   <script type="module" src="./main.js"></script>
 </body>
 </html>
+
