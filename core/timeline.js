@@ -5,11 +5,18 @@ let zoom = 1.0;
 let selectedClip = null;
 const PIXELS_PER_SECOND = 50;
 
-// Track management
-let trackCounter = {
-  video: 2,
-  audio: 2
-};
+// Calculate the highest track number for each type
+function getMaxTrackNumber(type) {
+  const tracksOfType = project.tracks.filter(t => t.type === type);
+  if (tracksOfType.length === 0) return 0;
+  
+  const numbers = tracksOfType.map(t => {
+    const match = t.id.match(/-(\d+)$/);
+    return match ? parseInt(match[1]) : 0;
+  });
+  
+  return Math.max(...numbers);
+}
 
 // Called from main.js to initialize timeline
 export function initTimeline(domElement) {
@@ -33,9 +40,11 @@ export function addTrack(type) {
   console.log(`[Timeline] addTrack called with type: ${type}`);
   snapshot();
   
-  trackCounter[type]++;
-  const trackId = `${type}-${trackCounter[type]}`;
-  const trackName = `${type.charAt(0).toUpperCase() + type.slice(1)} ${trackCounter[type]}`;
+  // Get the next available track number
+  const maxNumber = getMaxTrackNumber(type);
+  const trackNumber = maxNumber + 1;
+  const trackId = `${type}-${trackNumber}`;
+  const trackName = `${type.charAt(0).toUpperCase() + type.slice(1)} ${trackNumber}`;
   
   const newTrack = {
     id: trackId,
