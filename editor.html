@@ -200,26 +200,7 @@
       
       <!-- Track Headers -->
       <div id="track-headers">
-        <div class="track-header" data-track="video-2">
-          <span class="track-icon" data-icon="video"></span>
-          <span class="track-name">Video 2</span>
-          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility" data-icon="eye"></button>
-        </div>
-        <div class="track-header" data-track="video-1">
-          <span class="track-icon" data-icon="video"></span>
-          <span class="track-name">Video 1</span>
-          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility" data-icon="eye"></button>
-        </div>
-        <div class="track-header" data-track="audio-1">
-          <span class="track-icon" data-icon="musicNote"></span>
-          <span class="track-name">Audio 1</span>
-          <button class="track-btn mute-btn" data-muted="false" title="Mute" data-icon="speaker"></button>
-        </div>
-        <div class="track-header" data-track="audio-2">
-          <span class="track-icon" data-icon="musicNote"></span>
-          <span class="track-name">Audio 2</span>
-          <button class="track-btn mute-btn" data-muted="false" title="Mute" data-icon="speaker"></button>
-        </div>
+        <!-- Tracks will be dynamically rendered here -->
       </div>
 
       <!-- Timeline Content -->
@@ -235,10 +216,7 @@
         
         <!-- Tracks -->
         <div id="tracks-container">
-          <div class="track" data-track="video-2" data-type="video"></div>
-          <div class="track" data-track="video-1" data-type="video"></div>
-          <div class="track" data-track="audio-1" data-type="audio"></div>
-          <div class="track" data-track="audio-2" data-type="audio"></div>
+          <!-- Tracks will be dynamically rendered here -->
         </div>
       </div>
       
@@ -391,21 +369,21 @@
     </div>
   </div>
 
+  <!-- FFmpeg Loading Modal -->
   <div id="ffmpeg-loading" class="modal">
-  <div class="modal-content loading-modal">
-    <div class="modal-body">
-      <div class="loading-icon" data-icon="video"></div>
-      <h3>Loading Video Engine</h3>
-      <p>Initializing FFmpeg WebAssembly...</p>
-      <div class="progress-bar">
-        <div class="progress-fill" id="ffmpeg-progress"></div>
+    <div class="modal-content loading-modal">
+      <div class="modal-body">
+        <div class="loading-icon" data-icon="video"></div>
+        <h3>Loading Video Engine</h3>
+        <p>Initializing FFmpeg WebAssembly...</p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="ffmpeg-progress"></div>
+        </div>
+        <span class="progress-text" id="ffmpeg-progress-text">0%</span>
       </div>
-      <span class="progress-text" id="ffmpeg-progress-text">0%</span>
     </div>
   </div>
-</div>
 
   <script type="module" src="./main.js"></script>
 </body>
 </html>
-
