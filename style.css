@@ -72,6 +72,7 @@ body {
   padding: 16px;
   background: var(--panel);
   border-right: 1px solid var(--border);
+  overflow-y: auto;
 }
 
 #preview {
@@ -115,12 +116,18 @@ body {
 #timeline-content {
   height: 120px;
   min-width: 100%; 
+  position: relative;
   background-image: linear-gradient(
       to right,
       var(--border) 1px,
       transparent 1px
     );
   background-size: 40px 100%;
+  transition: background 0.2s;
+}
+
+#timeline-content.dragover {
+  background-color: rgba(33, 150, 243, 0.1);
 }
 
 #media-list li:hover {
@@ -137,6 +144,39 @@ body {
   border-radius: 4px;
   cursor: grab;
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  min-width: 50px;
+  overflow: hidden;
+}
+
+.timeline-clip:hover {
+  filter: brightness(1.1);
+}
+
+.clip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-size: 12px;
+}
+
+.clip-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 0 4px 4px 0;
+}
+
+.clip-resize-handle:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 #preview-container {
@@ -146,6 +186,26 @@ body {
   border-radius: 6px;
   overflow: hidden;
   aspect-ratio: 16 / 9; /* default */
+}
+
+/* Wrapper that handles cropping */
+#preview-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Video is centered and scalable */
+#preview-frame video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  transform: translate(-50%, -50%);
+  background: black;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 #preview-video {
@@ -208,6 +268,7 @@ body {
 .media-thumb {
   width: 100%;
   border-radius: 4px;
+  object-fit: cover;
 }
 
 .media-name {
@@ -219,10 +280,16 @@ body {
 .media-thumb-wrapper {
   position: relative;
   width: 100%;
-  height: 90px; /* or 100px, or auto with aspect ratio */
+  height: 90px;
   overflow: hidden;
+  border-radius: 4px;
 }
 
+.media-thumb-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .media-duration {
   position: absolute;
@@ -238,7 +305,7 @@ body {
 .clip-delete {
   position: absolute;
   top: 2px;
-  right: 4px;
+  right: 12px;
   background: rgba(0,0,0,0.5);
   color: white;
   border: none;
@@ -246,41 +313,78 @@ body {
   cursor: pointer;
   padding: 0 4px;
   font-size: 12px;
+  z-index: 10;
 }
 
 .clip-delete:hover {
   background: rgba(255,0,0,0.7);
 }
 
-/* --- RESIZE MEDIA SYSTEM --- */
-
-#preview-container {
-  width: 100%;
-  position: relative;
-  background: black;
+/* --- FILE MENU DROPDOWN --- */
+#file-menu {
+  position: fixed;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  overflow: hidden;
-  aspect-ratio: 16 / 9; /* default */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  min-width: 160px;
+  padding: 4px 0;
 }
 
-/* Wrapper that handles cropping */
-#preview-frame {
+#file-menu button {
+  display: block;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 10px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s;
 }
 
-/* Video is centered and scalable */
-#preview-frame video {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center center;
-  transform: translate(-50%, -50%);
-  background: black;
+#file-menu button:hover {
+  background: var(--button-hover);
 }
 
+/* --- ASPECT SELECT --- */
+#aspect-select {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 10px 0;
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
 
+#aspect-select:hover {
+  border-color: var(--accent);
+}
 
+#aspect-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
+/* --- RESIZE BUTTON --- */
+#resize-media-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+#resize-media-btn:hover {
+  background: var(--button-hover);
+  border-color: var(--accent);
+}
