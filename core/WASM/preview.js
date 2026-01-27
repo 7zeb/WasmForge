@@ -1,4 +1,4 @@
-// Preview Renderer for Timeline 
+// Preview Renderer for Timeline
 import ffmpegManager from './ffmpeg.js';
 import { project } from '../projects.js';
 
