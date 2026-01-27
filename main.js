@@ -1,9 +1,32 @@
+// ========================================
+// WASMFORGE - VIDEO EDITOR v5.0
+// ========================================
+
+// WASM Module Handling - Load dynamically
+let ffmpegManager = null;
+let previewRenderer = null;
+
+// Try to load WASM modules, but don't fail if they're not available
+async function loadWasmModules() {
+  try {
+    const ffmpegModule = await import("./core/wasm/ffmpeg.js");
+    const previewModule = await import("./core/wasm/preview.js");
+    
+    ffmpegManager = ffmpegModule.default;
+    previewRenderer = previewModule.default;
+    
+    return true;
+  } catch (error) {
+    console.warn('[WasmForge] WASM modules not available:', error);
+    return false;
+  }
+}
+
+// Core imports
 import { project, snapshot, undo, redo } from "./core/projects.js";
 import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 import { getIcon, createIcon } from "./core/assets/icons/icons.js";
-import ffmpegManager from "./core/wasm/ffmpeg.js";
-import previewRenderer from "./core/wasm/preview.js";
 
 // ========================================
 // DOM ELEMENTS
@@ -106,7 +129,15 @@ function initIcons() {
 async function initFFmpeg() {
   if (!ffmpegLoadingModal) {
     console.warn('[WasmForge] FFmpeg loading modal not found');
-    return;
+    return false;
+  }
+
+  if (!ffmpegManager) {
+    console.warn('[WasmForge] FFmpeg manager not loaded');
+    if (ffmpegLoadingModal) {
+      ffmpegLoadingModal.style.display = 'none';
+    }
+    return false;
   }
 
   const progressBar = document.getElementById('ffmpeg-progress');
@@ -127,29 +158,53 @@ async function initFFmpeg() {
     setTimeout(() => {
       ffmpegLoadingModal.classList.remove('visible');
     }, 500);
+    
+    return true;
   } catch (error) {
     console.error('[WasmForge] FFmpeg load failed:', error);
     ffmpegLoadingModal.classList.remove('visible');
     
     const shouldContinue = confirm(
-      'Failed to load video engine. Some features may not work.\n\n' +
+      'Failed to load video engine. Basic features will still work.\n\n' +
+      'Advanced features like video export will be unavailable.\n\n' +
       'Continue anyway?'
     );
     
     if (!shouldContinue) {
       window.location.href = './index.html';
     }
+    
+    return false;
   }
 }
 
+// Initialize dark mode
+function initDarkMode() {
+  const savedMode = localStorage.getItem("wasmforge-dark-mode");
+  const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  applyDarkMode(prefersDark);
+}
+
 // Initialize application
-function init() {
+async function init() {
   console.log('[WasmForge] Initializing version 4.0...');
   
   initIcons();
   initTimeline(tracksContainer);
-  initFFmpeg();
   initDarkMode();
+  
+  // Try to load WASM modules asynchronously
+  const wasmLoaded = await loadWasmModules();
+  
+  if (wasmLoaded) {
+    console.log('[WasmForge] WASM modules loaded, initializing FFmpeg...');
+    // Don't await - let FFmpeg load in background
+    initFFmpeg().catch(err => {
+      console.warn('[WasmForge] FFmpeg initialization failed:', err);
+    });
+  } else {
+    console.log('[WasmForge] Running without WASM support');
+  }
   
   console.log('[WasmForge] Ready');
 }
@@ -613,15 +668,12 @@ editMenu.addEventListener("click", (e) => {
       loadTimeline();
       break;
     case "cut":
-      // TODO: Implement cut
       console.log('[WasmForge] Cut not yet implemented');
       break;
     case "copy":
-      // TODO: Implement copy
       console.log('[WasmForge] Copy not yet implemented');
       break;
     case "paste":
-      // TODO: Implement paste
       console.log('[WasmForge] Paste not yet implemented');
       break;
     case "delete":
@@ -719,19 +771,16 @@ shortcutsModal?.addEventListener("click", (e) => {
 
 function createNewProject() {
   if (confirm("Create new project? Unsaved changes will be lost.")) {
-    // Clear project data
     project.title = "Untitled Project";
     project.media = [];
     project.timeline = [];
     project.aspectRatio = "16:9";
     
-    // Clear UI
     projectTitleInput.value = "Untitled Project";
     mediaList.innerHTML = "";
     mediaFileCache.clear();
     loadTimeline();
     
-    // Reset preview
     previewVideo.src = "";
     previewVideo.classList.remove("visible");
     previewPlaceholder.classList.remove("hidden");
@@ -790,7 +839,6 @@ function loadProject(data) {
   mediaFileCache.clear();
   loadTimeline();
   
-  // Reset preview
   previewVideo.src = "";
   previewVideo.classList.remove("visible");
   previewPlaceholder.classList.remove("hidden");
@@ -799,6 +847,11 @@ function loadProject(data) {
 }
 
 async function exportProject() {
+  if (!ffmpegManager) {
+    alert("Video export is not available. FFmpeg WASM module failed to load.");
+    return;
+  }
+
   if (!ffmpegManager.isLoaded()) {
     alert("Video engine not ready. Please wait for initialization to complete.");
     return;
@@ -809,7 +862,6 @@ async function exportProject() {
     return;
   }
   
-  // TODO: Implement actual export with compositor
   alert(
     "Export feature coming soon!\n\n" +
     "This will use FFmpeg.wasm to composite your timeline into a final video.\n\n" +
@@ -826,12 +878,6 @@ async function exportProject() {
 // ========================================
 // DARK MODE
 // ========================================
-
-function initDarkMode() {
-  const savedMode = localStorage.getItem("wasmforge-dark-mode");
-  const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  applyDarkMode(prefersDark);
-}
 
 function applyDarkMode(isDark) {
   if (isDark) {
@@ -979,7 +1025,6 @@ window.addEventListener('unhandledrejection', (e) => {
 // START APPLICATION
 // ========================================
 
-// Wait for DOM to be ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

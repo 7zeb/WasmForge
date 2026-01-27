@@ -1,6 +1,5 @@
 // Preview Renderer for Timeline
-import ffmpegManager from './ffmpeg.js';
-import { project } from '../projects.js';
+// Simplified version without FFmpeg dependency initially
 
 class PreviewRenderer {
   constructor() {
@@ -9,7 +8,7 @@ class PreviewRenderer {
     this.canvas = null;
     this.ctx = null;
     this.animationFrame = null;
-    this.videoElements = new Map(); // Cache for video elements
+    this.videoElements = new Map();
     this.audioContext = null;
     this.audioSources = new Map();
   }
@@ -18,8 +17,6 @@ class PreviewRenderer {
   init(canvasElement) {
     this.canvas = canvasElement;
     this.ctx = this.canvas.getContext('2d');
-    
-    // Set canvas size based on aspect ratio
     this.updateCanvasSize();
   }
 
@@ -27,10 +24,17 @@ class PreviewRenderer {
   updateCanvasSize() {
     if (!this.canvas) return;
 
-    const [w, h] = project.aspectRatio.split(':').map(Number);
+    // Default to 16:9 if no project is available
+    let aspectRatio = '16:9';
+    
+    // Try to get from global project if available
+    if (typeof window !== 'undefined' && window.project && window.project.aspectRatio) {
+      aspectRatio = window.project.aspectRatio;
+    }
+
+    const [w, h] = aspectRatio.split(':').map(Number);
     const ratio = w / h;
     
-    // Set a reasonable resolution
     this.canvas.width = 1280;
     this.canvas.height = Math.round(1280 / ratio);
   }
@@ -53,13 +57,6 @@ class PreviewRenderer {
     return video;
   }
 
-  // Get clips at current time
-  getActiveClips(time) {
-    return project.timeline.filter(clip => {
-      return time >= clip.start && time <= clip.end;
-    });
-  }
-
   // Render frame at specific time
   async renderFrame(time) {
     if (!this.canvas || !this.ctx) return;
@@ -70,38 +67,7 @@ class PreviewRenderer {
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Get active clips
-    const activeClips = this.getActiveClips(time);
-
-    // Sort by track (render bottom to top)
-    activeClips.sort((a, b) => {
-      const trackOrder = ['audio-2', 'audio-1', 'video-1', 'video-2'];
-      return trackOrder.indexOf(a.track) - trackOrder.indexOf(b.track);
-    });
-
-    // Render each clip
-    for (const clipData of activeClips) {
-      const media = project.media.find(m => m.id === clipData.mediaId);
-      if (!media) continue;
-
-      // Only render video/image clips
-      if (media.mediaType === 'video' || media.mediaType === 'image') {
-        await this.renderClip(clipData, media, time);
-      }
-    }
-  }
-
-  // Render a single clip
-  async renderClip(clipData, media, currentTime) {
-    // Calculate local time within clip
-    const localTime = currentTime - clipData.start;
-    
-    // Get video element (would need actual file reference)
-    // For now, this is a placeholder
-    // In reality, you'd need to track the file objects
-    
-    // Draw to canvas
-    // this.ctx.drawImage(videoElement, 0, 0, this.canvas.width, this.canvas.height);
+    // Placeholder - actual rendering would happen here
   }
 
   // Start playback
@@ -145,7 +111,6 @@ class PreviewRenderer {
   destroy() {
     this.pause();
     
-    // Revoke video URLs
     this.videoElements.forEach(video => {
       URL.revokeObjectURL(video.src);
     });
