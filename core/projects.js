@@ -3,6 +3,7 @@ export const project = {
   title: "Untitled Project",
   media: [],
   timeline: [],
+  tracks: [], // Dynamic tracks
   aspectRatio: "16:9"
 };
 
@@ -39,5 +40,3 @@ export function redo() {
   const next = redoStack.pop();
   Object.assign(project, next);
 }
-
-
