@@ -1,5 +1,5 @@
 export const project = {
-  version: 3,
+  version: 4,
   title: "Untitled Project",
   media: [],
   timeline: [],
@@ -39,3 +39,4 @@ export function redo() {
   const next = redoStack.pop();
   Object.assign(project, next);
 }
+
