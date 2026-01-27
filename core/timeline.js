@@ -54,7 +54,6 @@ export function addTrack(type) {
     locked: false
   };
   
-  // Insert in the right position (videos at top, audio at bottom)
   if (type === 'video') {
     const firstAudioIndex = project.tracks.findIndex(t => t.type === 'audio');
     if (firstAudioIndex !== -1) {
@@ -70,6 +69,7 @@ export function addTrack(type) {
 }
 
 // Render all tracks
+
 export function renderTracks() {
   if (!tracksContainer) return;
   
@@ -85,27 +85,13 @@ export function renderTracks() {
   const audioTracks = project.tracks.filter(t => t.type === 'audio');
   
   // === VIDEO SECTION ===
-  const videoSection = document.createElement('div');
-  videoSection.className = 'track-controls-row';
-  videoSection.style.position = 'relative';
-  videoSection.style.zIndex = '100';
-  
-  const videoButton = document.createElement('button');
-  videoButton.className = 'add-track-btn';
-  videoButton.textContent = '+ Video Track';
-  videoButton.style.position = 'relative';
-  videoButton.style.zIndex = '101';
-  videoButton.style.pointerEvents = 'auto';
-  
-  videoButton.onclick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    addTrack('video');
-    return false;
-  };
-  
-  videoSection.appendChild(videoButton);
-  trackHeaders.appendChild(videoSection);
+  trackHeaders.insertAdjacentHTML('beforeend', `
+    <div class="track-controls-row">
+      <button class="add-track-btn add-video-track">
+        <span class="btn-icon">+</span> Video Track
+      </button>
+    </div>
+  `);
   
   // Render video tracks
   videoTracks.forEach(track => {
@@ -114,47 +100,55 @@ export function renderTracks() {
   });
   
   // === AUDIO SECTION ===
-  const audioSection = document.createElement('div');
-  audioSection.className = 'track-controls-row';
-  audioSection.style.position = 'relative';
-  audioSection.style.zIndex = '100';
-  audioSection.style.pointerEvents = 'auto'; // CRITICAL FIX
-  
-  const audioButton = document.createElement('button');
-  audioButton.className = 'add-track-btn';
-  audioButton.textContent = '+ Audio Track';
-  audioButton.style.position = 'relative';
-  audioButton.style.zIndex = '101';
-  audioButton.style.pointerEvents = 'auto'; // CRITICAL FIX
-  audioButton.style.cursor = 'pointer';
-  audioButton.style.backgroundColor = '#ff00ff'; // DEBUG: Make it bright pink so you can see it
-  audioButton.style.color = 'white';
-  audioButton.style.border = '3px solid yellow'; // DEBUG: Yellow border
-  
-  audioButton.onclick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    addTrack('audio');
-    return false;
-  };
-  
-  // Add mouseenter event to test if the button is receiving events at all
-  audioButton.onmouseenter = function() {
-    audioButton.style.backgroundColor = '#00ff00'; // Turn green on hover
-  };
-  
-  audioButton.onmouseleave = function() {
-    audioButton.style.backgroundColor = '#ff00ff'; // Back to pink
-  };
-  
-  audioSection.appendChild(audioButton);
-  trackHeaders.appendChild(audioSection);
+  trackHeaders.insertAdjacentHTML('beforeend', `
+    <div class="track-controls-row">
+      <button class="add-track-btn add-audio-track">
+        <span class="btn-icon">+</span> Audio Track
+      </button>
+    </div>
+  `);
   
   // Render audio tracks
   audioTracks.forEach(track => {
     renderTrackHeader(track, trackHeaders);
     renderTrack(track, tracksContainer);
   });
+  
+  // Attach event listeners AFTER all HTML is added
+  const videoBtn = trackHeaders.querySelector('.add-video-track');
+  const audioBtn = trackHeaders.querySelector('.add-audio-track');
+  
+  if (videoBtn) {
+    // Use mousedown instead of click
+    videoBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addTrack('video');
+    }, true); // Capture phase
+  }
+  
+  if (audioBtn) {
+    // Use mousedown instead of click - and add multiple event types
+    audioBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addTrack('audio');
+    }, true); // Capture phase
+    
+    // Also try click as backup
+    audioBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addTrack('audio');
+    }, true); // Capture phase
+    
+    // Nuclear option - also try pointerdown
+    audioBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addTrack('audio');
+    }, true); // Capture phase
+  }
   
   // Load clips
   loadTimeline();
@@ -506,3 +500,4 @@ function wireClipInteractions(clip, clipData) {
   setupResize(leftHandle, true);
   setupResize(rightHandle, false);
 }
+
