@@ -1,5 +1,5 @@
 // ========================================
-// WASMFORGE - VIDEO EDITOR v5.0
+// WASMFORGE - VIDEO EDITOR v6.0
 // Main Application Entry Point
 // ========================================
 
@@ -201,7 +201,7 @@ function showStatusDetails() {
                    'Basic (Core Features Only)';
 
   alert(
-    `WasmForge Status - Version 5.0\n\n` +
+    `WasmForge Status - Version 6.0\n\n` +
     `Mode: ${modeText}\n` +
     `FFmpeg WASM: ${wasmStatus.ffmpegLoaded ? 'Loaded ✓' : wasmStatus.mode === 'loading' ? 'Loading...' : 'Not Available ✗'}\n\n` +
     `Features:\n${features.join('\n')}\n\n` +
@@ -309,7 +309,7 @@ function initDarkMode() {
 
 // Initialize application
 async function init() {
-  console.log('[WasmForge] Initializing version 5.0...');
+  console.log('[WasmForge] Initializing version 6.0...');
   
   initIcons();
   initTimeline(tracksContainer);
@@ -794,7 +794,7 @@ function showAboutDialog() {
   
   alert(
     "WasmForge - Open Source Video Editor\n" +
-    "Version 5.0\n\n" +
+    "Version 6.0\n\n" +
     `Current Mode: ${mode}\n` +
     `FFmpeg: ${wasmStatus.ffmpegLoaded ? 'Active' : 'Not Loaded'}\n\n` +
     "Created by 7Zeb\n" +
@@ -1104,3 +1104,4 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded');
+
