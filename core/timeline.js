@@ -28,61 +28,103 @@ export function initTimeline(domElement) {
   renderTracks();
 }
 
+// Add new track
+export function addTrack(type) {
+  console.log(`[Timeline] addTrack called with type: ${type}`);
+  snapshot();
+  
+  trackCounter[type]++;
+  const trackId = `${type}-${trackCounter[type]}`;
+  const trackName = `${type.charAt(0).toUpperCase() + type.slice(1)} ${trackCounter[type]}`;
+  
+  const newTrack = {
+    id: trackId,
+    name: trackName,
+    type: type,
+    visible: true,
+    muted: false,
+    locked: false
+  };
+  
+  // Insert in the right position (videos at top, audio at bottom)
+  if (type === 'video') {
+    const firstAudioIndex = project.tracks.findIndex(t => t.type === 'audio');
+    if (firstAudioIndex !== -1) {
+      project.tracks.splice(firstAudioIndex, 0, newTrack);
+    } else {
+      project.tracks.push(newTrack);
+    }
+  } else {
+    project.tracks.push(newTrack);
+  }
+  
+  console.log(`[Timeline] Added track: ${trackName}`, newTrack);
+  renderTracks();
+}
+
 // Render all tracks
 export function renderTracks() {
-  if (!tracksContainer) return;
+  console.log('[Timeline] renderTracks called');
+  
+  if (!tracksContainer) {
+    console.error('[Timeline] tracksContainer is null');
+    return;
+  }
   
   const trackHeaders = document.getElementById('track-headers');
-  if (!trackHeaders) return;
+  if (!trackHeaders) {
+    console.error('[Timeline] trackHeaders element not found');
+    return;
+  }
   
   // Clear existing tracks
   tracksContainer.innerHTML = '';
   trackHeaders.innerHTML = '';
   
-  // Add video track controls
-  const videoControls = document.createElement('div');
-  videoControls.className = 'track-controls-row';
+  // Separate video and audio tracks
+  const videoTracks = project.tracks.filter(t => t.type === 'video');
+  const audioTracks = project.tracks.filter(t => t.type === 'audio');
   
-  const addVideoBtn = document.createElement('button');
-  addVideoBtn.className = 'add-track-btn';
-  addVideoBtn.dataset.type = 'video';
-  addVideoBtn.title = 'Add Video Track';
-  addVideoBtn.innerHTML = '<span class="btn-icon">+</span> Video Track';
-  addVideoBtn.addEventListener('click', () => {
-    addTrack('video');
-  });
+  console.log(`[Timeline] Rendering ${videoTracks.length} video tracks and ${audioTracks.length} audio tracks`);
   
-  videoControls.appendChild(addVideoBtn);
-  trackHeaders.appendChild(videoControls);
+  // Add video section header and button
+  const videoSection = document.createElement('div');
+  videoSection.className = 'track-controls-row';
+  videoSection.innerHTML = `<button class="add-track-btn" data-type="video" title="Add Video Track"><span class="btn-icon">+</span> Video Track</button>`;
+  trackHeaders.appendChild(videoSection);
   
   // Render video tracks
-  const videoTracks = project.tracks.filter(t => t.type === 'video');
   videoTracks.forEach(track => {
     renderTrackHeader(track, trackHeaders);
     renderTrack(track, tracksContainer);
   });
   
-  // Add audio track controls
-  const audioControls = document.createElement('div');
-  audioControls.className = 'track-controls-row';
-  
-  const addAudioBtn = document.createElement('button');
-  addAudioBtn.className = 'add-track-btn';
-  addAudioBtn.dataset.type = 'audio';
-  addAudioBtn.title = 'Add Audio Track';
-  addAudioBtn.innerHTML = '<span class="btn-icon">+</span> Audio Track';
-  addAudioBtn.addEventListener('click', () => {
-    addTrack('audio');
-  });
-  
-  audioControls.appendChild(addAudioBtn);
-  trackHeaders.appendChild(audioControls);
+  // Add audio section header and button
+  const audioSection = document.createElement('div');
+  audioSection.className = 'track-controls-row';
+  audioSection.innerHTML = `<button class="add-track-btn" data-type="audio" title="Add Audio Track"><span class="btn-icon">+</span> Audio Track</button>`;
+  trackHeaders.appendChild(audioSection);
   
   // Render audio tracks
-  const audioTracks = project.tracks.filter(t => t.type === 'audio');
   audioTracks.forEach(track => {
     renderTrackHeader(track, trackHeaders);
     renderTrack(track, tracksContainer);
+  });
+  
+  // Attach event listeners to add track buttons
+  const addTrackButtons = trackHeaders.querySelectorAll('.add-track-btn');
+  console.log(`[Timeline] Found ${addTrackButtons.length} add track buttons`);
+  
+  addTrackButtons.forEach((btn, index) => {
+    const trackType = btn.dataset.type;
+    console.log(`[Timeline] Setting up button ${index} for type: ${trackType}`);
+    
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[Timeline] Button clicked! Type: ${trackType}`);
+      addTrack(trackType);
+    });
   });
   
   // Load clips
@@ -97,14 +139,17 @@ function renderTrackHeader(track, container) {
   
   const icon = track.type === 'video' ? '🎬' : '🔊';
   
-  // Create track name input
+  // Build header HTML
+  const iconSpan = document.createElement('span');
+  iconSpan.className = 'track-icon';
+  iconSpan.textContent = icon;
+  
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
   nameInput.className = 'track-name-input';
   nameInput.value = track.name;
   nameInput.spellcheck = false;
   
-  // Create track controls container
   const controls = document.createElement('div');
   controls.className = 'track-controls';
   
@@ -131,7 +176,7 @@ function renderTrackHeader(track, container) {
   deleteBtn.title = 'Delete Track';
   
   // Assemble header
-  header.innerHTML = `<span class="track-icon">${icon}</span>`;
+  header.appendChild(iconSpan);
   header.appendChild(nameInput);
   controls.appendChild(controlBtn);
   controls.appendChild(deleteBtn);
@@ -206,39 +251,6 @@ function renderTrack(track, container) {
       window.addClipToTimeline(mediaId, track.id);
     }
   });
-}
-
-// Add new track
-export function addTrack(type) {
-  snapshot();
-  
-  trackCounter[type]++;
-  const trackId = `${type}-${trackCounter[type]}`;
-  const trackName = `${type.charAt(0).toUpperCase() + type.slice(1)} ${trackCounter[type]}`;
-  
-  const newTrack = {
-    id: trackId,
-    name: trackName,
-    type: type,
-    visible: true,
-    muted: false,
-    locked: false
-  };
-  
-  // Insert in the right position (videos at top, audio at bottom)
-  if (type === 'video') {
-    const firstAudioIndex = project.tracks.findIndex(t => t.type === 'audio');
-    if (firstAudioIndex !== -1) {
-      project.tracks.splice(firstAudioIndex, 0, newTrack);
-    } else {
-      project.tracks.push(newTrack);
-    }
-  } else {
-    project.tracks.push(newTrack);
-  }
-  
-  renderTracks();
-  console.log(`[Timeline] Added track: ${trackName}`);
 }
 
 // Delete track
