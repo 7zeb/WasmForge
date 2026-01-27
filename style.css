@@ -1290,3 +1290,77 @@ body {
   }
 }
 
+/* Track Controls Row */
+.track-controls-row {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.add-track-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.add-track-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.add-track-btn .btn-icon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Track name input */
+.track-name-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.track-name-input:hover {
+  background: var(--bg-elevated);
+}
+
+.track-name-input:focus {
+  outline: none;
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+/* Delete track button */
+.delete-track-btn {
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.track-header:hover .delete-track-btn {
+  opacity: 1;
+}
+
+.delete-track-btn:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
