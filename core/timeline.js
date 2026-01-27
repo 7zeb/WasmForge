@@ -1,167 +1,235 @@
 import { project, snapshot } from "./projects.js";
 
-let timelineContent = null;
+let tracksContainer = null;
+let zoom = 1.0;
+let selectedClip = null;
+const PIXELS_PER_SECOND = 50;
 
 // Called from main.js to initialize timeline
 export function initTimeline(domElement) {
-  timelineContent = domElement;
-  
-  // Enable drop on timeline
-  timelineContent.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    timelineContent.classList.add("dragover");
-  });
-  
-  timelineContent.addEventListener("dragleave", () => {
-    timelineContent.classList.remove("dragover");
-  });
-  
-  timelineContent.addEventListener("drop", (e) => {
-    e.preventDefault();
-    timelineContent.classList.remove("dragover");
-    
-    const mediaId = e.dataTransfer.getData("wasmforge-media-id");
-    if (mediaId && window.addClipToTimeline) {
-      window.addClipToTimeline(mediaId);
-    }
-  });
+  tracksContainer = domElement;
+}
+
+// Get current zoom
+export function getZoom() {
+  return zoom;
+}
+
+// Set zoom level
+export function setZoom(newZoom) {
+  zoom = Math.max(0.2, Math.min(2, newZoom));
+  loadTimeline();
+}
+
+// Get pixels per second considering zoom
+export function getPixelsPerSecond() {
+  return PIXELS_PER_SECOND * zoom;
+}
+
+// Find track element
+function getTrackElement(trackId) {
+  return tracksContainer.querySelector(`.track[data-track="${trackId}"]`);
 }
 
 // Create a DOM element for a clip
 export function renderClip(clipData, media) {
+  const track = getTrackElement(clipData.track);
+  if (!track) return null;
+
   const clip = document.createElement("div");
   clip.className = "timeline-clip";
+  clip.dataset.clipId = clipData.id;
+  clip.dataset.type = media.mediaType;
 
-  clip.style.left = clipData.x + "px";
-  clip.style.width = clipData.width + "px";
+  const pps = getPixelsPerSecond();
+  const width = (clipData.end - clipData.start) * pps;
+  const left = clipData.start * pps;
+
+  clip.style.left = left + "px";
+  clip.style.width = width + "px";
+
+  const icon = media.mediaType === "video" ? "🎬" : 
+               media.mediaType === "audio" ? "🔊" : "🖼️";
 
   clip.innerHTML = `
-    <span class="clip-label">${media.name}</span>
+    <div class="clip-content">
+      <span class="clip-icon">${icon}</span>
+      <span class="clip-label">${media.name}</span>
+    </div>
     <button class="clip-delete">×</button>
+    <div class="clip-resize-handle left"></div>
+    <div class="clip-resize-handle right"></div>
   `;
 
-  timelineContent.appendChild(clip);
+  track.appendChild(clip);
 
-  wireDelete(clip, clipData);
-  wireDrag(clip, clipData);
-  wireResize(clip, clipData);
+  wireClipInteractions(clip, clipData);
 
   return clip;
 }
 
 // Add a new clip to the timeline
-export function addClip(media) {
-  // Calculate position based on existing clips
-  let maxRight = 0;
+export function addClip(media, trackId = "video-1") {
+  // Find the rightmost position on the track
+  let maxEnd = 0;
   project.timeline.forEach(c => {
-    const right = c.x + c.width;
-    if (right > maxRight) maxRight = right;
+    if (c.track === trackId && c.end > maxEnd) {
+      maxEnd = c.end;
+    }
   });
 
+  const duration = 5; // Default 5 seconds
   const clipData = {
     id: crypto.randomUUID(),
     mediaId: media.id,
-    x: maxRight + 10, // Add small gap between clips
-    width: 200,
-    start: 0,
-    end: 5
+    track: trackId,
+    start: maxEnd,
+    end: maxEnd + duration
   };
 
   project.timeline.push(clipData);
-
-  return renderClip(clipData, media);
+  renderClip(clipData, media);
 }
 
 // Load all clips from project.timeline
 export function loadTimeline() {
-  if (!timelineContent) return;
+  if (!tracksContainer) return;
 
-  timelineContent.innerHTML = "";
+  // Clear all tracks
+  tracksContainer.querySelectorAll(".timeline-clip").forEach(clip => clip.remove());
 
+  // Render all clips
   project.timeline.forEach(clipData => {
     const media = project.media.find(m => m.id === clipData.mediaId);
     if (media) renderClip(clipData, media);
   });
 }
 
-// Delete clip
-function wireDelete(clip, clipData) {
-  const btn = clip.querySelector(".clip-delete");
+// Delete selected clip
+export function deleteSelectedClip() {
+  if (!selectedClip) return;
 
-  btn.addEventListener("click", (e) => {
+  const clipId = selectedClip.dataset.clipId;
+  selectedClip.remove();
+  project.timeline = project.timeline.filter(c => c.id !== clipId);
+  selectedClip = null;
+
+  // Hide inspector
+  document.getElementById("clip-properties").style.display = "none";
+  document.getElementById("no-selection").style.display = "flex";
+}
+
+// Select a clip
+export function selectClip(clip) {
+  // Deselect all
+  document.querySelectorAll(".timeline-clip").forEach(c => c.classList.remove("selected"));
+  
+  if (clip) {
+    clip.classList.add("selected");
+    selectedClip = clip;
+
+    // Show inspector
+    document.getElementById("clip-properties").style.display = "block";
+    document.getElementById("no-selection").style.display = "none";
+  } else {
+    selectedClip = null;
+    document.getElementById("clip-properties").style.display = "none";
+    document.getElementById("no-selection").style.display = "flex";
+  }
+}
+
+// Wire up clip interactions
+function wireClipInteractions(clip, clipData) {
+  const deleteBtn = clip.querySelector(".clip-delete");
+  const leftHandle = clip.querySelector(".clip-resize-handle.left");
+  const rightHandle = clip.querySelector(".clip-resize-handle.right");
+
+  // Click to select
+  clip.addEventListener("click", (e) => {
+    if (e.target === deleteBtn) return;
+    selectClip(clip);
+  });
+
+  // Delete
+  deleteBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    snapshot(); // Save state before deleting
+    snapshot();
+    const clipId = clip.dataset.clipId;
     clip.remove();
-    project.timeline = project.timeline.filter(c => c.id !== clipData.id);
+    project.timeline = project.timeline.filter(c => c.id !== clipId);
+    if (selectedClip === clip) {
+      selectClip(null);
+    }
   });
-}
 
-// Drag clip
-function wireDrag(clip, clipData) {
-  let offsetX = 0;
-  let isDragging = false;
-
+  // Drag to move
   clip.addEventListener("mousedown", (e) => {
-    if (e.target.closest(".clip-delete") || e.target.closest(".clip-resize-handle")) return;
+    if (e.target === deleteBtn || e.target.classList.contains("clip-resize-handle")) return;
 
-    isDragging = true;
-    offsetX = e.clientX - clip.offsetLeft;
-    clip.style.cursor = "grabbing";
-    
-    snapshot(); // Save state before dragging
-
-    function onMove(ev) {
-      if (!isDragging) return;
-      const newX = Math.max(0, ev.clientX - offsetX);
-      clip.style.left = newX + "px";
-      clipData.x = newX;
-    }
-
-    function onUp() {
-      isDragging = false;
-      clip.style.cursor = "grab";
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    }
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  });
-}
-
-// Resize clip
-function wireResize(clip, clipData) {
-  // Add resize handle
-  const handle = document.createElement("div");
-  handle.className = "clip-resize-handle";
-  clip.appendChild(handle);
-
-  let isResizing = false;
-
-  handle.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-    isResizing = true;
-    
-    snapshot(); // Save state before resizing
-
+    snapshot();
     const startX = e.clientX;
-    const startWidth = clipData.width;
+    const startLeft = parseFloat(clip.style.left);
+    const pps = getPixelsPerSecond();
 
     function onMove(ev) {
-      if (!isResizing) return;
-      const delta = ev.clientX - startX;
-      const newWidth = Math.max(50, startWidth + delta);
-      clip.style.width = newWidth + "px";
-      clipData.width = newWidth;
+      const deltaX = ev.clientX - startX;
+      const newLeft = Math.max(0, startLeft + deltaX);
+      clip.style.left = newLeft + "px";
+      
+      const newStart = newLeft / pps;
+      const duration = clipData.end - clipData.start;
+      clipData.start = newStart;
+      clipData.end = newStart + duration;
     }
 
     function onUp() {
-      isResizing = false;
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
     }
 
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
   });
+
+  // Resize handles
+  function setupResize(handle, isLeft) {
+    handle.addEventListener("mousedown", (e) => {
+      e.stopPropagation();
+      snapshot();
+
+      const startX = e.clientX;
+      const startWidth = parseFloat(clip.style.width);
+      const startLeft = parseFloat(clip.style.left);
+      const pps = getPixelsPerSecond();
+
+      function onMove(ev) {
+        const deltaX = ev.clientX - startX;
+        
+        if (isLeft) {
+          const newLeft = Math.max(0, startLeft + deltaX);
+          const newWidth = Math.max(20, startWidth - deltaX);
+          clip.style.left = newLeft + "px";
+          clip.style.width = newWidth + "px";
+          
+          clipData.start = newLeft / pps;
+        } else {
+          const newWidth = Math.max(20, startWidth + deltaX);
+          clip.style.width = newWidth + "px";
+          
+          clipData.end = clipData.start + (newWidth / pps);
+        }
+      }
+
+      function onUp() {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      }
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  }
+
+  setupResize(leftHandle, true);
+  setupResize(rightHandle, false);
 }
