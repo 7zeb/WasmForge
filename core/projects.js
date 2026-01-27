@@ -40,4 +40,3 @@ export function redo() {
   const next = redoStack.pop();
   Object.assign(project, next);
 }
-
