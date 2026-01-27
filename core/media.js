@@ -1,5 +1,3 @@
-// /WasmForge/core/media.js
-
 // Helper: format seconds → mm:ss
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
@@ -26,8 +24,6 @@ export async function generateThumbnail(file) {
 
     video.addEventListener("loadedmetadata", () => {
       const durationSeconds = video.duration;
-
-      // seek slightly in (or middle if very short)
       video.currentTime = Math.min(0.1, durationSeconds / 2 || 0);
 
       video.addEventListener("seeked", () => {
@@ -48,46 +44,70 @@ export async function generateThumbnail(file) {
 }
 
 // Create a tile DOM element for a media file
-export function createMediaTile(file, thumbnail, durationSeconds, mediaID) {
+export function createMediaTile(file, thumbnail, durationSeconds, mediaID, mediaType) {
   const tile = document.createElement("div");
   tile.className = "media-tile";
+  tile.draggable = true;
 
   const hasDuration = typeof durationSeconds === "number" && !isNaN(durationSeconds);
 
+  const typeIcon = mediaType === "video" ? "🎬" : 
+                   mediaType === "audio" ? "🔊" : "🖼️";
+
   tile.innerHTML = `
     <div class="media-thumb-wrapper">
-      <img src="${thumbnail}" class="media-thumb">
-      ${hasDuration
-        ? `<span class="media-duration">${formatDuration(durationSeconds)}</span>`
-        : ""}
+      <img src="${thumbnail}" class="media-thumb" alt="${file.name}">
+      ${hasDuration ? `<span class="media-duration">${formatDuration(durationSeconds)}</span>` : ""}
+      <span class="media-type-badge">${typeIcon} ${mediaType}</span>
     </div>
-    <span class="media-name">${file.name}</span>
+    <span class="media-name" title="${file.name}">${file.name}</span>
   `;
 
-  tile.draggable = true;
-
+  // Drag start
   tile.addEventListener("dragstart", (e) => {
+    e.dataTransfer.effectAllowed = "copy";
     e.dataTransfer.setData("wasmforge-media-id", mediaID);
+    tile.classList.add("dragging");
   });
 
+  tile.addEventListener("dragend", () => {
+    tile.classList.remove("dragging");
+  });
+
+  // Click to preview
   tile.addEventListener("click", () => {
-    if (window.previewMediaFile) window.previewMediaFile(file);
-    if (window.addClipToTimeline) window.addClipToTimeline(mediaID);
+    if (window.previewMediaFile) {
+      window.previewMediaFile(file);
+    }
+  });
+
+  // Double click to add to timeline
+  tile.addEventListener("dblclick", () => {
+    if (window.addClipToTimeline) {
+      window.addClipToTimeline(mediaID);
+    }
   });
 
   return tile;
 }
-
 
 // Main entry: handle imported files, create tiles, register with project
 export async function handleImportedFiles(files, mediaListElement, onMediaRegistered) {
   const fileArray = Array.from(files);
 
   for (const file of fileArray) {
+    // Skip non-media files
+    if (!file.type.startsWith("video") && 
+        !file.type.startsWith("audio") && 
+        !file.type.startsWith("image")) {
+      console.warn("Skipping non-media file:", file.name);
+      continue;
+    }
+
     let mediaObj = null;
 
     if (typeof onMediaRegistered === "function") {
-      mediaObj = onMediaRegistered(file);   // MUST return { id, name, type }
+      mediaObj = onMediaRegistered(file);
     }
 
     const { thumbnail, durationSeconds } = await generateThumbnail(file);
@@ -96,12 +116,10 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
       file,
       thumbnail,
       durationSeconds,
-      mediaObj.id   // ← pass the ID here
+      mediaObj.id,
+      mediaObj.mediaType
     );
 
     mediaListElement.appendChild(tile);
   }
 }
-
-
-
