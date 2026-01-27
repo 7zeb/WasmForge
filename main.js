@@ -1,10 +1,19 @@
 // ========================================
 // WASMFORGE - VIDEO EDITOR v5.0
+// Main Application Entry Point
 // ========================================
 
 // WASM Module Handling - Load dynamically
 let ffmpegManager = null;
 let previewRenderer = null;
+
+// WASM Status Tracking
+const wasmStatus = {
+  ffmpegAvailable: false,
+  ffmpegLoaded: false,
+  previewAvailable: false,
+  mode: 'basic' // 'basic', 'loading', 'full'
+};
 
 // Try to load WASM modules, but don't fail if they're not available
 async function loadWasmModules() {
@@ -15,9 +24,14 @@ async function loadWasmModules() {
     ffmpegManager = ffmpegModule.default;
     previewRenderer = previewModule.default;
     
+    wasmStatus.ffmpegAvailable = true;
+    wasmStatus.previewAvailable = true;
+    
     return true;
   } catch (error) {
     console.warn('[WasmForge] WASM modules not available:', error);
+    wasmStatus.ffmpegAvailable = false;
+    wasmStatus.previewAvailable = false;
     return false;
   }
 }
@@ -107,6 +121,98 @@ let activeMenu = null;
 let mediaFileCache = new Map(); // Cache for imported media files
 
 // ========================================
+// STATUS INDICATOR
+// ========================================
+
+// Update the status indicator in the UI
+function updateStatusIndicator() {
+  let statusElement = document.getElementById('wasm-status');
+  
+  // Create status indicator if it doesn't exist
+  if (!statusElement) {
+    statusElement = document.createElement('div');
+    statusElement.id = 'wasm-status';
+    statusElement.className = 'wasm-status-indicator';
+    document.body.appendChild(statusElement);
+  }
+
+  let statusHTML = '';
+  let statusClass = '';
+
+  if (wasmStatus.mode === 'loading') {
+    statusClass = 'status-loading';
+    statusHTML = `
+      <span class="status-icon">⏳</span>
+      <span class="status-text">Loading Video Engine...</span>
+    `;
+  } else if (wasmStatus.mode === 'full') {
+    statusClass = 'status-full';
+    statusHTML = `
+      <span class="status-icon">✓</span>
+      <span class="status-text">Full Mode</span>
+      <span class="status-detail">FFmpeg Active</span>
+    `;
+  } else {
+    statusClass = 'status-basic';
+    statusHTML = `
+      <span class="status-icon">⚠</span>
+      <span class="status-text">Basic Mode</span>
+      <span class="status-detail">Limited Features</span>
+    `;
+  }
+
+  statusElement.className = `wasm-status-indicator ${statusClass}`;
+  statusElement.innerHTML = statusHTML;
+  statusElement.title = "Click for details";
+  
+  // Add click handler to show details
+  statusElement.onclick = showStatusDetails;
+}
+
+// Show detailed status information
+function showStatusDetails() {
+  const features = [];
+  
+  if (wasmStatus.ffmpegLoaded) {
+    features.push('✓ Video Export');
+    features.push('✓ Advanced Effects');
+    features.push('✓ Video Trimming');
+    features.push('✓ Format Conversion');
+    features.push('✓ Audio Mixing');
+  } else {
+    features.push('✗ Video Export (unavailable)');
+    features.push('✗ Advanced Effects (unavailable)');
+    features.push('✗ Video Trimming (unavailable)');
+    features.push('✗ Format Conversion (unavailable)');
+    features.push('✗ Audio Mixing (unavailable)');
+  }
+  
+  features.push('');
+  features.push('✓ Media Import');
+  features.push('✓ Timeline Editing');
+  features.push('✓ Preview Playback');
+  features.push('✓ Project Save/Load');
+  features.push('✓ Drag & Drop');
+  features.push('✓ Undo/Redo');
+
+  const modeText = wasmStatus.mode === 'full' ? 'Full (All Features)' : 
+                   wasmStatus.mode === 'loading' ? 'Loading...' : 
+                   'Basic (Core Features Only)';
+
+  alert(
+    `WasmForge Status - Version 4.0\n\n` +
+    `Mode: ${modeText}\n` +
+    `FFmpeg WASM: ${wasmStatus.ffmpegLoaded ? 'Loaded ✓' : wasmStatus.mode === 'loading' ? 'Loading...' : 'Not Available ✗'}\n\n` +
+    `Features:\n${features.join('\n')}\n\n` +
+    `${!wasmStatus.ffmpegLoaded && wasmStatus.mode !== 'loading' ? 
+      'ℹ️ Some advanced features require FFmpeg WASM.\nTry refreshing the page to load it.' : 
+      wasmStatus.mode === 'loading' ? 
+      '⏳ Please wait while the video engine loads...' :
+      '✓ All features available!'}`
+  );
+}
+
+// ========================================
 // INITIALIZATION
 // ========================================
 
@@ -127,8 +233,13 @@ function initIcons() {
 
 // Initialize FFmpeg
 async function initFFmpeg() {
+  wasmStatus.mode = 'loading';
+  updateStatusIndicator();
+
   if (!ffmpegLoadingModal) {
     console.warn('[WasmForge] FFmpeg loading modal not found');
+    wasmStatus.mode = 'basic';
+    updateStatusIndicator();
     return false;
   }
 
@@ -137,6 +248,8 @@ async function initFFmpeg() {
     if (ffmpegLoadingModal) {
       ffmpegLoadingModal.style.display = 'none';
     }
+    wasmStatus.mode = 'basic';
+    updateStatusIndicator();
     return false;
   }
 
@@ -155,6 +268,10 @@ async function initFFmpeg() {
     await ffmpegManager.load();
     console.log('[WasmForge] FFmpeg loaded successfully');
     
+    wasmStatus.ffmpegLoaded = true;
+    wasmStatus.mode = 'full';
+    updateStatusIndicator();
+    
     setTimeout(() => {
       ffmpegLoadingModal.classList.remove('visible');
     }, 500);
@@ -163,6 +280,10 @@ async function initFFmpeg() {
   } catch (error) {
     console.error('[WasmForge] FFmpeg load failed:', error);
     ffmpegLoadingModal.classList.remove('visible');
+    
+    wasmStatus.ffmpegLoaded = false;
+    wasmStatus.mode = 'basic';
+    updateStatusIndicator();
     
     const shouldContinue = confirm(
       'Failed to load video engine. Basic features will still work.\n\n' +
@@ -193,6 +314,10 @@ async function init() {
   initTimeline(tracksContainer);
   initDarkMode();
   
+  // Show initial status
+  wasmStatus.mode = 'basic';
+  updateStatusIndicator();
+  
   // Try to load WASM modules asynchronously
   const wasmLoaded = await loadWasmModules();
   
@@ -201,9 +326,13 @@ async function init() {
     // Don't await - let FFmpeg load in background
     initFFmpeg().catch(err => {
       console.warn('[WasmForge] FFmpeg initialization failed:', err);
+      wasmStatus.mode = 'basic';
+      updateStatusIndicator();
     });
   } else {
     console.log('[WasmForge] Running without WASM support');
+    wasmStatus.mode = 'basic';
+    updateStatusIndicator();
   }
   
   console.log('[WasmForge] Ready');
@@ -738,9 +867,15 @@ helpMenu.addEventListener("click", (e) => {
 });
 
 function showAboutDialog() {
+  const mode = wasmStatus.mode === 'full' ? 'Full Mode' : 
+               wasmStatus.mode === 'loading' ? 'Loading...' :
+               'Basic Mode';
+  
   alert(
     "WasmForge - Open Source Video Editor\n" +
     "Version 4.0\n\n" +
+    `Current Mode: ${mode}\n` +
+    `FFmpeg: ${wasmStatus.ffmpegLoaded ? 'Active' : 'Not Loaded'}\n\n` +
     "Created by 7Zeb\n" +
     "Powered by FFmpeg.wasm\n\n" +
     "MIT License\n" +
@@ -848,12 +983,21 @@ function loadProject(data) {
 
 async function exportProject() {
   if (!ffmpegManager) {
-    alert("Video export is not available. FFmpeg WASM module failed to load.");
+    alert(
+      "Video Export Not Available\n\n" +
+      "FFmpeg WASM module failed to load.\n" +
+      "You're currently in Basic Mode.\n\n" +
+      "Try refreshing the page or check your internet connection."
+    );
     return;
   }
 
   if (!ffmpegManager.isLoaded()) {
-    alert("Video engine not ready. Please wait for initialization to complete.");
+    alert(
+      "Video Engine Not Ready\n\n" +
+      "FFmpeg is still loading. Please wait a moment.\n\n" +
+      "Check the status indicator in the bottom right corner."
+    );
     return;
   }
   
@@ -863,13 +1007,14 @@ async function exportProject() {
   }
   
   alert(
-    "Export feature coming soon!\n\n" +
+    "Export Feature Coming Soon!\n\n" +
     "This will use FFmpeg.wasm to composite your timeline into a final video.\n\n" +
-    "Features planned:\n" +
-    "- Multiple track composition\n" +
-    "- Effects and transitions\n" +
-    "- Audio mixing\n" +
-    "- Custom export settings"
+    "Planned Features:\n" +
+    "• Multiple track composition\n" +
+    "• Effects and transitions\n" +
+    "• Audio mixing\n" +
+    "• Custom export settings\n" +
+    "• Multiple output formats"
   );
   
   console.log('[WasmForge] Export requested');
