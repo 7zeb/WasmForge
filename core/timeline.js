@@ -39,14 +39,20 @@ export function renderTracks() {
   tracksContainer.innerHTML = '';
   trackHeaders.innerHTML = '';
   
-  // Add track controls
+  // Add video track controls
   const videoControls = document.createElement('div');
   videoControls.className = 'track-controls-row';
-  videoControls.innerHTML = `
-    <button class="add-track-btn" data-type="video" title="Add Video Track">
-      <span class="btn-icon">+</span> Video Track
-    </button>
-  `;
+  
+  const addVideoBtn = document.createElement('button');
+  addVideoBtn.className = 'add-track-btn';
+  addVideoBtn.dataset.type = 'video';
+  addVideoBtn.title = 'Add Video Track';
+  addVideoBtn.innerHTML = '<span class="btn-icon">+</span> Video Track';
+  addVideoBtn.addEventListener('click', () => {
+    addTrack('video');
+  });
+  
+  videoControls.appendChild(addVideoBtn);
   trackHeaders.appendChild(videoControls);
   
   // Render video tracks
@@ -56,14 +62,20 @@ export function renderTracks() {
     renderTrack(track, tracksContainer);
   });
   
-  // Add audio controls
+  // Add audio track controls
   const audioControls = document.createElement('div');
   audioControls.className = 'track-controls-row';
-  audioControls.innerHTML = `
-    <button class="add-track-btn" data-type="audio" title="Add Audio Track">
-      <span class="btn-icon">+</span> Audio Track
-    </button>
-  `;
+  
+  const addAudioBtn = document.createElement('button');
+  addAudioBtn.className = 'add-track-btn';
+  addAudioBtn.dataset.type = 'audio';
+  addAudioBtn.title = 'Add Audio Track';
+  addAudioBtn.innerHTML = '<span class="btn-icon">+</span> Audio Track';
+  addAudioBtn.addEventListener('click', () => {
+    addTrack('audio');
+  });
+  
+  audioControls.appendChild(addAudioBtn);
   trackHeaders.appendChild(audioControls);
   
   // Render audio tracks
@@ -75,14 +87,6 @@ export function renderTracks() {
   
   // Load clips
   loadTimeline();
-  
-  // Setup add track buttons
-  document.querySelectorAll('.add-track-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.type;
-      addTrack(type);
-    });
-  });
 }
 
 // Render track header
@@ -92,23 +96,50 @@ function renderTrackHeader(track, container) {
   header.dataset.track = track.id;
   
   const icon = track.type === 'video' ? '🎬' : '🔊';
-  const controlBtn = track.type === 'video' ? 
-    `<button class="track-btn visibility-btn" data-visible="${track.visible}" title="Toggle Visibility">${track.visible ? '👁' : '👁‍🗨'}</button>` :
-    `<button class="track-btn mute-btn" data-muted="${track.muted}" title="Mute">${track.muted ? '🔇' : '🔊'}</button>`;
   
-  header.innerHTML = `
-    <span class="track-icon">${icon}</span>
-    <input type="text" class="track-name-input" value="${track.name}" spellcheck="false">
-    <div class="track-controls">
-      ${controlBtn}
-      <button class="track-btn delete-track-btn" title="Delete Track">🗑</button>
-    </div>
-  `;
+  // Create track name input
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'track-name-input';
+  nameInput.value = track.name;
+  nameInput.spellcheck = false;
+  
+  // Create track controls container
+  const controls = document.createElement('div');
+  controls.className = 'track-controls';
+  
+  // Create visibility/mute button
+  const controlBtn = document.createElement('button');
+  controlBtn.className = 'track-btn';
+  
+  if (track.type === 'video') {
+    controlBtn.classList.add('visibility-btn');
+    controlBtn.dataset.visible = track.visible;
+    controlBtn.textContent = track.visible ? '👁' : '👁‍🗨';
+    controlBtn.title = 'Toggle Visibility';
+  } else {
+    controlBtn.classList.add('mute-btn');
+    controlBtn.dataset.muted = track.muted;
+    controlBtn.textContent = track.muted ? '🔇' : '🔊';
+    controlBtn.title = 'Mute';
+  }
+  
+  // Create delete button
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'track-btn delete-track-btn';
+  deleteBtn.textContent = '🗑';
+  deleteBtn.title = 'Delete Track';
+  
+  // Assemble header
+  header.innerHTML = `<span class="track-icon">${icon}</span>`;
+  header.appendChild(nameInput);
+  controls.appendChild(controlBtn);
+  controls.appendChild(deleteBtn);
+  header.appendChild(controls);
   
   container.appendChild(header);
   
   // Setup event listeners
-  const nameInput = header.querySelector('.track-name-input');
   nameInput.addEventListener('change', (e) => {
     track.name = e.target.value || `${track.type.charAt(0).toUpperCase() + track.type.slice(1)} Track`;
     snapshot();
@@ -120,27 +151,22 @@ function renderTrackHeader(track, container) {
     }
   });
   
-  const visibilityBtn = header.querySelector('.visibility-btn');
-  if (visibilityBtn) {
-    visibilityBtn.addEventListener('click', () => {
+  if (track.type === 'video') {
+    controlBtn.addEventListener('click', () => {
       track.visible = !track.visible;
-      visibilityBtn.dataset.visible = track.visible;
-      visibilityBtn.textContent = track.visible ? '👁' : '👁‍🗨';
+      controlBtn.dataset.visible = track.visible;
+      controlBtn.textContent = track.visible ? '👁' : '👁‍🗨';
       snapshot();
     });
-  }
-  
-  const muteBtn = header.querySelector('.mute-btn');
-  if (muteBtn) {
-    muteBtn.addEventListener('click', () => {
+  } else {
+    controlBtn.addEventListener('click', () => {
       track.muted = !track.muted;
-      muteBtn.dataset.muted = track.muted;
-      muteBtn.textContent = track.muted ? '🔇' : '🔊';
+      controlBtn.dataset.muted = track.muted;
+      controlBtn.textContent = track.muted ? '🔇' : '🔊';
       snapshot();
     });
   }
   
-  const deleteBtn = header.querySelector('.delete-track-btn');
   deleteBtn.addEventListener('click', () => {
     deleteTrack(track.id);
   });
