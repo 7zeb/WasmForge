@@ -38,7 +38,7 @@ async function loadWasmModules() {
 
 // Core imports
 import { project, snapshot, undo, redo } from "./core/projects.js";
-import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip } from "./core/timeline.js";
+import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip, renderTracks } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 import { getIcon, createIcon } from "./core/assets/icons/icons.js";
 
@@ -194,6 +194,7 @@ function showStatusDetails() {
   features.push('✓ Project Save/Load');
   features.push('✓ Drag & Drop');
   features.push('✓ Undo/Redo');
+  features.push('✓ Dynamic Tracks');
 
   const modeText = wasmStatus.mode === 'full' ? 'Full (All Features)' : 
                    wasmStatus.mode === 'loading' ? 'Loading...' : 
@@ -435,64 +436,6 @@ fileInput.addEventListener("change", (event) => {
 });
 
 // ========================================
-// DRAG & DROP
-// ========================================
-
-// Drag & drop on media panel
-mediaPanel.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  mediaPanel.classList.add("dragover");
-});
-
-mediaPanel.addEventListener("dragleave", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  if (e.target === mediaPanel) {
-    mediaPanel.classList.remove("dragover");
-  }
-});
-
-mediaPanel.addEventListener("drop", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  mediaPanel.classList.remove("dragover");
-
-  if (e.dataTransfer.files.length > 0) {
-    handleImportedFiles(e.dataTransfer.files, mediaList, registerImportedFile);
-  }
-});
-
-// Drag & drop on tracks
-document.querySelectorAll(".track").forEach(track => {
-  track.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    track.classList.add("dragover");
-  });
-
-  track.addEventListener("dragleave", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.target === track) {
-      track.classList.remove("dragover");
-    }
-  });
-
-  track.addEventListener("drop", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    track.classList.remove("dragover");
-
-    const mediaId = e.dataTransfer.getData("wasmforge-media-id");
-    if (mediaId) {
-      const trackId = track.dataset.track;
-      window.addClipToTimeline(mediaId, trackId);
-    }
-  });
-});
-
-// ========================================
 // ASPECT RATIO
 // ========================================
 
@@ -603,12 +546,12 @@ btnNextFrame.addEventListener("click", () => {
 
 btnUndo.addEventListener("click", () => {
   undo();
-  loadTimeline();
+  renderTracks();
 });
 
 btnRedo.addEventListener("click", () => {
   redo();
-  loadTimeline();
+  renderTracks();
 });
 
 btnDelete.addEventListener("click", () => {
@@ -635,28 +578,6 @@ toolRazor.addEventListener("click", () => {
   currentTool = "razor";
   toolRazor.classList.add("active");
   toolSelect.classList.remove("active");
-});
-
-// ========================================
-// TRACK BUTTONS
-// ========================================
-
-document.querySelectorAll(".visibility-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const visible = btn.dataset.visible === "true";
-    btn.dataset.visible = !visible;
-    btn.innerHTML = visible ? getIcon('eyeOff') : getIcon('eye');
-    btn.classList.toggle("hidden", visible);
-  });
-});
-
-document.querySelectorAll(".mute-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const muted = btn.dataset.muted === "true";
-    btn.dataset.muted = !muted;
-    btn.innerHTML = muted ? getIcon('speaker') : getIcon('speakerMute');
-    btn.classList.toggle("muted", !muted);
-  });
 });
 
 // ========================================
@@ -790,11 +711,11 @@ editMenu.addEventListener("click", (e) => {
   switch (action) {
     case "undo":
       undo();
-      loadTimeline();
+      renderTracks();
       break;
     case "redo":
       redo();
-      loadTimeline();
+      renderTracks();
       break;
     case "cut":
       console.log('[WasmForge] Cut not yet implemented');
@@ -879,7 +800,7 @@ function showAboutDialog() {
     "Created by 7Zeb\n" +
     "Powered by FFmpeg.wasm\n\n" +
     "MIT License\n" +
-    "© 2026 Rutwik Stuff Branding Umbrella"
+    "© 2026"
   );
 }
 
@@ -909,12 +830,15 @@ function createNewProject() {
     project.title = "Untitled Project";
     project.media = [];
     project.timeline = [];
+    project.tracks = [];
     project.aspectRatio = "16:9";
     
     projectTitleInput.value = "Untitled Project";
     mediaList.innerHTML = "";
     mediaFileCache.clear();
-    loadTimeline();
+    
+    // Re-initialize timeline
+    initTimeline(tracksContainer);
     
     previewVideo.src = "";
     previewVideo.classList.remove("visible");
@@ -962,6 +886,7 @@ function loadProject(data) {
   project.title = data.title ?? project.title;
   project.media = data.media ?? [];
   project.timeline = data.timeline ?? [];
+  project.tracks = data.tracks ?? [];
 
   if (data.aspectRatio) {
     project.aspectRatio = data.aspectRatio;
@@ -972,7 +897,9 @@ function loadProject(data) {
   projectTitleInput.value = project.title;
   mediaList.innerHTML = "";
   mediaFileCache.clear();
-  loadTimeline();
+  
+  // Re-render timeline with loaded tracks
+  renderTracks();
   
   previewVideo.src = "";
   previewVideo.classList.remove("visible");
@@ -1046,7 +973,7 @@ darkModeToggle.addEventListener("click", () => {
 
 document.addEventListener("keydown", (e) => {
   // Ignore if typing in input
-  if (e.target.tagName === "INPUT" && e.target.id === "project-title-input") return;
+  if (e.target.tagName === "INPUT" && (e.target.id === "project-title-input" || e.target.classList.contains("track-name-input"))) return;
   
   // Space - Play/Pause
   if (e.code === "Space") {
@@ -1099,13 +1026,13 @@ document.addEventListener("keydown", (e) => {
         } else {
           undo();
         }
-        loadTimeline();
+        renderTracks();
         return;
         
       case "y":
         e.preventDefault();
         redo();
-        loadTimeline();
+        renderTracks();
         return;
         
       case "s":
@@ -1177,4 +1104,3 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded');
-
