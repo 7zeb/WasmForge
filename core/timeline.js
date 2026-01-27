@@ -3,6 +3,7 @@ import { project, snapshot } from "./projects.js";
 let tracksContainer = null;
 let zoom = 1.0;
 let selectedClip = null;
+let activeTool = 'select'; // 'select' or 'razor'
 const PIXELS_PER_SECOND = 50;
 
 // Calculate the highest track number for each type
@@ -33,6 +34,76 @@ export function initTimeline(domElement) {
   }
   
   renderTracks();
+}
+
+// Set active tool
+export function setActiveTool(tool) {
+  activeTool = tool;
+  
+  // Update cursor for all clips
+  if (tracksContainer) {
+    const clips = tracksContainer.querySelectorAll('.timeline-clip');
+    clips.forEach(clip => {
+      if (tool === 'razor') {
+        clip.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'white\' stroke=\'black\' stroke-width=\'1\' d=\'M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z\'/%3E%3C/svg%3E") 12 12, auto';
+      } else {
+        clip.style.cursor = 'grab';
+      }
+    });
+  }
+  
+  console.log('[Timeline] Active tool:', tool);
+}
+
+// Get active tool
+export function getActiveTool() {
+  return activeTool;
+}
+
+// Split clip at position
+function splitClip(clip, clickX) {
+  const clipId = clip.dataset.clipId;
+  const clipData = project.timeline.find(c => c.id === clipId);
+  
+  if (!clipData) return;
+  
+  // Calculate the split position
+  const clipRect = clip.getBoundingClientRect();
+  const clickOffset = clickX - clipRect.left;
+  const pps = getPixelsPerSecond();
+  const splitTime = clipData.start + (clickOffset / pps);
+  
+  // Don't split if too close to edges (minimum 0.5 seconds on each side)
+  const minDuration = 0.5;
+  if (splitTime - clipData.start < minDuration || clipData.end - splitTime < minDuration) {
+    console.log('[Timeline] Clip too small to split at this position');
+    return;
+  }
+  
+  snapshot();
+  
+  // Create the second clip
+  const newClipData = {
+    id: crypto.randomUUID(),
+    mediaId: clipData.mediaId,
+    track: clipData.track,
+    start: splitTime,
+    end: clipData.end
+  };
+  
+  // Update the original clip
+  clipData.end = splitTime;
+  
+  // Add the new clip to the timeline
+  project.timeline.push(newClipData);
+  
+  console.log('[Timeline] Split clip:', {
+    original: `${clipData.start.toFixed(2)}s - ${clipData.end.toFixed(2)}s`,
+    new: `${newClipData.start.toFixed(2)}s - ${newClipData.end.toFixed(2)}s`
+  });
+  
+  // Re-render the timeline
+  loadTimeline();
 }
 
 // Add new track
@@ -323,6 +394,13 @@ export function renderClip(clipData, media) {
 
   clip.style.left = left + "px";
   clip.style.width = width + "px";
+  
+  // Set cursor based on active tool
+  if (activeTool === 'razor') {
+    clip.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'white\' stroke=\'black\' stroke-width=\'1\' d=\'M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z\'/%3E%3C/svg%3E") 12 12, auto';
+  } else {
+    clip.style.cursor = 'grab';
+  }
 
   const icon = media.mediaType === "video" ? "🎬" : 
                media.mediaType === "audio" ? "🔊" : "🖼️";
@@ -405,7 +483,7 @@ export function selectClip(clip) {
     if (clipProperties) clipProperties.style.display = "block";
     if (noSelection) noSelection.style.display = "none";
     
-    // FIX: Preview the media in the preview section
+    // Preview the media in the preview section
     const clipId = clip.dataset.clipId;
     const clipData = project.timeline.find(c => c.id === clipId);
     
@@ -413,7 +491,6 @@ export function selectClip(clip) {
       const media = project.media.find(m => m.id === clipData.mediaId);
       
       if (media && media.file) {
-        // Call the preview function if it exists
         if (window.previewMediaFile && typeof window.previewMediaFile === 'function') {
           console.log('[Timeline] Previewing clip:', media.name);
           window.previewMediaFile(media.file);
@@ -436,7 +513,13 @@ function wireClipInteractions(clip, clipData) {
 
   clip.addEventListener("click", (e) => {
     if (e.target === deleteBtn) return;
-    selectClip(clip);
+    
+    // Handle based on active tool
+    if (activeTool === 'razor') {
+      splitClip(clip, e.clientX);
+    } else {
+      selectClip(clip);
+    }
   });
 
   deleteBtn.addEventListener("click", (e) => {
@@ -450,8 +533,11 @@ function wireClipInteractions(clip, clipData) {
     }
   });
 
+  // Only allow dragging with select tool
   clip.addEventListener("mousedown", (e) => {
     if (e.target === deleteBtn || e.target.classList.contains("clip-resize-handle")) return;
+    if (activeTool === 'razor') return; // Don't drag with razor tool
+    
     snapshot();
     const startX = e.clientX;
     const startLeft = parseFloat(clip.style.left);
@@ -479,6 +565,8 @@ function wireClipInteractions(clip, clipData) {
   function setupResize(handle, isLeft) {
     handle.addEventListener("mousedown", (e) => {
       e.stopPropagation();
+      if (activeTool === 'razor') return; // Don't resize with razor tool
+      
       snapshot();
       const startX = e.clientX;
       const startWidth = parseFloat(clip.style.width);
