@@ -29,7 +29,7 @@
 
     <div class="menu-right">
       <button id="dark-mode-toggle" title="Toggle Theme">
-        <span class="icon">🌙</span>
+        <span class="icon" data-icon="darkMode"></span>
       </button>
     </div>
   </div>
@@ -53,8 +53,8 @@
       <div class="panel-content">
         <div id="media-tab" class="tab-content active">
           <div id="import-area">
-            <label id="file-picker-label" for="file-input">
-              <span class="import-icon">📁</span>
+            <label id="file-picker-label">
+              <span class="import-icon" data-icon="folderOpen"></span>
               <span class="import-text">Import Media</span>
               <span class="import-hint">or drag & drop files here</span>
             </label>
@@ -92,7 +92,7 @@
         <div id="preview-container">
           <video id="preview-video"></video>
           <div id="preview-placeholder">
-            <span class="placeholder-icon">🎬</span>
+            <span class="placeholder-icon" data-icon="video"></span>
             <span>Import media to get started</span>
           </div>
         </div>
@@ -105,11 +105,11 @@
         </div>
         
         <div class="transport-center">
-          <button id="btn-start" title="Go to Start">⏮</button>
-          <button id="btn-prev-frame" title="Previous Frame">⏪</button>
-          <button id="btn-play" title="Play/Pause">▶</button>
-          <button id="btn-next-frame" title="Next Frame">⏩</button>
-          <button id="btn-end" title="Go to End">⏭</button>
+          <button id="btn-start" title="Go to Start" data-icon="skipBack"></button>
+          <button id="btn-prev-frame" title="Previous Frame" data-icon="previous"></button>
+          <button id="btn-play" title="Play/Pause" data-icon="play"></button>
+          <button id="btn-next-frame" title="Next Frame" data-icon="next"></button>
+          <button id="btn-end" title="Go to End" data-icon="skipForward"></button>
         </div>
         
         <div class="transport-right">
@@ -126,7 +126,7 @@
       
       <div class="panel-content">
         <div id="no-selection" class="inspector-placeholder">
-          <span class="placeholder-icon">📋</span>
+          <span class="placeholder-icon" data-icon="cursor"></span>
           <span>Select a clip to view properties</span>
         </div>
         
@@ -172,23 +172,25 @@
     <!-- Timeline Toolbar -->
     <div id="timeline-toolbar">
       <div class="toolbar-left">
-        <button id="tool-select" class="tool-btn active" title="Select Tool (V)">↖</button>
-        <button id="tool-razor" class="tool-btn" title="Razor Tool (C)">✂</button>
+        <button id="tool-select" class="tool-btn active" title="Select Tool (V)" data-icon="cursor"></button>
+        <button id="tool-razor" class="tool-btn" title="Razor Tool (C)" data-icon="scissors"></button>
         <div class="toolbar-divider"></div>
-        <button id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
-        <button id="btn-redo" title="Redo (Ctrl+Y)">↪</button>
+        <button id="btn-undo" title="Undo (Ctrl+Z)" data-icon="undo"></button>
+        <button id="btn-redo" title="Redo (Ctrl+Y)" data-icon="redo"></button>
         <div class="toolbar-divider"></div>
-        <button id="btn-delete" title="Delete Selected">🗑</button>
+        <button id="btn-delete" title="Delete Selected" data-icon="delete"></button>
       </div>
       
       <div class="toolbar-center">
-        <button id="btn-snap" class="toggle-btn active" title="Snapping">🧲 Snap</button>
+        <button id="btn-snap" class="toggle-btn active" title="Snapping">
+          <span data-icon="magnet"></span> Snap
+        </button>
       </div>
       
       <div class="toolbar-right">
-        <button id="btn-zoom-out" title="Zoom Out">−</button>
+        <button id="btn-zoom-out" title="Zoom Out" data-icon="subtract"></button>
         <input type="range" id="timeline-zoom" min="20" max="200" value="100">
-        <button id="btn-zoom-in" title="Zoom In">+</button>
+        <button id="btn-zoom-in" title="Zoom In" data-icon="add"></button>
         <span id="zoom-level">100%</span>
       </div>
     </div>
@@ -199,24 +201,24 @@
       <!-- Track Headers -->
       <div id="track-headers">
         <div class="track-header" data-track="video-2">
-          <span class="track-icon">🎬</span>
+          <span class="track-icon" data-icon="video"></span>
           <span class="track-name">Video 2</span>
-          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility">👁</button>
+          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility" data-icon="eye"></button>
         </div>
         <div class="track-header" data-track="video-1">
-          <span class="track-icon">🎬</span>
+          <span class="track-icon" data-icon="video"></span>
           <span class="track-name">Video 1</span>
-          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility">👁</button>
+          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility" data-icon="eye"></button>
         </div>
         <div class="track-header" data-track="audio-1">
-          <span class="track-icon">🔊</span>
+          <span class="track-icon" data-icon="musicNote"></span>
           <span class="track-name">Audio 1</span>
-          <button class="track-btn mute-btn" data-muted="false" title="Mute">🔊</button>
+          <button class="track-btn mute-btn" data-muted="false" title="Mute" data-icon="speaker"></button>
         </div>
         <div class="track-header" data-track="audio-2">
-          <span class="track-icon">🎵</span>
+          <span class="track-icon" data-icon="musicNote"></span>
           <span class="track-name">Audio 2</span>
-          <button class="track-btn mute-btn" data-muted="false" title="Mute">🔊</button>
+          <button class="track-btn mute-btn" data-muted="false" title="Mute" data-icon="speaker"></button>
         </div>
       </div>
 
@@ -245,40 +247,114 @@
 
   <!-- Dropdown Menus -->
   <div id="file-menu" class="dropdown-menu">
-    <button data-action="new"><span class="menu-icon">📄</span> New Project <span class="shortcut">Ctrl+N</span></button>
-    <button data-action="open"><span class="menu-icon">📂</span> Open Project <span class="shortcut">Ctrl+O</span></button>
-    <button data-action="save"><span class="menu-icon">💾</span> Save Project <span class="shortcut">Ctrl+S</span></button>
+    <button data-action="new">
+      <span class="menu-icon" data-icon="documentAdd"></span> 
+      New Project 
+      <span class="shortcut">Ctrl+N</span>
+    </button>
+    <button data-action="open">
+      <span class="menu-icon" data-icon="folderOpen"></span> 
+      Open Project 
+      <span class="shortcut">Ctrl+O</span>
+    </button>
+    <button data-action="save">
+      <span class="menu-icon" data-icon="save"></span> 
+      Save Project 
+      <span class="shortcut">Ctrl+S</span>
+    </button>
     <div class="menu-divider"></div>
-    <button data-action="import"><span class="menu-icon">📥</span> Import Media <span class="shortcut">Ctrl+I</span></button>
-    <button data-action="export"><span class="menu-icon">📤</span> Export Video <span class="shortcut">Ctrl+E</span></button>
+    <button data-action="import">
+      <span class="menu-icon" data-icon="arrowImport"></span> 
+      Import Media 
+      <span class="shortcut">Ctrl+I</span>
+    </button>
+    <button data-action="export">
+      <span class="menu-icon" data-icon="arrowExport"></span> 
+      Export Video 
+      <span class="shortcut">Ctrl+E</span>
+    </button>
     <div class="menu-divider"></div>
-    <button data-action="home"><span class="menu-icon">🏠</span> Back to Home</button>
+    <button data-action="home">
+      <span class="menu-icon" data-icon="home"></span> 
+      Back to Home
+    </button>
   </div>
 
   <div id="edit-menu" class="dropdown-menu">
-    <button data-action="undo"><span class="menu-icon">↩</span> Undo <span class="shortcut">Ctrl+Z</span></button>
-    <button data-action="redo"><span class="menu-icon">↪</span> Redo <span class="shortcut">Ctrl+Y</span></button>
+    <button data-action="undo">
+      <span class="menu-icon" data-icon="undo"></span> 
+      Undo 
+      <span class="shortcut">Ctrl+Z</span>
+    </button>
+    <button data-action="redo">
+      <span class="menu-icon" data-icon="redo"></span> 
+      Redo 
+      <span class="shortcut">Ctrl+Y</span>
+    </button>
     <div class="menu-divider"></div>
-    <button data-action="cut"><span class="menu-icon">✂</span> Cut <span class="shortcut">Ctrl+X</span></button>
-    <button data-action="copy"><span class="menu-icon">📋</span> Copy <span class="shortcut">Ctrl+C</span></button>
-    <button data-action="paste"><span class="menu-icon">📌</span> Paste <span class="shortcut">Ctrl+V</span></button>
-    <button data-action="delete"><span class="menu-icon">🗑</span> Delete <span class="shortcut">Del</span></button>
+    <button data-action="cut">
+      <span class="menu-icon" data-icon="cut"></span> 
+      Cut 
+      <span class="shortcut">Ctrl+X</span>
+    </button>
+    <button data-action="copy">
+      <span class="menu-icon" data-icon="copy"></span> 
+      Copy 
+      <span class="shortcut">Ctrl+C</span>
+    </button>
+    <button data-action="paste">
+      <span class="menu-icon" data-icon="paste"></span> 
+      Paste 
+      <span class="shortcut">Ctrl+V</span>
+    </button>
+    <button data-action="delete">
+      <span class="menu-icon" data-icon="delete"></span> 
+      Delete 
+      <span class="shortcut">Del</span>
+    </button>
     <div class="menu-divider"></div>
-    <button data-action="select-all"><span class="menu-icon">☑</span> Select All <span class="shortcut">Ctrl+A</span></button>
+    <button data-action="select-all">
+      <span class="menu-icon" data-icon="checkmark"></span> 
+      Select All 
+      <span class="shortcut">Ctrl+A</span>
+    </button>
   </div>
 
   <div id="view-menu" class="dropdown-menu">
-    <button data-action="zoom-in"><span class="menu-icon">🔍</span> Zoom In <span class="shortcut">Ctrl++</span></button>
-    <button data-action="zoom-out"><span class="menu-icon">🔍</span> Zoom Out <span class="shortcut">Ctrl+-</span></button>
-    <button data-action="fit-timeline"><span class="menu-icon">↔</span> Fit Timeline</button>
+    <button data-action="zoom-in">
+      <span class="menu-icon" data-icon="zoomIn"></span> 
+      Zoom In 
+      <span class="shortcut">Ctrl++</span>
+    </button>
+    <button data-action="zoom-out">
+      <span class="menu-icon" data-icon="zoomOut"></span> 
+      Zoom Out 
+      <span class="shortcut">Ctrl+-</span>
+    </button>
+    <button data-action="fit-timeline">
+      <span class="menu-icon" data-icon="zoomOut"></span> 
+      Fit Timeline
+    </button>
     <div class="menu-divider"></div>
-    <button data-action="toggle-snap"><span class="menu-icon">🧲</span> Toggle Snapping</button>
+    <button data-action="toggle-snap">
+      <span class="menu-icon" data-icon="magnet"></span> 
+      Toggle Snapping
+    </button>
   </div>
 
   <div id="help-menu" class="dropdown-menu">
-    <button data-action="shortcuts"><span class="menu-icon">⌨</span> Keyboard Shortcuts</button>
-    <button data-action="about"><span class="menu-icon">ℹ</span> About WasmForge</button>
-    <button data-action="github"><span class="menu-icon">🐙</span> GitHub Repository</button>
+    <button data-action="shortcuts">
+      <span class="menu-icon" data-icon="keyboard"></span> 
+      Keyboard Shortcuts
+    </button>
+    <button data-action="about">
+      <span class="menu-icon" data-icon="info"></span> 
+      About WasmForge
+    </button>
+    <button data-action="github">
+      <span class="menu-icon" data-icon="github"></span> 
+      GitHub Repository
+    </button>
   </div>
 
   <!-- Keyboard Shortcuts Modal -->
@@ -286,7 +362,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Keyboard Shortcuts</h2>
-        <button class="modal-close">&times;</button>
+        <button class="modal-close" data-icon="dismiss"></button>
       </div>
       <div class="modal-body">
         <div class="shortcut-group">
