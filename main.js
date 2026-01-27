@@ -1,6 +1,7 @@
 import { project, snapshot, undo, redo } from "./core/projects.js";
 import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
+import { getIcon, createIcon } from "./core/assets/icons/icons.js";
 
 // --- DOM ELEMENTS ---
 const fileInput = document.getElementById("file-input");
@@ -65,8 +66,33 @@ let currentTool = "select";
 let snappingEnabled = true;
 let activeMenu = null;
 
+// --- INIT ICONS ---
+function initIcons() {
+  document.querySelectorAll('[data-icon]').forEach(element => {
+    const iconName = element.dataset.icon;
+    const iconHTML = getIcon(iconName);
+    
+    if (element.tagName === 'BUTTON') {
+      // For buttons, prepend icon and keep text content
+      const textContent = element.textContent.trim();
+      element.innerHTML = iconHTML;
+      if (textContent && element.querySelector('.shortcut') === null) {
+        // Only add text if button originally had it (not just an icon button)
+        const hasOtherContent = element.querySelector('.shortcut, .menu-icon');
+        if (!hasOtherContent && textContent) {
+          element.innerHTML = iconHTML;
+        }
+      }
+    } else {
+      // For spans and other elements, replace entirely
+      element.innerHTML = iconHTML;
+    }
+  });
+}
+
 // --- INIT ---
 initTimeline(tracksContainer);
+initIcons();
 
 // --- TIME FORMATTING ---
 function formatTime(seconds) {
@@ -96,8 +122,13 @@ previewVideo.addEventListener("timeupdate", () => {
 
 previewVideo.addEventListener("ended", () => {
   isPlaying = false;
-  btnPlay.textContent = "▶";
+  updatePlayButton();
 });
+
+// --- UPDATE PLAY BUTTON ---
+function updatePlayButton() {
+  btnPlay.innerHTML = isPlaying ? getIcon('pause') : getIcon('play');
+}
 
 // --- REGISTER IMPORTED FILE ---
 function registerImportedFile(file) {
@@ -160,7 +191,6 @@ mediaPanel.addEventListener("drop", (e) => {
   e.stopPropagation();
   mediaPanel.classList.remove("dragover");
 
-  // Handle files dropped from OS
   if (e.dataTransfer.files.length > 0) {
     handleImportedFiles(e.dataTransfer.files, mediaList, registerImportedFile);
   }
@@ -241,12 +271,11 @@ btnZoomOut.addEventListener("click", () => {
 function togglePlay() {
   if (isPlaying) {
     previewVideo.pause();
-    btnPlay.textContent = "▶";
   } else {
     previewVideo.play();
-    btnPlay.textContent = "⏸";
   }
   isPlaying = !isPlaying;
+  updatePlayButton();
 }
 
 btnPlay.addEventListener("click", togglePlay);
@@ -311,7 +340,7 @@ document.querySelectorAll(".visibility-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const visible = btn.dataset.visible === "true";
     btn.dataset.visible = !visible;
-    btn.textContent = visible ? "👁‍🗨" : "👁";
+    btn.innerHTML = visible ? getIcon('eyeOff') : getIcon('eye');
     btn.classList.toggle("hidden", visible);
   });
 });
@@ -320,7 +349,7 @@ document.querySelectorAll(".mute-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const muted = btn.dataset.muted === "true";
     btn.dataset.muted = !muted;
-    btn.textContent = muted ? "🔊" : "🔇";
+    btn.innerHTML = muted ? getIcon('speaker') : getIcon('speakerMute');
     btn.classList.toggle("muted", !muted);
   });
 });
@@ -564,10 +593,10 @@ function loadProject(data) {
 function applyDarkMode(isDark) {
   if (isDark) {
     document.body.classList.remove("light-mode");
-    darkModeToggle.querySelector(".icon").textContent = "🌙";
+    darkModeToggle.querySelector(".icon").innerHTML = getIcon('darkMode');
   } else {
     document.body.classList.add("light-mode");
-    darkModeToggle.querySelector(".icon").textContent = "☀️";
+    darkModeToggle.querySelector(".icon").innerHTML = getIcon('lightMode');
   }
   localStorage.setItem("wasmforge-dark-mode", isDark ? "dark" : "light");
 }
