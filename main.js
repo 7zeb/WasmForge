@@ -2,33 +2,32 @@ import { project, snapshot, undo, redo } from "./core/projects.js";
 import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 import { getIcon, createIcon } from "./core/assets/icons/icons.js";
+import ffmpegManager from "./core/wasm/ffmpeg.js";
+import previewRenderer from "./core/wasm/preview.js";
 
-// --- DOM ELEMENTS ---
+// ========================================
+// DOM ELEMENTS
+// ========================================
+
+// File inputs
 const fileInput = document.getElementById("file-input");
-const mediaList = document.getElementById("media-list");
-const previewVideo = document.getElementById("preview-video");
-const previewPlaceholder = document.getElementById("preview-placeholder");
-const mediaPanel = document.getElementById("media-panel");
-const aspectSelect = document.getElementById("aspect-select");
-const projectTitleInput = document.getElementById("project-title-input");
 const loadFileInput = document.getElementById("load-file-input");
-const tracksContainer = document.getElementById("tracks-container");
 const filePickerLabel = document.getElementById("file-picker-label");
 
-// Menu buttons
-const fileButton = document.getElementById("file-button");
-const editButton = document.getElementById("edit-button");
-const viewButton = document.getElementById("view-button");
-const helpButton = document.getElementById("help-button");
-const darkModeToggle = document.getElementById("dark-mode-toggle");
+// Media panel
+const mediaList = document.getElementById("media-list");
+const mediaPanel = document.getElementById("media-panel");
 
-// Menus
-const fileMenu = document.getElementById("file-menu");
-const editMenu = document.getElementById("edit-menu");
-const viewMenu = document.getElementById("view-menu");
-const helpMenu = document.getElementById("help-menu");
+// Preview section
+const previewVideo = document.getElementById("preview-video");
+const previewPlaceholder = document.getElementById("preview-placeholder");
+const aspectSelect = document.getElementById("aspect-select");
 
-// Timeline controls
+// Project
+const projectTitleInput = document.getElementById("project-title-input");
+
+// Timeline
+const tracksContainer = document.getElementById("tracks-container");
 const timelineZoom = document.getElementById("timeline-zoom");
 const zoomLevel = document.getElementById("zoom-level");
 const btnZoomIn = document.getElementById("btn-zoom-in");
@@ -43,7 +42,7 @@ const btnNextFrame = document.getElementById("btn-next-frame");
 const currentTimeDisplay = document.getElementById("current-time");
 const totalTimeDisplay = document.getElementById("total-time");
 
-// Toolbar
+// Toolbar buttons
 const btnUndo = document.getElementById("btn-undo");
 const btnRedo = document.getElementById("btn-redo");
 const btnDelete = document.getElementById("btn-delete");
@@ -51,50 +50,114 @@ const btnSnap = document.getElementById("btn-snap");
 const toolSelect = document.getElementById("tool-select");
 const toolRazor = document.getElementById("tool-razor");
 
-// Inspector
+// Menu buttons
+const fileButton = document.getElementById("file-button");
+const editButton = document.getElementById("edit-button");
+const viewButton = document.getElementById("view-button");
+const helpButton = document.getElementById("help-button");
+const darkModeToggle = document.getElementById("dark-mode-toggle");
+
+// Dropdown menus
+const fileMenu = document.getElementById("file-menu");
+const editMenu = document.getElementById("edit-menu");
+const viewMenu = document.getElementById("view-menu");
+const helpMenu = document.getElementById("help-menu");
+
+// Inspector controls
 const propScale = document.getElementById("prop-scale");
 const propOpacity = document.getElementById("prop-opacity");
 const propSpeed = document.getElementById("prop-speed");
 const propVolume = document.getElementById("prop-volume");
 
-// Modal
+// Modals
 const shortcutsModal = document.getElementById("shortcuts-modal");
+const ffmpegLoadingModal = document.getElementById("ffmpeg-loading");
 
-// --- STATE ---
+// ========================================
+// STATE
+// ========================================
+
 let isPlaying = false;
 let currentTool = "select";
 let snappingEnabled = true;
 let activeMenu = null;
+let mediaFileCache = new Map(); // Cache for imported media files
 
-// --- INIT ICONS ---
+// ========================================
+// INITIALIZATION
+// ========================================
+
+// Initialize icons
 function initIcons() {
   document.querySelectorAll('[data-icon]').forEach(element => {
     const iconName = element.dataset.icon;
     const iconHTML = getIcon(iconName);
     
     if (element.tagName === 'BUTTON') {
-      // For buttons, prepend icon and keep text content
       const textContent = element.textContent.trim();
       element.innerHTML = iconHTML;
-      if (textContent && element.querySelector('.shortcut') === null) {
-        // Only add text if button originally had it (not just an icon button)
-        const hasOtherContent = element.querySelector('.shortcut, .menu-icon');
-        if (!hasOtherContent && textContent) {
-          element.innerHTML = iconHTML;
-        }
-      }
     } else {
-      // For spans and other elements, replace entirely
       element.innerHTML = iconHTML;
     }
   });
 }
 
-// --- INIT ---
-initTimeline(tracksContainer);
-initIcons();
+// Initialize FFmpeg
+async function initFFmpeg() {
+  if (!ffmpegLoadingModal) {
+    console.warn('[WasmForge] FFmpeg loading modal not found');
+    return;
+  }
 
-// --- TIME FORMATTING ---
+  const progressBar = document.getElementById('ffmpeg-progress');
+  const progressText = document.getElementById('ffmpeg-progress-text');
+  
+  ffmpegLoadingModal.classList.add('visible');
+  
+  ffmpegManager.onProgress((progress) => {
+    const percent = Math.round(progress * 100);
+    if (progressBar) progressBar.style.width = percent + '%';
+    if (progressText) progressText.textContent = percent + '%';
+  });
+  
+  try {
+    await ffmpegManager.load();
+    console.log('[WasmForge] FFmpeg loaded successfully');
+    
+    setTimeout(() => {
+      ffmpegLoadingModal.classList.remove('visible');
+    }, 500);
+  } catch (error) {
+    console.error('[WasmForge] FFmpeg load failed:', error);
+    ffmpegLoadingModal.classList.remove('visible');
+    
+    const shouldContinue = confirm(
+      'Failed to load video engine. Some features may not work.\n\n' +
+      'Continue anyway?'
+    );
+    
+    if (!shouldContinue) {
+      window.location.href = './index.html';
+    }
+  }
+}
+
+// Initialize application
+function init() {
+  console.log('[WasmForge] Initializing version 4.0...');
+  
+  initIcons();
+  initTimeline(tracksContainer);
+  initFFmpeg();
+  initDarkMode();
+  
+  console.log('[WasmForge] Ready');
+}
+
+// ========================================
+// TIME FORMATTING
+// ========================================
+
 function formatTime(seconds) {
   if (!seconds || isNaN(seconds)) return "00:00:00";
   const h = Math.floor(seconds / 3600);
@@ -103,7 +166,10 @@ function formatTime(seconds) {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-// --- PREVIEW FUNCTIONS ---
+// ========================================
+// PREVIEW FUNCTIONS
+// ========================================
+
 function previewMediaFile(file) {
   const url = URL.createObjectURL(file);
   previewVideo.src = url;
@@ -114,8 +180,11 @@ function previewMediaFile(file) {
     totalTimeDisplay.textContent = formatTime(previewVideo.duration);
   };
 }
+
+// Expose globally for media tiles
 window.previewMediaFile = previewMediaFile;
 
+// Update time display
 previewVideo.addEventListener("timeupdate", () => {
   currentTimeDisplay.textContent = formatTime(previewVideo.currentTime);
 });
@@ -125,12 +194,15 @@ previewVideo.addEventListener("ended", () => {
   updatePlayButton();
 });
 
-// --- UPDATE PLAY BUTTON ---
+// Update play button icon
 function updatePlayButton() {
   btnPlay.innerHTML = isPlaying ? getIcon('pause') : getIcon('play');
 }
 
-// --- REGISTER IMPORTED FILE ---
+// ========================================
+// MEDIA MANAGEMENT
+// ========================================
+
 function registerImportedFile(file) {
   const mediaType = file.type.startsWith("video") ? "video" : 
                     file.type.startsWith("audio") ? "audio" : "image";
@@ -144,11 +216,14 @@ function registerImportedFile(file) {
 
   snapshot();
   project.media.push(mediaObj);
+  
+  // Cache the file for later use
+  mediaFileCache.set(mediaObj.id, file);
 
   return mediaObj;
 }
 
-// --- ADD CLIP TO TIMELINE ---
+// Add clip to timeline
 window.addClipToTimeline = (mediaId, trackId = null) => {
   const media = project.media.find(m => m.id === mediaId);
   if (!media) return;
@@ -158,20 +233,28 @@ window.addClipToTimeline = (mediaId, trackId = null) => {
   addClip(media, targetTrack);
 };
 
-// --- FILE PICKER LABEL CLICK ---
+// ========================================
+// FILE IMPORT
+// ========================================
+
+// File picker click
 filePickerLabel.addEventListener("click", (e) => {
   e.preventDefault();
   fileInput.click();
 });
 
-// --- FILE INPUT ---
+// File input change
 fileInput.addEventListener("change", (event) => {
   if (!event.target.files.length) return;
   handleImportedFiles(event.target.files, mediaList, registerImportedFile);
   fileInput.value = "";
 });
 
-// --- DRAG & DROP ON MEDIA PANEL ---
+// ========================================
+// DRAG & DROP
+// ========================================
+
+// Drag & drop on media panel
 mediaPanel.addEventListener("dragover", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -196,7 +279,7 @@ mediaPanel.addEventListener("drop", (e) => {
   }
 });
 
-// --- DRAG & DROP ON TRACKS ---
+// Drag & drop on tracks
 document.querySelectorAll(".track").forEach(track => {
   track.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -225,7 +308,10 @@ document.querySelectorAll(".track").forEach(track => {
   });
 });
 
-// --- ASPECT RATIO ---
+// ========================================
+// ASPECT RATIO
+// ========================================
+
 function setAspect(ratio) {
   const container = document.getElementById("preview-container");
   if (!container) return;
@@ -241,12 +327,25 @@ aspectSelect.addEventListener("change", (e) => {
 
 setAspect(project.aspectRatio);
 
-// --- PROJECT TITLE ---
+// ========================================
+// PROJECT TITLE
+// ========================================
+
 projectTitleInput.addEventListener("change", (e) => {
   project.title = e.target.value || "Untitled Project";
 });
 
-// --- TIMELINE ZOOM ---
+projectTitleInput.addEventListener("blur", (e) => {
+  if (!e.target.value.trim()) {
+    e.target.value = "Untitled Project";
+    project.title = "Untitled Project";
+  }
+});
+
+// ========================================
+// TIMELINE ZOOM
+// ========================================
+
 function updateZoom(value) {
   zoomLevel.textContent = value + "%";
   setZoom(value / 100);
@@ -267,12 +366,22 @@ btnZoomOut.addEventListener("click", () => {
   updateZoom(Math.max(20, current - 20));
 });
 
-// --- PLAY/PAUSE ---
+// ========================================
+// PLAYBACK CONTROLS
+// ========================================
+
 function togglePlay() {
+  if (!previewVideo.src || previewVideo.src === window.location.href) {
+    console.warn('[WasmForge] No media loaded in preview');
+    return;
+  }
+
   if (isPlaying) {
     previewVideo.pause();
   } else {
-    previewVideo.play();
+    previewVideo.play().catch(err => {
+      console.error('[WasmForge] Play failed:', err);
+    });
   }
   isPlaying = !isPlaying;
   updatePlayButton();
@@ -280,9 +389,10 @@ function togglePlay() {
 
 btnPlay.addEventListener("click", togglePlay);
 
-// --- TRANSPORT CONTROLS ---
 btnStart.addEventListener("click", () => {
-  previewVideo.currentTime = 0;
+  if (previewVideo.src) {
+    previewVideo.currentTime = 0;
+  }
 });
 
 btnEnd.addEventListener("click", () => {
@@ -292,7 +402,9 @@ btnEnd.addEventListener("click", () => {
 });
 
 btnPrevFrame.addEventListener("click", () => {
-  previewVideo.currentTime = Math.max(0, previewVideo.currentTime - 1/30);
+  if (previewVideo.src) {
+    previewVideo.currentTime = Math.max(0, previewVideo.currentTime - 1/30);
+  }
 });
 
 btnNextFrame.addEventListener("click", () => {
@@ -301,7 +413,10 @@ btnNextFrame.addEventListener("click", () => {
   }
 });
 
-// --- TOOLBAR BUTTONS ---
+// ========================================
+// TOOLBAR BUTTONS
+// ========================================
+
 btnUndo.addEventListener("click", () => {
   undo();
   loadTimeline();
@@ -322,7 +437,10 @@ btnSnap.addEventListener("click", () => {
   btnSnap.classList.toggle("active", snappingEnabled);
 });
 
-// --- TOOL SELECTION ---
+// ========================================
+// TOOL SELECTION
+// ========================================
+
 toolSelect.addEventListener("click", () => {
   currentTool = "select";
   toolSelect.classList.add("active");
@@ -335,7 +453,10 @@ toolRazor.addEventListener("click", () => {
   toolSelect.classList.remove("active");
 });
 
-// --- TRACK BUTTONS ---
+// ========================================
+// TRACK BUTTONS
+// ========================================
+
 document.querySelectorAll(".visibility-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const visible = btn.dataset.visible === "true";
@@ -354,7 +475,10 @@ document.querySelectorAll(".mute-btn").forEach(btn => {
   });
 });
 
-// --- INSPECTOR CONTROLS ---
+// ========================================
+// INSPECTOR CONTROLS
+// ========================================
+
 if (propScale) {
   propScale.addEventListener("input", () => {
     document.getElementById("scale-value").textContent = propScale.value + "%";
@@ -380,7 +504,10 @@ if (propVolume) {
   });
 }
 
-// --- PANEL TABS ---
+// ========================================
+// PANEL TABS
+// ========================================
+
 document.querySelectorAll(".panel-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -394,7 +521,10 @@ document.querySelectorAll(".panel-tab").forEach(tab => {
   });
 });
 
-// --- DROPDOWN MENUS ---
+// ========================================
+// DROPDOWN MENUS
+// ========================================
+
 function showMenu(menu, button) {
   hideAllMenus();
   const rect = button.getBoundingClientRect();
@@ -431,7 +561,10 @@ helpButton.addEventListener("click", (e) => {
 
 document.addEventListener("click", hideAllMenus);
 
-// --- MENU ACTIONS ---
+// ========================================
+// MENU ACTIONS - FILE
+// ========================================
+
 fileMenu.addEventListener("click", (e) => {
   const action = e.target.closest("button")?.dataset.action;
   if (!action) return;
@@ -439,9 +572,7 @@ fileMenu.addEventListener("click", (e) => {
   
   switch (action) {
     case "new":
-      if (confirm("Create new project? Unsaved changes will be lost.")) {
-        location.reload();
-      }
+      createNewProject();
       break;
     case "open":
       loadFileInput.click();
@@ -453,13 +584,19 @@ fileMenu.addEventListener("click", (e) => {
       fileInput.click();
       break;
     case "export":
-      alert("Export feature coming soon! FFmpeg WASM integration required.");
+      exportProject();
       break;
     case "home":
-      window.location.href = "./index.html";
+      if (confirm("Return to home? Unsaved changes will be lost.")) {
+        window.location.href = "./index.html";
+      }
       break;
   }
 });
+
+// ========================================
+// MENU ACTIONS - EDIT
+// ========================================
 
 editMenu.addEventListener("click", (e) => {
   const action = e.target.closest("button")?.dataset.action;
@@ -475,6 +612,18 @@ editMenu.addEventListener("click", (e) => {
       redo();
       loadTimeline();
       break;
+    case "cut":
+      // TODO: Implement cut
+      console.log('[WasmForge] Cut not yet implemented');
+      break;
+    case "copy":
+      // TODO: Implement copy
+      console.log('[WasmForge] Copy not yet implemented');
+      break;
+    case "paste":
+      // TODO: Implement paste
+      console.log('[WasmForge] Paste not yet implemented');
+      break;
     case "delete":
       snapshot();
       deleteSelectedClip();
@@ -486,6 +635,10 @@ editMenu.addEventListener("click", (e) => {
       break;
   }
 });
+
+// ========================================
+// MENU ACTIONS - VIEW
+// ========================================
 
 viewMenu.addEventListener("click", (e) => {
   const action = e.target.closest("button")?.dataset.action;
@@ -510,6 +663,10 @@ viewMenu.addEventListener("click", (e) => {
   }
 });
 
+// ========================================
+// MENU ACTIONS - HELP
+// ========================================
+
 helpMenu.addEventListener("click", (e) => {
   const action = e.target.closest("button")?.dataset.action;
   if (!action) return;
@@ -520,7 +677,7 @@ helpMenu.addEventListener("click", (e) => {
       shortcutsModal.classList.add("visible");
       break;
     case "about":
-      alert("WasmForge - Open Source Video Editor\nVersion 4.0\nCreated by 7Zeb");
+      showAboutDialog();
       break;
     case "github":
       window.open("https://github.com/7zeb/WasmForge", "_blank");
@@ -528,7 +685,21 @@ helpMenu.addEventListener("click", (e) => {
   }
 });
 
-// --- MODAL CLOSE ---
+function showAboutDialog() {
+  alert(
+    "WasmForge - Open Source Video Editor\n" +
+    "Version 4.0\n\n" +
+    "Created by 7Zeb\n" +
+    "Powered by FFmpeg.wasm\n\n" +
+    "MIT License\n" +
+    "© 2026"
+  );
+}
+
+// ========================================
+// MODAL MANAGEMENT
+// ========================================
+
 const modalClose = document.querySelector(".modal-close");
 if (modalClose) {
   modalClose.addEventListener("click", () => {
@@ -536,13 +707,39 @@ if (modalClose) {
   });
 }
 
-shortcutsModal.addEventListener("click", (e) => {
+shortcutsModal?.addEventListener("click", (e) => {
   if (e.target === shortcutsModal) {
     shortcutsModal.classList.remove("visible");
   }
 });
 
-// --- SAVE/LOAD PROJECT ---
+// ========================================
+// PROJECT MANAGEMENT
+// ========================================
+
+function createNewProject() {
+  if (confirm("Create new project? Unsaved changes will be lost.")) {
+    // Clear project data
+    project.title = "Untitled Project";
+    project.media = [];
+    project.timeline = [];
+    project.aspectRatio = "16:9";
+    
+    // Clear UI
+    projectTitleInput.value = "Untitled Project";
+    mediaList.innerHTML = "";
+    mediaFileCache.clear();
+    loadTimeline();
+    
+    // Reset preview
+    previewVideo.src = "";
+    previewVideo.classList.remove("visible");
+    previewPlaceholder.classList.remove("hidden");
+    
+    console.log('[WasmForge] New project created');
+  }
+}
+
 function saveProject() {
   const data = JSON.stringify(project, null, 2);
   const blob = new Blob([data], { type: "application/json" });
@@ -555,6 +752,8 @@ function saveProject() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  
+  console.log('[WasmForge] Project saved:', project.title);
 }
 
 loadFileInput.addEventListener("change", async (event) => {
@@ -565,7 +764,9 @@ loadFileInput.addEventListener("change", async (event) => {
     const text = await file.text();
     const data = JSON.parse(text);
     loadProject(data);
+    console.log('[WasmForge] Project loaded:', data.title);
   } catch (err) {
+    console.error('[WasmForge] Load failed:', err);
     alert("Failed to load project: " + err.message);
   }
   
@@ -586,10 +787,52 @@ function loadProject(data) {
 
   projectTitleInput.value = project.title;
   mediaList.innerHTML = "";
+  mediaFileCache.clear();
   loadTimeline();
+  
+  // Reset preview
+  previewVideo.src = "";
+  previewVideo.classList.remove("visible");
+  previewPlaceholder.classList.remove("hidden");
+  
+  console.log('[WasmForge] Project loaded successfully');
 }
 
-// --- DARK MODE ---
+async function exportProject() {
+  if (!ffmpegManager.isLoaded()) {
+    alert("Video engine not ready. Please wait for initialization to complete.");
+    return;
+  }
+  
+  if (project.timeline.length === 0) {
+    alert("Timeline is empty. Add some clips before exporting.");
+    return;
+  }
+  
+  // TODO: Implement actual export with compositor
+  alert(
+    "Export feature coming soon!\n\n" +
+    "This will use FFmpeg.wasm to composite your timeline into a final video.\n\n" +
+    "Features planned:\n" +
+    "- Multiple track composition\n" +
+    "- Effects and transitions\n" +
+    "- Audio mixing\n" +
+    "- Custom export settings"
+  );
+  
+  console.log('[WasmForge] Export requested');
+}
+
+// ========================================
+// DARK MODE
+// ========================================
+
+function initDarkMode() {
+  const savedMode = localStorage.getItem("wasmforge-dark-mode");
+  const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  applyDarkMode(prefersDark);
+}
+
 function applyDarkMode(isDark) {
   if (isDark) {
     document.body.classList.remove("light-mode");
@@ -601,17 +844,17 @@ function applyDarkMode(isDark) {
   localStorage.setItem("wasmforge-dark-mode", isDark ? "dark" : "light");
 }
 
-const savedMode = localStorage.getItem("wasmforge-dark-mode");
-const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
-applyDarkMode(prefersDark);
-
 darkModeToggle.addEventListener("click", () => {
   const isDark = !document.body.classList.contains("light-mode");
   applyDarkMode(!isDark);
 });
 
-// --- KEYBOARD SHORTCUTS ---
+// ========================================
+// KEYBOARD SHORTCUTS
+// ========================================
+
 document.addEventListener("keydown", (e) => {
+  // Ignore if typing in input
   if (e.target.tagName === "INPUT" && e.target.id === "project-title-input") return;
   
   // Space - Play/Pause
@@ -647,7 +890,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Delete
+  // Delete/Backspace
   if (e.code === "Delete" || e.code === "Backspace") {
     e.preventDefault();
     snapshot();
@@ -655,64 +898,92 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
-  // Ctrl shortcuts
+  // Ctrl/Cmd shortcuts
   if (e.ctrlKey || e.metaKey) {
-    // Undo
-    if (e.key === "z" && !e.shiftKey) {
-      e.preventDefault();
-      undo();
-      loadTimeline();
-      return;
-    }
-
-    // Redo
-    if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
-      e.preventDefault();
-      redo();
-      loadTimeline();
-      return;
-    }
-
-    // Save
-    if (e.key === "s") {
-      e.preventDefault();
-      saveProject();
-      return;
-    }
-
-    // Open
-    if (e.key === "o") {
-      e.preventDefault();
-      loadFileInput.click();
-      return;
-    }
-
-    // Import
-    if (e.key === "i") {
-      e.preventDefault();
-      fileInput.click();
-      return;
-    }
-
-    // Select All
-    if (e.key === "a") {
-      e.preventDefault();
-      document.querySelectorAll(".timeline-clip").forEach(clip => {
-        clip.classList.add("selected");
-      });
-      return;
+    switch (e.key.toLowerCase()) {
+      case "z":
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+        loadTimeline();
+        return;
+        
+      case "y":
+        e.preventDefault();
+        redo();
+        loadTimeline();
+        return;
+        
+      case "s":
+        e.preventDefault();
+        saveProject();
+        return;
+        
+      case "o":
+        e.preventDefault();
+        loadFileInput.click();
+        return;
+        
+      case "n":
+        e.preventDefault();
+        createNewProject();
+        return;
+        
+      case "i":
+        e.preventDefault();
+        fileInput.click();
+        return;
+        
+      case "e":
+        e.preventDefault();
+        exportProject();
+        return;
+        
+      case "a":
+        e.preventDefault();
+        document.querySelectorAll(".timeline-clip").forEach(clip => {
+          clip.classList.add("selected");
+        });
+        return;
     }
   }
 
   // Tool shortcuts
-  if (e.key === "v" || e.key === "V") {
+  if (e.key.toLowerCase() === "v") {
     toolSelect.click();
     return;
   }
 
-  if (e.key === "c" || e.key === "C") {
+  if (e.key.toLowerCase() === "c") {
     toolRazor.click();
     return;
   }
 });
 
+// ========================================
+// ERROR HANDLING
+// ========================================
+
+window.addEventListener('error', (e) => {
+  console.error('[WasmForge] Error:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[WasmForge] Unhandled rejection:', e.reason);
+});
+
+// ========================================
+// START APPLICATION
+// ========================================
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+console.log('[WasmForge] Module loaded');
