@@ -69,7 +69,6 @@ export function addTrack(type) {
 }
 
 // Render all tracks
-
 export function renderTracks() {
   if (!tracksContainer) return;
   
@@ -119,35 +118,31 @@ export function renderTracks() {
   const audioBtn = trackHeaders.querySelector('.add-audio-track');
   
   if (videoBtn) {
-    // Use mousedown instead of click
     videoBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       addTrack('video');
-    }, true); // Capture phase
+    }, true);
   }
   
   if (audioBtn) {
-    // Use mousedown instead of click - and add multiple event types
     audioBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       addTrack('audio');
-    }, true); // Capture phase
+    }, true);
     
-    // Also try click as backup
     audioBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       addTrack('audio');
-    }, true); // Capture phase
+    }, true);
     
-    // Nuclear option - also try pointerdown
     audioBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       addTrack('audio');
-    }, true); // Capture phase
+    }, true);
   }
   
   // Load clips
@@ -403,10 +398,28 @@ export function selectClip(clip) {
   if (clip) {
     clip.classList.add("selected");
     selectedClip = clip;
+    
+    // Show inspector panel
     const clipProperties = document.getElementById("clip-properties");
     const noSelection = document.getElementById("no-selection");
     if (clipProperties) clipProperties.style.display = "block";
     if (noSelection) noSelection.style.display = "none";
+    
+    // FIX: Preview the media in the preview section
+    const clipId = clip.dataset.clipId;
+    const clipData = project.timeline.find(c => c.id === clipId);
+    
+    if (clipData) {
+      const media = project.media.find(m => m.id === clipData.mediaId);
+      
+      if (media && media.file) {
+        // Call the preview function if it exists
+        if (window.previewMediaFile && typeof window.previewMediaFile === 'function') {
+          console.log('[Timeline] Previewing clip:', media.name);
+          window.previewMediaFile(media.file);
+        }
+      }
+    }
   } else {
     selectedClip = null;
     const clipProperties = document.getElementById("clip-properties");
@@ -500,4 +513,3 @@ function wireClipInteractions(clip, clipData) {
   setupResize(leftHandle, true);
   setupResize(rightHandle, false);
 }
-
