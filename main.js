@@ -11,6 +11,13 @@ const timelineContent = document.getElementById("timeline-content");
 const aspectSelect = document.getElementById("aspect-select");
 const resizeBtn = document.getElementById("resize-media-btn");
 
+// Menu buttons
+const saveBtn = document.getElementById("save-btn");
+const loadBtn = document.getElementById("load-btn");
+const loadFileInput = document.getElementById("load-file-input");
+const fileButton = document.getElementById("file-button");
+const darkModeToggle = document.getElementById("dark-mode-toggle");
+
 // --- INIT TIMELINE ---
 initTimeline(timelineContent);
 
@@ -113,6 +120,113 @@ resizeBtn.addEventListener("click", () => {
   }
 });
 
+// --- SAVE PROJECT ---
+saveBtn.addEventListener("click", () => {
+  const data = getProjectData();
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${project.title || "project"}.wasmforge`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// --- LOAD PROJECT ---
+loadBtn.addEventListener("click", () => {
+  loadFileInput.click();
+});
+
+loadFileInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    loadProject(data);
+  } catch (err) {
+    alert("Failed to load project: " + err.message);
+  }
+  
+  // Reset file input so the same file can be loaded again
+  loadFileInput.value = "";
+});
+
+// --- FILE BUTTON (Dropdown Menu) ---
+let fileMenuOpen = false;
+const fileMenu = document.createElement("div");
+fileMenu.id = "file-menu";
+fileMenu.innerHTML = `
+  <button id="menu-new">New Project</button>
+  <button id="menu-save">Save Project</button>
+  <button id="menu-load">Load Project</button>
+  <button id="menu-export">Export Video</button>
+`;
+fileMenu.style.display = "none";
+document.body.appendChild(fileMenu);
+
+fileButton.addEventListener("click", (e) => {
+  e.stopPropagation();
+  fileMenuOpen = !fileMenuOpen;
+  fileMenu.style.display = fileMenuOpen ? "block" : "none";
+  
+  // Position the menu below the button
+  const rect = fileButton.getBoundingClientRect();
+  fileMenu.style.top = rect.bottom + "px";
+  fileMenu.style.left = rect.left + "px";
+});
+
+// Close menu when clicking outside
+document.addEventListener("click", () => {
+  fileMenuOpen = false;
+  fileMenu.style.display = "none";
+});
+
+// File menu actions
+document.getElementById("menu-new")?.addEventListener("click", () => {
+  if (confirm("Create new project? Unsaved changes will be lost.")) {
+    location.reload();
+  }
+});
+
+document.getElementById("menu-save")?.addEventListener("click", () => {
+  saveBtn.click();
+});
+
+document.getElementById("menu-load")?.addEventListener("click", () => {
+  loadBtn.click();
+});
+
+document.getElementById("menu-export")?.addEventListener("click", () => {
+  alert("Export feature coming soon! FFmpeg integration required.");
+});
+
+// --- DARK MODE TOGGLE ---
+function applyDarkMode(isDark) {
+  if (isDark) {
+    document.body.classList.remove("light-mode");
+    darkModeToggle.textContent = "Light Mode";
+  } else {
+    document.body.classList.add("light-mode");
+    darkModeToggle.textContent = "Dark Mode";
+  }
+  localStorage.setItem("wasmforge-dark-mode", isDark ? "dark" : "light");
+}
+
+// Load saved preference
+const savedMode = localStorage.getItem("wasmforge-dark-mode");
+const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
+applyDarkMode(prefersDark);
+
+darkModeToggle.addEventListener("click", () => {
+  const isDark = !document.body.classList.contains("light-mode");
+  applyDarkMode(!isDark);
+});
+
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener("keydown", (e) => {
   // Undo
@@ -138,6 +252,20 @@ document.addEventListener("keydown", (e) => {
     loadTimeline();
     return;
   }
+
+  // Save (Ctrl+S)
+  if (e.ctrlKey && e.key === "s") {
+    e.preventDefault();
+    saveBtn.click();
+    return;
+  }
+
+  // Open/Load (Ctrl+O)
+  if (e.ctrlKey && e.key === "o") {
+    e.preventDefault();
+    loadBtn.click();
+    return;
+  }
 });
 
 // --- LOAD PROJECT ---
@@ -153,6 +281,9 @@ export function loadProject(data) {
     aspectSelect.value = project.aspectRatio;
   }
 
+  // Clear the media list UI
+  mediaList.innerHTML = "";
+
   loadTimeline();
 }
 
@@ -160,4 +291,3 @@ export function loadProject(data) {
 export function getProjectData() {
   return JSON.stringify(project, null, 2);
 }
-
