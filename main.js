@@ -520,7 +520,7 @@ helpMenu.addEventListener("click", (e) => {
       shortcutsModal.classList.add("visible");
       break;
     case "about":
-      alert("WasmForge - Open Source Video Editor\nVersion 3.0\nCreated by 7Zeb");
+      alert("WasmForge - Open Source Video Editor\nVersion 4.0\nCreated by 7Zeb");
       break;
     case "github":
       window.open("https://github.com/7zeb/WasmForge", "_blank");
@@ -715,3 +715,4 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 });
+
