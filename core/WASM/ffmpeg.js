@@ -1,4 +1,4 @@
-// FFmpeg WASM Integration for WasmForge
+// FFmpeg WASM Integration for WasmForge 
 import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/esm/ffmpeg.js';
 import { toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
 

@@ -1,4 +1,4 @@
-// Video Compositor - Combines timeline clips into final output
+// Video Compositor - Combines timeline clips into final output 
 import ffmpegManager from './ffmpeg.js';
 import { project } from '../projects.js';
 
