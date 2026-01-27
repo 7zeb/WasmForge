@@ -78,6 +78,35 @@ body {
 }
 
 /* ========================================
+   FLUENT ICONS
+   ======================================== */
+
+.fluent-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.fluent-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.fluent-icon-small {
+  width: 16px;
+  height: 16px;
+}
+
+.fluent-icon-large {
+  width: 24px;
+  height: 24px;
+}
+
+/* ========================================
    TOP MENU BAR
    ======================================== */
 
@@ -1113,3 +1142,4 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-light);
 }
+
