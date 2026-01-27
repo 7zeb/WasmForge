@@ -5,9 +5,243 @@ let zoom = 1.0;
 let selectedClip = null;
 const PIXELS_PER_SECOND = 50;
 
+// Track management
+let trackCounter = {
+  video: 2,
+  audio: 2
+};
+
 // Called from main.js to initialize timeline
 export function initTimeline(domElement) {
   tracksContainer = domElement;
+  
+  // Initialize default tracks if not in project
+  if (!project.tracks || project.tracks.length === 0) {
+    project.tracks = [
+      { id: 'video-2', name: 'Video 2', type: 'video', visible: true, muted: false, locked: false },
+      { id: 'video-1', name: 'Video 1', type: 'video', visible: true, muted: false, locked: false },
+      { id: 'audio-1', name: 'Audio 1', type: 'audio', visible: true, muted: false, locked: false },
+      { id: 'audio-2', name: 'Audio 2', type: 'audio', visible: true, muted: false, locked: false }
+    ];
+  }
+  
+  renderTracks();
+}
+
+// Render all tracks
+export function renderTracks() {
+  if (!tracksContainer) return;
+  
+  const trackHeaders = document.getElementById('track-headers');
+  if (!trackHeaders) return;
+  
+  // Clear existing tracks
+  tracksContainer.innerHTML = '';
+  trackHeaders.innerHTML = '';
+  
+  // Add track controls
+  const videoControls = document.createElement('div');
+  videoControls.className = 'track-controls-row';
+  videoControls.innerHTML = `
+    <button class="add-track-btn" data-type="video" title="Add Video Track">
+      <span class="btn-icon">+</span> Video Track
+    </button>
+  `;
+  trackHeaders.appendChild(videoControls);
+  
+  // Render video tracks
+  const videoTracks = project.tracks.filter(t => t.type === 'video');
+  videoTracks.forEach(track => {
+    renderTrackHeader(track, trackHeaders);
+    renderTrack(track, tracksContainer);
+  });
+  
+  // Add audio controls
+  const audioControls = document.createElement('div');
+  audioControls.className = 'track-controls-row';
+  audioControls.innerHTML = `
+    <button class="add-track-btn" data-type="audio" title="Add Audio Track">
+      <span class="btn-icon">+</span> Audio Track
+    </button>
+  `;
+  trackHeaders.appendChild(audioControls);
+  
+  // Render audio tracks
+  const audioTracks = project.tracks.filter(t => t.type === 'audio');
+  audioTracks.forEach(track => {
+    renderTrackHeader(track, trackHeaders);
+    renderTrack(track, tracksContainer);
+  });
+  
+  // Load clips
+  loadTimeline();
+  
+  // Setup add track buttons
+  document.querySelectorAll('.add-track-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      addTrack(type);
+    });
+  });
+}
+
+// Render track header
+function renderTrackHeader(track, container) {
+  const header = document.createElement('div');
+  header.className = 'track-header';
+  header.dataset.track = track.id;
+  
+  const icon = track.type === 'video' ? '🎬' : '🔊';
+  const controlBtn = track.type === 'video' ? 
+    `<button class="track-btn visibility-btn" data-visible="${track.visible}" title="Toggle Visibility">${track.visible ? '👁' : '👁‍🗨'}</button>` :
+    `<button class="track-btn mute-btn" data-muted="${track.muted}" title="Mute">${track.muted ? '🔇' : '🔊'}</button>`;
+  
+  header.innerHTML = `
+    <span class="track-icon">${icon}</span>
+    <input type="text" class="track-name-input" value="${track.name}" spellcheck="false">
+    <div class="track-controls">
+      ${controlBtn}
+      <button class="track-btn delete-track-btn" title="Delete Track">🗑</button>
+    </div>
+  `;
+  
+  container.appendChild(header);
+  
+  // Setup event listeners
+  const nameInput = header.querySelector('.track-name-input');
+  nameInput.addEventListener('change', (e) => {
+    track.name = e.target.value || `${track.type.charAt(0).toUpperCase() + track.type.slice(1)} Track`;
+    snapshot();
+  });
+  
+  nameInput.addEventListener('blur', (e) => {
+    if (!e.target.value.trim()) {
+      e.target.value = track.name;
+    }
+  });
+  
+  const visibilityBtn = header.querySelector('.visibility-btn');
+  if (visibilityBtn) {
+    visibilityBtn.addEventListener('click', () => {
+      track.visible = !track.visible;
+      visibilityBtn.dataset.visible = track.visible;
+      visibilityBtn.textContent = track.visible ? '👁' : '👁‍🗨';
+      snapshot();
+    });
+  }
+  
+  const muteBtn = header.querySelector('.mute-btn');
+  if (muteBtn) {
+    muteBtn.addEventListener('click', () => {
+      track.muted = !track.muted;
+      muteBtn.dataset.muted = track.muted;
+      muteBtn.textContent = track.muted ? '🔇' : '🔊';
+      snapshot();
+    });
+  }
+  
+  const deleteBtn = header.querySelector('.delete-track-btn');
+  deleteBtn.addEventListener('click', () => {
+    deleteTrack(track.id);
+  });
+}
+
+// Render track
+function renderTrack(track, container) {
+  const trackElement = document.createElement('div');
+  trackElement.className = 'track';
+  trackElement.dataset.track = track.id;
+  trackElement.dataset.type = track.type;
+  
+  container.appendChild(trackElement);
+  
+  // Setup drag and drop
+  trackElement.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    trackElement.classList.add('dragover');
+  });
+  
+  trackElement.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.target === trackElement) {
+      trackElement.classList.remove('dragover');
+    }
+  });
+  
+  trackElement.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    trackElement.classList.remove('dragover');
+    
+    const mediaId = e.dataTransfer.getData('wasmforge-media-id');
+    if (mediaId && window.addClipToTimeline) {
+      window.addClipToTimeline(mediaId, track.id);
+    }
+  });
+}
+
+// Add new track
+export function addTrack(type) {
+  snapshot();
+  
+  trackCounter[type]++;
+  const trackId = `${type}-${trackCounter[type]}`;
+  const trackName = `${type.charAt(0).toUpperCase() + type.slice(1)} ${trackCounter[type]}`;
+  
+  const newTrack = {
+    id: trackId,
+    name: trackName,
+    type: type,
+    visible: true,
+    muted: false,
+    locked: false
+  };
+  
+  // Insert in the right position (videos at top, audio at bottom)
+  if (type === 'video') {
+    const firstAudioIndex = project.tracks.findIndex(t => t.type === 'audio');
+    if (firstAudioIndex !== -1) {
+      project.tracks.splice(firstAudioIndex, 0, newTrack);
+    } else {
+      project.tracks.push(newTrack);
+    }
+  } else {
+    project.tracks.push(newTrack);
+  }
+  
+  renderTracks();
+  console.log(`[Timeline] Added track: ${trackName}`);
+}
+
+// Delete track
+export function deleteTrack(trackId) {
+  // Don't allow deleting if it's the last track of its type
+  const track = project.tracks.find(t => t.id === trackId);
+  if (!track) return;
+  
+  const tracksOfSameType = project.tracks.filter(t => t.type === track.type);
+  if (tracksOfSameType.length <= 1) {
+    alert(`Cannot delete the last ${track.type} track.`);
+    return;
+  }
+  
+  // Check if track has clips
+  const clipsOnTrack = project.timeline.filter(c => c.track === trackId);
+  if (clipsOnTrack.length > 0) {
+    if (!confirm(`Track "${track.name}" has ${clipsOnTrack.length} clip(s). Delete anyway?`)) {
+      return;
+    }
+    // Remove clips on this track
+    project.timeline = project.timeline.filter(c => c.track !== trackId);
+  }
+  
+  snapshot();
+  project.tracks = project.tracks.filter(t => t.id !== trackId);
+  renderTracks();
+  
+  console.log(`[Timeline] Deleted track: ${track.name}`);
 }
 
 // Get current zoom
@@ -34,7 +268,10 @@ function getTrackElement(trackId) {
 // Create a DOM element for a clip
 export function renderClip(clipData, media) {
   const track = getTrackElement(clipData.track);
-  if (!track) return null;
+  if (!track) {
+    console.warn(`[Timeline] Track not found: ${clipData.track}`);
+    return null;
+  }
 
   const clip = document.createElement("div");
   clip.className = "timeline-clip";
@@ -70,6 +307,15 @@ export function renderClip(clipData, media) {
 
 // Add a new clip to the timeline
 export function addClip(media, trackId = "video-1") {
+  // Check if track exists
+  const trackExists = project.tracks.find(t => t.id === trackId);
+  if (!trackExists) {
+    console.warn(`[Timeline] Track ${trackId} doesn't exist, using default`);
+    trackId = media.mediaType === 'audio' ? 
+      project.tracks.find(t => t.type === 'audio')?.id || 'audio-1' :
+      project.tracks.find(t => t.type === 'video')?.id || 'video-1';
+  }
+  
   // Find the rightmost position on the track
   let maxEnd = 0;
   project.timeline.forEach(c => {
@@ -115,8 +361,10 @@ export function deleteSelectedClip() {
   selectedClip = null;
 
   // Hide inspector
-  document.getElementById("clip-properties").style.display = "none";
-  document.getElementById("no-selection").style.display = "flex";
+  const clipProperties = document.getElementById("clip-properties");
+  const noSelection = document.getElementById("no-selection");
+  if (clipProperties) clipProperties.style.display = "none";
+  if (noSelection) noSelection.style.display = "flex";
 }
 
 // Select a clip
@@ -129,12 +377,16 @@ export function selectClip(clip) {
     selectedClip = clip;
 
     // Show inspector
-    document.getElementById("clip-properties").style.display = "block";
-    document.getElementById("no-selection").style.display = "none";
+    const clipProperties = document.getElementById("clip-properties");
+    const noSelection = document.getElementById("no-selection");
+    if (clipProperties) clipProperties.style.display = "block";
+    if (noSelection) noSelection.style.display = "none";
   } else {
     selectedClip = null;
-    document.getElementById("clip-properties").style.display = "none";
-    document.getElementById("no-selection").style.display = "flex";
+    const clipProperties = document.getElementById("clip-properties");
+    const noSelection = document.getElementById("no-selection");
+    if (clipProperties) clipProperties.style.display = "none";
+    if (noSelection) noSelection.style.display = "flex";
   }
 }
 
