@@ -3,78 +3,318 @@
 <head>
   <meta charset="UTF-8">
   <title>WasmForge</title>
-
-  <!-- Correct relative path for GitHub Pages -->
   <link rel="stylesheet" href="./style.css">
   <link rel="apple-touch-icon" href="./core/assets/icons/logo.png">
-  <meta name="theme-color" content="#3ebbf8">
+  <meta name="theme-color" content="#1a1a2e">
 </head>
 
 <body>
 
+  <!-- TOP MENU BAR -->
   <div id="top-menu">
     <div class="menu-left">
+      <span id="app-logo">⚡</span>
       <span id="app-title">WasmForge</span>
-      <a href="./index.html"><button id="home-menu">Home</button></a>
+      <div class="menu-items">
+        <button id="file-button">File</button>
+        <button id="edit-button">Edit</button>
+        <button id="view-button">View</button>
+        <button id="help-button">Help</button>
+      </div>
+    </div>
+
+    <div class="menu-center">
+      <input type="text" id="project-title-input" value="Untitled Project" spellcheck="false">
     </div>
 
     <div class="menu-right">
-      <button id="file-button">File</button>
-      <button id="save-btn">Save</button>
-      <button id="load-btn">Load</button>
-      <button id="dark-mode-toggle">Dark Mode</button>
+      <button id="dark-mode-toggle" title="Toggle Theme">
+        <span class="icon">🌙</span>
+      </button>
     </div>
   </div>
 
-  <!-- Hidden file input for loading projects -->
+  <!-- Hidden file inputs -->
   <input type="file" id="load-file-input" accept=".wasmforge,.json" hidden>
+  <input type="file" id="file-input" multiple accept="video/*,audio/*,image/*" hidden>
 
-  <div id="app">
+  <!-- MAIN EDITOR LAYOUT -->
+  <div id="editor">
 
+    <!-- LEFT PANEL: Media Browser -->
     <aside id="media-panel">
-      <h2>Media</h2>
-
-      <label id="file-picker-label">
-        <i class="ms-Icon ms-Icon--Upload"></i>
-        Import Media
-        <input type="file" id="file-input" multiple hidden>
-      </label>
-
-      <div id="media-list"></div>
+      <div class="panel-header">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-tab="media">Media</button>
+          <button class="panel-tab" data-tab="effects">Effects</button>
+        </div>
+      </div>
+      
+      <div class="panel-content">
+        <div id="media-tab" class="tab-content active">
+          <div id="import-area">
+            <label id="file-picker-label" for="file-input">
+              <span class="import-icon">📁</span>
+              <span class="import-text">Import Media</span>
+              <span class="import-hint">or drag & drop files here</span>
+            </label>
+          </div>
+          <div id="media-list"></div>
+        </div>
+        
+        <div id="effects-tab" class="tab-content">
+          <div class="effects-grid">
+            <div class="effect-item" data-effect="fade-in">Fade In</div>
+            <div class="effect-item" data-effect="fade-out">Fade Out</div>
+            <div class="effect-item" data-effect="blur">Blur</div>
+            <div class="effect-item" data-effect="grayscale">Grayscale</div>
+          </div>
+        </div>
+      </div>
     </aside>
 
-    <main id="timeline">
-      <h2>Timeline</h2>
-      <div id="timeline-area">
-        <div id="timeline-content"></div>
+    <!-- CENTER: Preview Monitor -->
+    <main id="preview-section">
+      <div class="panel-header">
+        <span class="panel-title">Preview</span>
+        <div class="preview-controls-top">
+          <select id="aspect-select" title="Aspect Ratio">
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+            <option value="1:1">1:1</option>
+            <option value="4:5">4:5</option>
+            <option value="21:9">21:9</option>
+          </select>
+        </div>
       </div>
-    </main>
-
-    <section id="preview">
-      <h2>Preview</h2>
-
-      <div id="preview-container">
-        <div id="preview-frame">
-          <video id="preview-video" controls></video>
+      
+      <div id="preview-wrapper">
+        <div id="preview-container">
+          <video id="preview-video"></video>
+          <div id="preview-placeholder">
+            <span class="placeholder-icon">🎬</span>
+            <span>Import media to get started</span>
+          </div>
         </div>
       </div>
 
-      <br>
+      <!-- Transport Controls -->
+      <div id="transport-controls">
+        <div class="transport-left">
+          <span id="current-time">00:00:00</span>
+        </div>
+        
+        <div class="transport-center">
+          <button id="btn-start" title="Go to Start">⏮</button>
+          <button id="btn-prev-frame" title="Previous Frame">⏪</button>
+          <button id="btn-play" title="Play/Pause">▶</button>
+          <button id="btn-next-frame" title="Next Frame">⏩</button>
+          <button id="btn-end" title="Go to End">⏭</button>
+        </div>
+        
+        <div class="transport-right">
+          <span id="total-time">00:00:00</span>
+        </div>
+      </div>
+    </main>
 
-      <select id="aspect-select">
-        <option value="16:9">16:9 (Landscape)</option>
-        <option value="9:16">9:16 (Portrait)</option>
-        <option value="1:1">1:1 (Square)</option>
-        <option value="4:5">4:5 (Portrait)</option>
-        <option value="21:9">21:9 (Ultrawide)</option>
-      </select>
-
-      <button id="resize-media-btn">Resize Media</button>
-    </section>
+    <!-- RIGHT PANEL: Inspector -->
+    <aside id="inspector-panel">
+      <div class="panel-header">
+        <span class="panel-title">Inspector</span>
+      </div>
+      
+      <div class="panel-content">
+        <div id="no-selection" class="inspector-placeholder">
+          <span class="placeholder-icon">📋</span>
+          <span>Select a clip to view properties</span>
+        </div>
+        
+        <div id="clip-properties" style="display: none;">
+          <div class="property-group">
+            <div class="property-group-header">Transform</div>
+            <div class="property-row">
+              <label>Scale</label>
+              <input type="range" id="prop-scale" min="10" max="200" value="100">
+              <span class="range-value" id="scale-value">100%</span>
+            </div>
+            <div class="property-row">
+              <label>Opacity</label>
+              <input type="range" id="prop-opacity" min="0" max="100" value="100">
+              <span class="range-value" id="opacity-value">100%</span>
+            </div>
+          </div>
+          
+          <div class="property-group">
+            <div class="property-group-header">Speed</div>
+            <div class="property-row">
+              <input type="range" id="prop-speed" min="25" max="400" value="100">
+              <span class="range-value" id="speed-value">1.0x</span>
+            </div>
+          </div>
+          
+          <div class="property-group">
+            <div class="property-group-header">Volume</div>
+            <div class="property-row">
+              <input type="range" id="prop-volume" min="0" max="200" value="100">
+              <span class="range-value" id="volume-value">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
 
   </div>
 
-  <!-- Correct module path -->
+  <!-- TIMELINE SECTION -->
+  <div id="timeline-section">
+    
+    <!-- Timeline Toolbar -->
+    <div id="timeline-toolbar">
+      <div class="toolbar-left">
+        <button id="tool-select" class="tool-btn active" title="Select Tool (V)">↖</button>
+        <button id="tool-razor" class="tool-btn" title="Razor Tool (C)">✂</button>
+        <div class="toolbar-divider"></div>
+        <button id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
+        <button id="btn-redo" title="Redo (Ctrl+Y)">↪</button>
+        <div class="toolbar-divider"></div>
+        <button id="btn-delete" title="Delete Selected">🗑</button>
+      </div>
+      
+      <div class="toolbar-center">
+        <button id="btn-snap" class="toggle-btn active" title="Snapping">🧲 Snap</button>
+      </div>
+      
+      <div class="toolbar-right">
+        <button id="btn-zoom-out" title="Zoom Out">−</button>
+        <input type="range" id="timeline-zoom" min="20" max="200" value="100">
+        <button id="btn-zoom-in" title="Zoom In">+</button>
+        <span id="zoom-level">100%</span>
+      </div>
+    </div>
+
+    <!-- Timeline Tracks Area -->
+    <div id="timeline-wrapper">
+      
+      <!-- Track Headers -->
+      <div id="track-headers">
+        <div class="track-header" data-track="video-2">
+          <span class="track-icon">🎬</span>
+          <span class="track-name">Video 2</span>
+          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility">👁</button>
+        </div>
+        <div class="track-header" data-track="video-1">
+          <span class="track-icon">🎬</span>
+          <span class="track-name">Video 1</span>
+          <button class="track-btn visibility-btn" data-visible="true" title="Toggle Visibility">👁</button>
+        </div>
+        <div class="track-header" data-track="audio-1">
+          <span class="track-icon">🔊</span>
+          <span class="track-name">Audio 1</span>
+          <button class="track-btn mute-btn" data-muted="false" title="Mute">🔊</button>
+        </div>
+        <div class="track-header" data-track="audio-2">
+          <span class="track-icon">🎵</span>
+          <span class="track-name">Audio 2</span>
+          <button class="track-btn mute-btn" data-muted="false" title="Mute">🔊</button>
+        </div>
+      </div>
+
+      <!-- Timeline Content -->
+      <div id="timeline-area">
+        <!-- Time Ruler -->
+        <div id="time-ruler"></div>
+        
+        <!-- Playhead -->
+        <div id="playhead">
+          <div id="playhead-handle"></div>
+          <div id="playhead-line"></div>
+        </div>
+        
+        <!-- Tracks -->
+        <div id="tracks-container">
+          <div class="track" data-track="video-2" data-type="video"></div>
+          <div class="track" data-track="video-1" data-type="video"></div>
+          <div class="track" data-track="audio-1" data-type="audio"></div>
+          <div class="track" data-track="audio-2" data-type="audio"></div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Dropdown Menus -->
+  <div id="file-menu" class="dropdown-menu">
+    <button data-action="new"><span class="menu-icon">📄</span> New Project <span class="shortcut">Ctrl+N</span></button>
+    <button data-action="open"><span class="menu-icon">📂</span> Open Project <span class="shortcut">Ctrl+O</span></button>
+    <button data-action="save"><span class="menu-icon">💾</span> Save Project <span class="shortcut">Ctrl+S</span></button>
+    <div class="menu-divider"></div>
+    <button data-action="import"><span class="menu-icon">📥</span> Import Media <span class="shortcut">Ctrl+I</span></button>
+    <button data-action="export"><span class="menu-icon">📤</span> Export Video <span class="shortcut">Ctrl+E</span></button>
+    <div class="menu-divider"></div>
+    <button data-action="home"><span class="menu-icon">🏠</span> Back to Home</button>
+  </div>
+
+  <div id="edit-menu" class="dropdown-menu">
+    <button data-action="undo"><span class="menu-icon">↩</span> Undo <span class="shortcut">Ctrl+Z</span></button>
+    <button data-action="redo"><span class="menu-icon">↪</span> Redo <span class="shortcut">Ctrl+Y</span></button>
+    <div class="menu-divider"></div>
+    <button data-action="cut"><span class="menu-icon">✂</span> Cut <span class="shortcut">Ctrl+X</span></button>
+    <button data-action="copy"><span class="menu-icon">📋</span> Copy <span class="shortcut">Ctrl+C</span></button>
+    <button data-action="paste"><span class="menu-icon">📌</span> Paste <span class="shortcut">Ctrl+V</span></button>
+    <button data-action="delete"><span class="menu-icon">🗑</span> Delete <span class="shortcut">Del</span></button>
+    <div class="menu-divider"></div>
+    <button data-action="select-all"><span class="menu-icon">☑</span> Select All <span class="shortcut">Ctrl+A</span></button>
+  </div>
+
+  <div id="view-menu" class="dropdown-menu">
+    <button data-action="zoom-in"><span class="menu-icon">🔍</span> Zoom In <span class="shortcut">Ctrl++</span></button>
+    <button data-action="zoom-out"><span class="menu-icon">🔍</span> Zoom Out <span class="shortcut">Ctrl+-</span></button>
+    <button data-action="fit-timeline"><span class="menu-icon">↔</span> Fit Timeline</button>
+    <div class="menu-divider"></div>
+    <button data-action="toggle-snap"><span class="menu-icon">🧲</span> Toggle Snapping</button>
+  </div>
+
+  <div id="help-menu" class="dropdown-menu">
+    <button data-action="shortcuts"><span class="menu-icon">⌨</span> Keyboard Shortcuts</button>
+    <button data-action="about"><span class="menu-icon">ℹ</span> About WasmForge</button>
+    <button data-action="github"><span class="menu-icon">🐙</span> GitHub Repository</button>
+  </div>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div id="shortcuts-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-group">
+          <h3>Playback</h3>
+          <div class="shortcut-item"><span>Space</span> Play/Pause</div>
+          <div class="shortcut-item"><span>←</span> Previous Frame</div>
+          <div class="shortcut-item"><span>→</span> Next Frame</div>
+          <div class="shortcut-item"><span>Home</span> Go to Start</div>
+          <div class="shortcut-item"><span>End</span> Go to End</div>
+        </div>
+        <div class="shortcut-group">
+          <h3>Editing</h3>
+          <div class="shortcut-item"><span>Ctrl+Z</span> Undo</div>
+          <div class="shortcut-item"><span>Ctrl+Y</span> Redo</div>
+          <div class="shortcut-item"><span>Delete</span> Delete Selected</div>
+          <div class="shortcut-item"><span>V</span> Select Tool</div>
+          <div class="shortcut-item"><span>C</span> Razor Tool</div>
+        </div>
+        <div class="shortcut-group">
+          <h3>File</h3>
+          <div class="shortcut-item"><span>Ctrl+S</span> Save Project</div>
+          <div class="shortcut-item"><span>Ctrl+O</span> Open Project</div>
+          <div class="shortcut-item"><span>Ctrl+I</span> Import Media</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./main.js"></script>
 </body>
 </html>
