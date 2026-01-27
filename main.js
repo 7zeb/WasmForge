@@ -1,64 +1,150 @@
 import { project, snapshot, undo, redo } from "./core/projects.js";
-import { initTimeline, addClip, loadTimeline } from "./core/timeline.js";
+import { initTimeline, addClip, loadTimeline, setZoom, getPixelsPerSecond } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 
 // --- DOM ELEMENTS ---
 const fileInput = document.getElementById("file-input");
 const mediaList = document.getElementById("media-list");
 const previewVideo = document.getElementById("preview-video");
+const previewPlaceholder = document.getElementById("preview-placeholder");
 const mediaPanel = document.getElementById("media-panel");
-const timelineContent = document.getElementById("timeline-content");
 const aspectSelect = document.getElementById("aspect-select");
-const resizeBtn = document.getElementById("resize-media-btn");
+const projectTitleInput = document.getElementById("project-title-input");
 
 // Menu buttons
-const saveBtn = document.getElementById("save-btn");
-const loadBtn = document.getElementById("load-btn");
 const loadFileInput = document.getElementById("load-file-input");
 const fileButton = document.getElementById("file-button");
+const editButton = document.getElementById("edit-button");
 const darkModeToggle = document.getElementById("dark-mode-toggle");
 
+// Timeline elements
+const timelineZoom = document.getElementById("timeline-zoom");
+const zoomLevel = document.getElementById("zoom-level");
+const tracksContainer = document.getElementById("tracks-container");
+
+// Transport controls
+const btnPlay = document.getElementById("btn-play");
+const currentTimeDisplay = document.getElementById("current-time");
+const totalTimeDisplay = document.getElementById("total-time");
+
+// Menus
+const fileMenu = document.getElementById("file-menu");
+const editMenu = document.getElementById("edit-menu");
+
+// --- STATE ---
+let isPlaying = false;
+let currentTool = "select";
+let activeMenu = null;
+
 // --- INIT TIMELINE ---
-initTimeline(timelineContent);
+initTimeline(tracksContainer);
+drawRuler();
+
+// --- TIME FORMATTING ---
+function formatTimecode(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const f = Math.floor((seconds % 1) * 30); // assuming 30fps
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}:${f.toString().padStart(2, "0")}`;
+}
+
+// --- RULER DRAWING ---
+function drawRuler() {
+  const canvas = document.getElementById("ruler-canvas");
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const width = canvas.parentElement.clientWidth;
+  const height = 28;
+  
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+  ctx.scale(dpr, dpr);
+  
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--bg-dark");
+  ctx.fillRect(0, 0, width, height);
+  
+  const pps = getPixelsPerSecond();
+  const majorInterval = pps >= 50 ? 1 : pps >= 20 ? 5 : 10;
+  const minorInterval = majorInterval / 5;
+  
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--border-light");
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--text-muted");
+  ctx.font = "10px -apple-system, sans-serif";
+  
+  for (let t = 0; t < 300; t += minorInterval) {
+    const x = t * pps;
+    const isMajor = t % majorInterval === 0;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, isMajor ? 8 : 18);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+    
+    if (isMajor) {
+      const minutes = Math.floor(t / 60);
+      const seconds = Math.floor(t % 60);
+      const label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+      ctx.fillText(label, x + 4, 18);
+    }
+  }
+}
 
 // --- PREVIEW HELPER ---
 function previewMediaFile(file) {
   const url = URL.createObjectURL(file);
   previewVideo.src = url;
+  previewPlaceholder.style.display = "none";
+  previewVideo.style.display = "block";
 
   previewVideo.onloadedmetadata = () => {
-    previewVideo.play();
+    totalTimeDisplay.textContent = formatTimecode(previewVideo.duration);
   };
 }
 window.previewMediaFile = previewMediaFile;
+
+// --- UPDATE TIME DISPLAY ---
+previewVideo.addEventListener("timeupdate", () => {
+  currentTimeDisplay.textContent = formatTimecode(previewVideo.currentTime);
+});
 
 // --- REGISTER IMPORTED FILE ---
 function registerImportedFile(file) {
   const mediaObj = {
     id: crypto.randomUUID(),
     name: file.name,
-    type: file.type
+    type: file.type,
+    mediaType: file.type.startsWith("video") ? "video" : 
+               file.type.startsWith("audio") ? "audio" : "image"
   };
 
-  snapshot(); // project changes
+  snapshot();
   project.media.push(mediaObj);
 
   return mediaObj;
 }
 
 // --- ADD CLIP TO TIMELINE ---
-window.addClipToTimeline = (mediaId) => {
+window.addClipToTimeline = (mediaId, trackId = null) => {
   const media = project.media.find(m => m.id === mediaId);
   if (!media) return;
 
-  snapshot(); // project changes
-  addClip(media);
+  snapshot();
+  
+  // Determine which track to add to
+  const targetTrack = trackId || (media.mediaType === "audio" ? "audio-1" : "video-1");
+  addClip(media, targetTrack);
 };
 
 // --- FILE IMPORT ---
 fileInput.addEventListener("change", (event) => {
   if (!event.target.files.length) return;
   handleImportedFiles(event.target.files, mediaList, registerImportedFile);
+  fileInput.value = "";
 });
 
 // --- DRAG/DROP IMPORT ---
@@ -89,39 +175,175 @@ function setAspect(ratio) {
 }
 
 aspectSelect.addEventListener("change", (e) => {
-  snapshot(); // project changes
+  snapshot();
   project.aspectRatio = e.target.value;
   setAspect(project.aspectRatio);
 });
 
 setAspect(project.aspectRatio);
 
-// --- RESIZE MEDIA BUTTON ---
-resizeBtn.addEventListener("click", () => {
-  if (!previewVideo.videoWidth || !previewVideo.videoHeight) return;
+// --- PROJECT TITLE ---
+projectTitleInput.addEventListener("change", (e) => {
+  project.title = e.target.value || "Untitled Project";
+});
 
-  const [pw, ph] = project.aspectRatio.split(":").map(Number);
-  const projectRatio = pw / ph;
-  const mediaRatio = previewVideo.videoWidth / previewVideo.videoHeight;
+// --- TIMELINE ZOOM ---
+timelineZoom.addEventListener("input", (e) => {
+  const value = parseInt(e.target.value);
+  zoomLevel.textContent = value + "%";
+  setZoom(value / 100);
+  drawRuler();
+});
 
-  // Reset styles first
-  previewVideo.style.width = "";
-  previewVideo.style.height = "";
-  previewVideo.style.transform = "translate(-50%, -50%)";
+// --- PLAY/PAUSE ---
+btnPlay.addEventListener("click", togglePlay);
 
-  if (mediaRatio > projectRatio) {
-    // Media is wider → fill by height, crop sides
-    previewVideo.style.height = "100%";
-    previewVideo.style.width = "auto";
+function togglePlay() {
+  if (isPlaying) {
+    previewVideo.pause();
+    btnPlay.textContent = "▶";
   } else {
-    // Media is taller → fill by width, crop top/bottom
-    previewVideo.style.width = "100%";
-    previewVideo.style.height = "auto";
+    previewVideo.play();
+    btnPlay.textContent = "⏸";
+  }
+  isPlaying = !isPlaying;
+}
+
+previewVideo.addEventListener("ended", () => {
+  isPlaying = false;
+  btnPlay.textContent = "▶";
+});
+
+// --- TRANSPORT CONTROLS ---
+document.getElementById("btn-start")?.addEventListener("click", () => {
+  previewVideo.currentTime = 0;
+});
+
+document.getElementById("btn-end")?.addEventListener("click", () => {
+  previewVideo.currentTime = previewVideo.duration || 0;
+});
+
+document.getElementById("btn-prev-frame")?.addEventListener("click", () => {
+  previewVideo.currentTime = Math.max(0, previewVideo.currentTime - 1/30);
+});
+
+document.getElementById("btn-next-frame")?.addEventListener("click", () => {
+  previewVideo.currentTime = Math.min(previewVideo.duration || 0, previewVideo.currentTime + 1/30);
+});
+
+// --- UNDO/REDO BUTTONS ---
+document.getElementById("btn-undo")?.addEventListener("click", () => {
+  undo();
+  loadTimeline();
+});
+
+document.getElementById("btn-redo")?.addEventListener("click", () => {
+  redo();
+  loadTimeline();
+});
+
+// --- TOOL SELECTION ---
+document.querySelectorAll(".tool-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tool-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentTool = btn.id.replace("tool-", "");
+  });
+});
+
+// --- DROPDOWN MENUS ---
+function showMenu(menu, button) {
+  hideAllMenus();
+  const rect = button.getBoundingClientRect();
+  menu.style.top = rect.bottom + 4 + "px";
+  menu.style.left = rect.left + "px";
+  menu.style.display = "block";
+  activeMenu = menu;
+}
+
+function hideAllMenus() {
+  fileMenu.style.display = "none";
+  editMenu.style.display = "none";
+  activeMenu = null;
+}
+
+fileButton.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (activeMenu === fileMenu) {
+    hideAllMenus();
+  } else {
+    showMenu(fileMenu, fileButton);
+  }
+});
+
+editButton.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (activeMenu === editMenu) {
+    hideAllMenus();
+  } else {
+    showMenu(editMenu, editButton);
+  }
+});
+
+document.addEventListener("click", hideAllMenus);
+
+// Menu actions
+fileMenu.addEventListener("click", (e) => {
+  const action = e.target.closest("button")?.dataset.action;
+  if (!action) return;
+  
+  hideAllMenus();
+  
+  switch (action) {
+    case "new":
+      if (confirm("Create new project? Unsaved changes will be lost.")) {
+        location.reload();
+      }
+      break;
+    case "open":
+      loadFileInput.click();
+      break;
+    case "save":
+      saveProject();
+      break;
+    case "save-as":
+      saveProject(true);
+      break;
+    case "import":
+      fileInput.click();
+      break;
+    case "export":
+      alert("Export feature coming soon! FFmpeg integration required.");
+      break;
+    case "home":
+      window.location.href = "./index.html";
+      break;
+  }
+});
+
+editMenu.addEventListener("click", (e) => {
+  const action = e.target.closest("button")?.dataset.action;
+  if (!action) return;
+  
+  hideAllMenus();
+  
+  switch (action) {
+    case "undo":
+      undo();
+      loadTimeline();
+      break;
+    case "redo":
+      redo();
+      loadTimeline();
+      break;
+    case "delete":
+      // Delete selected clip
+      break;
   }
 });
 
 // --- SAVE PROJECT ---
-saveBtn.addEventListener("click", () => {
+function saveProject(saveAs = false) {
   const data = getProjectData();
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -133,13 +355,9 @@ saveBtn.addEventListener("click", () => {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-});
+}
 
 // --- LOAD PROJECT ---
-loadBtn.addEventListener("click", () => {
-  loadFileInput.click();
-});
-
 loadFileInput.addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -152,72 +370,22 @@ loadFileInput.addEventListener("change", async (event) => {
     alert("Failed to load project: " + err.message);
   }
   
-  // Reset file input so the same file can be loaded again
   loadFileInput.value = "";
-});
-
-// --- FILE BUTTON (Dropdown Menu) ---
-let fileMenuOpen = false;
-const fileMenu = document.createElement("div");
-fileMenu.id = "file-menu";
-fileMenu.innerHTML = `
-  <button id="menu-new">New Project</button>
-  <button id="menu-save">Save Project</button>
-  <button id="menu-load">Load Project</button>
-  <button id="menu-export">Export Video</button>
-`;
-fileMenu.style.display = "none";
-document.body.appendChild(fileMenu);
-
-fileButton.addEventListener("click", (e) => {
-  e.stopPropagation();
-  fileMenuOpen = !fileMenuOpen;
-  fileMenu.style.display = fileMenuOpen ? "block" : "none";
-  
-  // Position the menu below the button
-  const rect = fileButton.getBoundingClientRect();
-  fileMenu.style.top = rect.bottom + "px";
-  fileMenu.style.left = rect.left + "px";
-});
-
-// Close menu when clicking outside
-document.addEventListener("click", () => {
-  fileMenuOpen = false;
-  fileMenu.style.display = "none";
-});
-
-// File menu actions
-document.getElementById("menu-new")?.addEventListener("click", () => {
-  if (confirm("Create new project? Unsaved changes will be lost.")) {
-    location.reload();
-  }
-});
-
-document.getElementById("menu-save")?.addEventListener("click", () => {
-  saveBtn.click();
-});
-
-document.getElementById("menu-load")?.addEventListener("click", () => {
-  loadBtn.click();
-});
-
-document.getElementById("menu-export")?.addEventListener("click", () => {
-  alert("Export feature coming soon! FFmpeg integration required.");
 });
 
 // --- DARK MODE TOGGLE ---
 function applyDarkMode(isDark) {
   if (isDark) {
     document.body.classList.remove("light-mode");
-    darkModeToggle.textContent = "Light Mode";
+    darkModeToggle.querySelector(".icon").textContent = "🌙";
   } else {
     document.body.classList.add("light-mode");
-    darkModeToggle.textContent = "Dark Mode";
+    darkModeToggle.querySelector(".icon").textContent = "☀️";
   }
   localStorage.setItem("wasmforge-dark-mode", isDark ? "dark" : "light");
+  drawRuler();
 }
 
-// Load saved preference
 const savedMode = localStorage.getItem("wasmforge-dark-mode");
 const prefersDark = savedMode === "dark" || (savedMode === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
 applyDarkMode(prefersDark);
@@ -227,8 +395,25 @@ darkModeToggle.addEventListener("click", () => {
   applyDarkMode(!isDark);
 });
 
+// --- PANEL TABS ---
+document.querySelectorAll(".panel-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const tabName = tab.dataset.tab;
+    const panel = tab.closest("#media-panel, #inspector-panel");
+    
+    panel.querySelectorAll(".panel-tab").forEach(t => t.classList.remove("active"));
+    panel.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    
+    tab.classList.add("active");
+    document.getElementById(`${tabName}-tab`)?.classList.add("active");
+  });
+});
+
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener("keydown", (e) => {
+  // Prevent shortcuts when typing in input
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  
   // Undo
   if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
     e.preventDefault();
@@ -246,48 +431,4 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Redo (Ctrl+Shift+Z)
-  if (e.ctrlKey && e.shiftKey && e.key === "Z") {
-    e.preventDefault();
-    redo();
-    loadTimeline();
-    return;
-  }
-
-  // Save (Ctrl+S)
-  if (e.ctrlKey && e.key === "s") {
-    e.preventDefault();
-    saveBtn.click();
-    return;
-  }
-
-  // Open/Load (Ctrl+O)
-  if (e.ctrlKey && e.key === "o") {
-    e.preventDefault();
-    loadBtn.click();
-    return;
-  }
-});
-
-// --- LOAD PROJECT ---
-export function loadProject(data) {
-  project.version = data.version ?? project.version;
-  project.title = data.title ?? project.title;
-  project.media = data.media ?? [];
-  project.timeline = data.timeline ?? [];
-
-  if (data.aspectRatio) {
-    project.aspectRatio = data.aspectRatio;
-    setAspect(project.aspectRatio);
-    aspectSelect.value = project.aspectRatio;
-  }
-
-  // Clear the media list UI
-  mediaList.innerHTML = "";
-
-  loadTimeline();
-}
-
-// --- SAVE PROJECT ---
-export function getProjectData() {
-  return JSON.stringify(project, null, 2);
-}
+  if (e.ctrlKey && e.shiftKey && e
