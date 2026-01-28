@@ -22,8 +22,6 @@ export async function generateThumbnail(file, useFFmpeg = false) {
 
   // AUDIO SUPPORT
   if (file.type.startsWith("audio")) {
-    // Generate waveform visualization for audio (future enhancement)
-    // For now, return a placeholder
     return {
       thumbnail: generateAudioPlaceholder(file.name),
       durationSeconds: await getAudioDuration(file)
@@ -40,7 +38,6 @@ export async function generateThumbnail(file, useFFmpeg = false) {
     video.addEventListener("loadedmetadata", () => {
       const durationSeconds = video.duration;
       
-      // Seek to 10% into the video or 0.5 seconds, whichever is greater
       video.currentTime = Math.max(0.5, Math.min(1, durationSeconds * 0.1));
 
       video.addEventListener("seeked", () => {
@@ -51,7 +48,6 @@ export async function generateThumbnail(file, useFFmpeg = false) {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Clean up
         URL.revokeObjectURL(video.src);
 
         resolve({
@@ -64,7 +60,6 @@ export async function generateThumbnail(file, useFFmpeg = false) {
         console.warn("[Media] Failed to generate thumbnail for:", file.name);
         URL.revokeObjectURL(video.src);
         
-        // Return placeholder on error
         resolve({
           thumbnail: generateVideoPlaceholder(file.name),
           durationSeconds: 0
@@ -110,11 +105,9 @@ function generateAudioPlaceholder(filename) {
   canvas.height = 90;
   const ctx = canvas.getContext("2d");
 
-  // Background
   ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Icon
   ctx.fillStyle = "#3b82f6";
   ctx.font = "40px Arial";
   ctx.textAlign = "center";
@@ -131,11 +124,9 @@ function generateVideoPlaceholder(filename) {
   canvas.height = 90;
   const ctx = canvas.getContext("2d");
 
-  // Background
   ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Icon
   ctx.fillStyle = "#ef4444";
   ctx.font = "40px Arial";
   ctx.textAlign = "center";
@@ -149,35 +140,45 @@ function generateVideoPlaceholder(filename) {
 export function createMediaTile(file, thumbnail, durationSeconds, mediaID, mediaType) {
   const tile = document.createElement("div");
   tile.className = "media-tile";
-  tile.draggable = true;
+  tile.draggable = true; // CRITICAL: Make it draggable
   tile.dataset.mediaId = mediaID;
   tile.dataset.mediaType = mediaType;
 
   const hasDuration = typeof durationSeconds === "number" && !isNaN(durationSeconds) && durationSeconds > 0;
 
-  // Icon based on media type
   const typeIcon = mediaType === "video" ? "🎬" : 
                    mediaType === "audio" ? "🔊" : "🖼️";
 
   tile.innerHTML = `
     <div class="media-thumb-wrapper">
-      <img src="${thumbnail}" class="media-thumb" alt="${file.name}" loading="lazy">
+      <img src="${thumbnail}" class="media-thumb" alt="${file.name}" loading="lazy" draggable="false">
       ${hasDuration ? `<span class="media-duration">${formatDuration(durationSeconds)}</span>` : ""}
       <span class="media-type-badge">${typeIcon} ${mediaType}</span>
     </div>
     <span class="media-name" title="${file.name}">${file.name}</span>
   `;
 
-  // Drag start
+  // DRAG START - CRITICAL FOR DRAG AND DROP
   tile.addEventListener("dragstart", (e) => {
+    e.stopPropagation();
+    
+    // Set the data to transfer
     e.dataTransfer.effectAllowed = "copy";
     e.dataTransfer.setData("wasmforge-media-id", mediaID);
+    e.dataTransfer.setData("text/plain", mediaID); // Fallback
+    
+    // Visual feedback
     tile.classList.add("dragging");
+    tile.style.opacity = "0.5";
+    
+    console.log('[Media] Drag started:', file.name, 'ID:', mediaID);
   });
 
-  // Drag end
-  tile.addEventListener("dragend", () => {
+  // DRAG END - Clean up
+  tile.addEventListener("dragend", (e) => {
     tile.classList.remove("dragging");
+    tile.style.opacity = "1";
+    console.log('[Media] Drag ended');
   });
 
   // Single click to preview
@@ -251,7 +252,7 @@ export async function handleImportedFiles(files, mediaListElement, onMediaRegist
 
       mediaListElement.appendChild(tile);
       
-      console.log(`[Media] Imported: ${file.name} (${mediaObj.mediaType})`);
+      console.log(`[Media] Imported: ${file.name} (${mediaObj.mediaType}) - ID: ${mediaObj.id}`);
     } catch (error) {
       console.error(`[Media] Failed to import ${file.name}:`, error);
     }
