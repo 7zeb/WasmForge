@@ -728,6 +728,11 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
     await ffmpegManager.ffmpeg.deleteFile(outputFileName);
 
     // Load the resized video into preview
+      // Revoke any previous object URL to prevent memory leaks
+      if (previewVideo && typeof previewVideo.src === 'string' && previewVideo.src.startsWith('blob:')) {
+        URL.revokeObjectURL(previewVideo.src);
+      }
+    
     const url = URL.createObjectURL(outputBlob);
     previewVideo.src = url;
     // Reset any inline transforms or object-fit styles from previous CSS resizing
@@ -1471,4 +1476,5 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded (v7.0.0)');
+
 
