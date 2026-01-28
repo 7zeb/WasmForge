@@ -433,6 +433,12 @@ function wireClipInteractions(clip, clipData) {
   clip.addEventListener("click", (e) => {
     if (e.target === deleteBtn) return;
     selectClip(clip);
+    
+    // Load clip into preview when clicked
+    if (window.previewClipFromTimeline) {
+      const clipId = clip.dataset.clipId;
+      window.previewClipFromTimeline(clipId);
+    }
   });
 
   deleteBtn.addEventListener("click", (e) => {

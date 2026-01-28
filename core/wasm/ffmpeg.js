@@ -6,6 +6,7 @@ class FFmpegManager {
     this.ffmpeg = null;
     this.FFmpegClass = null;
     this.toBlobURL = null;
+    this.fetchFile = null;
     this.loaded = false;
     this.loading = false;
     this.loadProgress = 0;
@@ -18,13 +19,15 @@ class FFmpegManager {
     if (this.FFmpegClass && this.toBlobURL) return true;
 
     try {
-      // Dynamically import FFmpeg modules
-      const ffmpegModule = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/esm/ffmpeg.js');
-      const utilModule = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+      // Dynamically import FFmpeg modules from jsDelivr CDN
+      const ffmpegModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+      const utilModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
       
       this.FFmpegClass = ffmpegModule.FFmpeg;
       this.toBlobURL = utilModule.toBlobURL;
+      this.fetchFile = utilModule.fetchFile;
       
+      console.log('[FFmpeg] Modules loaded successfully');
       return true;
     } catch (error) {
       console.error('[FFmpeg] Failed to load modules:', error);
@@ -62,7 +65,8 @@ class FFmpegManager {
         this.notifyProgress(progress, time);
       });
 
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+      // Use jsDelivr CDN for core files
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
       
       await this.ffmpeg.load({
         coreURL: await this.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),

@@ -368,8 +368,42 @@ function previewMediaFile(file) {
   };
 }
 
-// Expose globally for media tiles
+// Preview clip from timeline
+function previewClipFromTimeline(clipId) {
+  const clip = project.timeline.find(c => c.id === clipId);
+  if (!clip) {
+    console.warn('[Preview] Clip not found:', clipId);
+    return;
+  }
+
+  const media = project.media.find(m => m.id === clip.mediaId);
+  if (!media) {
+    console.warn('[Preview] Media not found for clip:', clipId);
+    return;
+  }
+
+  const file = mediaFileCache.get(media.id);
+  if (!file) {
+    console.warn('[Preview] File not found in cache for media:', media.id);
+    return;
+  }
+
+  // Preview the file
+  previewMediaFile(file);
+  
+  // Set the video to the clip's start position
+  previewVideo.onloadedmetadata = () => {
+    previewVideo.currentTime = clip.start || 0;
+    totalTimeDisplay.textContent = formatTime(previewVideo.duration);
+    updatePlayheadPosition(previewVideo.currentTime);
+  };
+  
+  console.log('[Preview] Showing clip:', media.name, 'at', clip.start + 's');
+}
+
+// Expose globally for media tiles and timeline clips
 window.previewMediaFile = previewMediaFile;
+window.previewClipFromTimeline = previewClipFromTimeline;
 
 // Update time display and playhead position
 previewVideo.addEventListener("timeupdate", () => {
@@ -421,6 +455,15 @@ window.addClipToTimeline = (mediaId, trackId = null) => {
   snapshot();
   const targetTrack = trackId || (media.mediaType === "audio" ? "audio-1" : "video-1");
   addClip(media, targetTrack);
+  
+  // Auto-load first video clip into preview if preview is empty
+  if (media.mediaType === 'video' && (!previewVideo.src || previewVideo.src === window.location.href)) {
+    const file = mediaFileCache.get(media.id);
+    if (file) {
+      console.log('[WasmForge] Auto-loading clip into preview:', media.name);
+      previewMediaFile(file);
+    }
+  }
 };
 
 // ========================================
@@ -571,11 +614,43 @@ btnZoomOut.addEventListener("click", () => {
 // ========================================
 
 function togglePlay() {
+  // Check if preview has media loaded
   if (!previewVideo.src || previewVideo.src === window.location.href) {
-    console.warn('[WasmForge] No media loaded in preview');
-    return;
+    // If no media in preview, try to load first clip from timeline
+    if (project.timeline.length > 0) {
+      const firstClip = project.timeline[0];
+      const media = project.media.find(m => m.id === firstClip.mediaId);
+      
+      if (media && mediaFileCache.has(media.id)) {
+        const file = mediaFileCache.get(media.id);
+        console.log('[WasmForge] Auto-loading first timeline clip:', media.name);
+        previewMediaFile(file);
+        
+        // Set video to clip's start position after it loads
+        previewVideo.onloadedmetadata = () => {
+          previewVideo.currentTime = firstClip.start || 0;
+          totalTimeDisplay.textContent = formatTime(previewVideo.duration);
+          updatePlayheadPosition(previewVideo.currentTime);
+          
+          // Now play the video
+          previewVideo.play().catch(err => {
+            console.error('[WasmForge] Play failed:', err);
+          });
+          isPlaying = true;
+          updatePlayButton();
+        };
+        
+        return; // Exit early, let onloadedmetadata handle play
+      } else {
+        console.warn('[WasmForge] No media file cached for first clip');
+      }
+    } else {
+      console.warn('[WasmForge] No media in preview and no clips on timeline');
+      return;
+    }
   }
 
+  // Normal play/pause toggle
   if (isPlaying) {
     previewVideo.pause();
   } else {
@@ -1101,6 +1176,19 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  // Tool shortcuts (V and C)
+  if (e.key.toLowerCase() === "v" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    toolSelect.click();
+    return;
+  }
+
+  if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    toolRazor.click();
+    return;
+  }
+
   // Ctrl/Cmd shortcuts
   if (e.ctrlKey || e.metaKey) {
     switch (e.key.toLowerCase()) {
@@ -1153,17 +1241,6 @@ document.addEventListener("keydown", (e) => {
         return;
     }
   }
-
-  // Tool shortcuts
-  if (e.key.toLowerCase() === "v") {
-    toolSelect.click();
-    return;
-  }
-
-  if (e.key.toLowerCase() === "c") {
-    toolRazor.click();
-    return;
-  }
 });
 
 // ========================================
@@ -1188,4 +1265,4 @@ if (document.readyState === 'loading') {
   init();
 }
 
-console.log('[WasmForge] Module loaded');
+console.log('[WasmForge] Module loaded (v7.0.0)');
