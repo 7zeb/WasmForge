@@ -1,5 +1,5 @@
 // ========================================
-// WASMFORGE - VIDEO EDITOR v6.0.1
+// WASMFORGE - VIDEO EDITOR v7.0.0
 // Main Application Entry Point
 // ========================================
 
@@ -38,7 +38,7 @@ async function loadWasmModules() {
 
 // Core imports
 import { project, snapshot, undo, redo } from "./core/projects.js";
-import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip, renderTracks } from "./core/timeline.js";
+import { initTimeline, addClip, loadTimeline, setZoom, getZoom, deleteSelectedClip, selectClip, renderTracks, updatePlayheadPosition } from "./core/timeline.js";
 import { handleImportedFiles } from "./core/media.js";
 import { getIcon, createIcon } from "./core/assets/icons/icons.js";
 
@@ -196,13 +196,14 @@ function showStatusDetails() {
   features.push('✓ Drag & Drop');
   features.push('✓ Undo/Redo');
   features.push('✓ Dynamic Tracks');
+  features.push('✓ Synced Playhead');
 
   const modeText = wasmStatus.mode === 'full' ? 'Full (All Features)' : 
                    wasmStatus.mode === 'loading' ? 'Loading...' : 
                    'Basic (Core Features Only)';
 
   alert(
-    `WasmForge Status - Version 6.0.1\n\n` +
+    `WasmForge Status - Version 7.0.0\n\n` +
     `Mode: ${modeText}\n` +
     `FFmpeg WASM: ${wasmStatus.ffmpegLoaded ? 'Loaded ✓' : wasmStatus.mode === 'loading' ? 'Loading...' : 'Not Available ✗'}\n\n` +
     `Features:\n${features.join('\n')}\n\n` +
@@ -310,7 +311,7 @@ function initDarkMode() {
 
 // Initialize application
 async function init() {
-  console.log('[WasmForge] Initializing version 6.0.1...');
+  console.log('[WasmForge] Initializing version 7.0.0...');
   
   initIcons();
   initTimeline(tracksContainer);
@@ -370,9 +371,12 @@ function previewMediaFile(file) {
 // Expose globally for media tiles
 window.previewMediaFile = previewMediaFile;
 
-// Update time display
+// Update time display and playhead position
 previewVideo.addEventListener("timeupdate", () => {
   currentTimeDisplay.textContent = formatTime(previewVideo.currentTime);
+  
+  // Update playhead position on timeline
+  updatePlayheadPosition(previewVideo.currentTime);
 });
 
 previewVideo.addEventListener("ended", () => {
@@ -588,24 +592,30 @@ btnPlay.addEventListener("click", togglePlay);
 btnStart.addEventListener("click", () => {
   if (previewVideo.src) {
     previewVideo.currentTime = 0;
+    updatePlayheadPosition(0);
   }
 });
 
 btnEnd.addEventListener("click", () => {
   if (previewVideo.duration) {
     previewVideo.currentTime = previewVideo.duration;
+    updatePlayheadPosition(previewVideo.duration);
   }
 });
 
 btnPrevFrame.addEventListener("click", () => {
   if (previewVideo.src) {
-    previewVideo.currentTime = Math.max(0, previewVideo.currentTime - 1/30);
+    const newTime = Math.max(0, previewVideo.currentTime - 1/30);
+    previewVideo.currentTime = newTime;
+    updatePlayheadPosition(newTime);
   }
 });
 
 btnNextFrame.addEventListener("click", () => {
   if (previewVideo.duration) {
-    previewVideo.currentTime = Math.min(previewVideo.duration, previewVideo.currentTime + 1/30);
+    const newTime = Math.min(previewVideo.duration, previewVideo.currentTime + 1/30);
+    previewVideo.currentTime = newTime;
+    updatePlayheadPosition(newTime);
   }
 });
 
@@ -863,7 +873,7 @@ function showAboutDialog() {
   
   alert(
     "WasmForge - Open Source Video Editor\n" +
-    "Version 6.0.1\n\n" +
+    "Version 7.0.0\n\n" +
     `Current Mode: ${mode}\n` +
     `FFmpeg: ${wasmStatus.ffmpegLoaded ? 'Active' : 'Not Loaded'}\n\n` +
     "Created by 7Zeb\n" +
@@ -912,6 +922,9 @@ function createNewProject() {
     previewVideo.src = "";
     previewVideo.classList.remove("visible");
     previewPlaceholder.classList.remove("hidden");
+    
+    // Reset playhead
+    updatePlayheadPosition(0);
     
     console.log('[WasmForge] New project created');
   }
@@ -973,6 +986,9 @@ function loadProject(data) {
   previewVideo.src = "";
   previewVideo.classList.remove("visible");
   previewPlaceholder.classList.remove("hidden");
+  
+  // Reset playhead
+  updatePlayheadPosition(0);
   
   console.log('[WasmForge] Project loaded successfully');
 }
