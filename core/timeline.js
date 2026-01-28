@@ -35,6 +35,16 @@ export function initTimeline(domElement) {
   renderTracks();
 }
 
+// Update playhead position based on current time
+export function updatePlayheadPosition(currentTime) {
+  const playhead = document.getElementById('playhead');
+  if (!playhead) return;
+  
+  const pps = getPixelsPerSecond();
+  const position = currentTime * pps;
+  playhead.style.left = position + 'px';
+}
+
 // Add new track
 export function addTrack(type) {
   snapshot();
@@ -69,7 +79,6 @@ export function addTrack(type) {
 }
 
 // Render all tracks
-
 export function renderTracks() {
   if (!tracksContainer) return;
   
@@ -500,4 +509,3 @@ function wireClipInteractions(clip, clipData) {
   setupResize(leftHandle, true);
   setupResize(rightHandle, false);
 }
-
