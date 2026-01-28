@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WasmForge (v7-Test)</title>
+  <title>WasmForge v7.0.0</title>
   <link rel="stylesheet" href="./style.css">
-  <link rel="apple-touch-icon" href="./core/assets/icons/logo.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <meta name="theme-color" content="#1a1a2e">
 </head>
 
@@ -78,6 +78,9 @@
       <div class="panel-header">
         <span class="panel-title">Preview</span>
         <div class="preview-controls-top">
+          <button id="resize-media-btn" class="resize-btn" title="Resize video to match aspect ratio">
+            <span data-icon="zoomIn"></span> Resize Media
+          </button>
           <select id="aspect-select" title="Aspect Ratio">
             <option value="16:9">16:9</option>
             <option value="9:16">9:16</option>
@@ -387,4 +390,3 @@
   <script type="module" src="./main.js"></script>
 </body>
 </html>
-
