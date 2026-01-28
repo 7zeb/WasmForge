@@ -730,6 +730,11 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
     // Load the resized video into preview
     const url = URL.createObjectURL(outputBlob);
     previewVideo.src = url;
+    // Reset any inline transforms or object-fit styles from previous CSS resizing
+    if (previewVideo && previewVideo.style) {
+      previewVideo.style.transform = '';
+      previewVideo.style.objectFit = '';
+    }
     
     if (ffmpegLoadingModal) {
       ffmpegLoadingModal.classList.remove('visible');
@@ -842,6 +847,7 @@ function togglePlay() {
         return; // Exit early, let onloadedmetadata handle play
       } else {
         console.warn('[WasmForge] No media file cached for first clip');
+        return;
       }
     } else {
       console.warn('[WasmForge] No media in preview and no clips on timeline');
@@ -1465,3 +1471,4 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded (v7.0.0)');
+
