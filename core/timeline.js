@@ -61,7 +61,7 @@ export function initTimeline(domElement) {
   // Initial render
   renderTracks();
 
-  console.log('[Timeline] Initialized');
+  console.log('[Timeline] Initialized with', project.tracks.length, 'tracks');
 }
 
 // ========================================
@@ -108,19 +108,25 @@ export function deleteTrack(trackId) {
 // ========================================
 
 export function renderTracks() {
-  if (!tracksContainer) return;
+  if (!tracksContainer) {
+    console.error('[Timeline] No tracks container');
+    return;
+  }
 
   tracksContainer.innerHTML = '';
 
-  // Render track headers container
-  const headersContainer = document.createElement('div');
-  headersContainer.className = 'track-headers';
-  tracksContainer.appendChild(headersContainer);
+  // Create wrapper structure
+  const wrapper = document.createElement('div');
+  wrapper.className = 'timeline-content';
+  wrapper.innerHTML = `
+    <div class="track-headers"></div>
+    <div class="tracks-area"></div>
+  `;
+  
+  tracksContainer.appendChild(wrapper);
 
-  // Render tracks container
-  const tracksArea = document.createElement('div');
-  tracksArea.className = 'tracks-area';
-  tracksContainer.appendChild(tracksArea);
+  const headersContainer = wrapper.querySelector('.track-headers');
+  const tracksArea = wrapper.querySelector('.tracks-area');
 
   // Render each track
   project.tracks.forEach(track => {
@@ -148,7 +154,7 @@ export function renderTracks() {
     });
   });
 
-  console.log('[Timeline] Tracks rendered');
+  console.log('[Timeline] Rendered', project.tracks.length, 'tracks');
 }
 
 function renderTrackHeader(track, container) {
@@ -212,13 +218,18 @@ function renderTrack(track, container) {
   const trackElement = document.createElement('div');
   trackElement.className = 'track';
   trackElement.dataset.track = track.id;
+  trackElement.dataset.trackType = track.type;
+  
+  // Give track a minimum height for drop target
+  trackElement.style.minHeight = '60px';
+  trackElement.style.position = 'relative';
   
   if (!track.visible) {
     trackElement.classList.add('track-hidden');
   }
 
-  // **CRITICAL: Setup drag and drop on each track**
-  setupTrackDragDrop(trackElement, track);
+  // Setup drag and drop IMMEDIATELY
+  enableDragDrop(trackElement, track);
 
   // Render clips on this track
   const clips = project.timeline.filter(clip => clip.track === track.id);
@@ -231,69 +242,63 @@ function renderTrack(track, container) {
   });
 
   container.appendChild(trackElement);
+  
+  console.log('[Timeline] Track rendered:', track.id, 'with', clips.length, 'clips');
 }
 
 // ========================================
-// DRAG AND DROP
+// DRAG AND DROP - CRITICAL SECTION
 // ========================================
 
-function setupTrackDragDrop(trackElement, track) {
-  // Prevent default drag behavior
+function enableDragDrop(trackElement, track) {
+  // DRAGOVER - Must prevent default to allow drop
   trackElement.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'copy';
-    trackElement.classList.add('drag-over');
+    trackElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
   });
 
+  // DRAGLEAVE - Remove highlight
   trackElement.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    trackElement.classList.remove('drag-over');
+    // Only remove if we're actually leaving the track
+    if (e.target === trackElement) {
+      trackElement.style.backgroundColor = '';
+    }
   });
 
-  trackElement.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  });
-
+  // DROP - Handle the drop
   trackElement.addEventListener('drop', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    trackElement.classList.remove('drag-over');
+    trackElement.style.backgroundColor = '';
     
-    handleDrop(e, track, trackElement);
-  });
-}
+    const mediaId = e.dataTransfer.getData('wasmforge-media-id');
+    
+    if (!mediaId) {
+      console.warn('[Drop] No media ID');
+      return;
+    }
 
-function handleDrop(e, track, trackElement) {
-  const mediaId = e.dataTransfer.getData('wasmforge-media-id');
-  
-  if (!mediaId) {
-    console.warn('[Timeline] No media ID in drop data');
-    return;
-  }
+    const media = project.media.find(m => m.id === mediaId);
+    if (!media) {
+      console.warn('[Drop] Media not found:', mediaId);
+      return;
+    }
 
-  const media = project.media.find(m => m.id === mediaId);
-  if (!media) {
-    console.warn('[Timeline] Media not found:', mediaId);
-    return;
-  }
+    // Calculate drop position
+    const rect = trackElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const timePosition = Math.max(0, x / getPixelsPerSecond());
 
-  // Calculate drop position in seconds
-  const trackRect = trackElement.getBoundingClientRect();
-  const relativeX = e.clientX - trackRect.left;
-  const timePosition = Math.max(0, relativeX / getPixelsPerSecond());
+    console.log('[Drop] Media:', media.name, 'Track:', track.name, 'Time:', timePosition.toFixed(2) + 's');
 
-  console.log('[Timeline] Drop:', {
-    media: media.name,
-    track: track.name,
-    position: timePosition.toFixed(2) + 's'
+    // Add clip
+    snapshot();
+    addClip(media, track.id, timePosition);
   });
 
-  // Add the clip
-  snapshot();
-  addClip(media, track.id, timePosition);
+  console.log('[DragDrop] Enabled for track:', track.id);
 }
 
 // ========================================
@@ -305,6 +310,7 @@ export function renderClip(clipData, media) {
   clip.className = 'timeline-clip';
   clip.dataset.clipId = clipData.id;
   clip.dataset.mediaId = media.id;
+  clip.draggable = false; // Prevent clip from interfering with media drag
   
   if (clipData.id === selectedClipId) {
     clip.classList.add('selected');
@@ -319,6 +325,8 @@ export function renderClip(clipData, media) {
   clip.style.left = left + 'px';
   clip.style.width = width + 'px';
   clip.style.background = color;
+  clip.style.position = 'absolute';
+  clip.style.top = '0';
 
   // Clip content
   const typeIcon = media.mediaType === 'video' ? '🎬' :
@@ -377,12 +385,7 @@ export function addClip(media, trackId = "video-1", startTime = null) {
   project.timeline.push(clipData);
   renderTracks();
 
-  console.log('[Timeline] Clip added:', {
-    id: clipData.id,
-    media: media.name,
-    track: trackId,
-    start: startTime
-  });
+  console.log('[Timeline] Clip added:', media.name, '@', startTime.toFixed(2) + 's');
 }
 
 export function deleteSelectedClip() {
@@ -390,6 +393,7 @@ export function deleteSelectedClip() {
 
   const clipIndex = project.timeline.findIndex(c => c.id === selectedClipId);
   if (clipIndex !== -1) {
+    snapshot();
     project.timeline.splice(clipIndex, 1);
     selectedClipId = null;
     renderTracks();
@@ -432,21 +436,17 @@ function splitClip(clipData, splitTime) {
 
   const clipEnd = clipData.start + clipData.duration;
   
-  // Validate split time
   if (splitTime <= clipData.start || splitTime >= clipEnd) {
     console.warn('[Timeline] Invalid split time');
     return;
   }
 
-  // Calculate durations for both parts
   const firstDuration = splitTime - clipData.start;
   const secondDuration = clipEnd - splitTime;
 
-  // Update first clip
   clipData.duration = firstDuration;
   clipData.outPoint = clipData.inPoint + firstDuration;
 
-  // Create second clip
   const secondClip = {
     id: crypto.randomUUID(),
     mediaId: clipData.mediaId,
@@ -460,11 +460,7 @@ function splitClip(clipData, splitTime) {
 
   project.timeline.push(secondClip);
   
-  console.log('[Timeline] Clip split:', {
-    original: clipData.id,
-    new: secondClip.id,
-    splitTime
-  });
+  console.log('[Timeline] Clip split at', splitTime.toFixed(2) + 's');
 
   renderTracks();
 }
@@ -474,14 +470,12 @@ function splitClip(clipData, splitTime) {
 // ========================================
 
 function wireClipInteractions(clip, clipData) {
-  // Click handler - select or split
   clip.addEventListener('mousedown', (e) => {
     if (e.target.classList.contains('clip-resize-handle')) return;
     
     e.stopPropagation();
 
     if (activeTool === 'razor') {
-      // Split the clip at click position
       const clipRect = clip.getBoundingClientRect();
       const relativeX = e.clientX - clipRect.left;
       const splitTime = clipData.start + (relativeX / getPixelsPerSecond());
@@ -489,20 +483,16 @@ function wireClipInteractions(clip, clipData) {
       snapshot();
       splitClip(clipData, splitTime);
     } else {
-      // Select the clip
       selectClip(clip);
       
-      // Preview the clip
       if (window.previewClipFromTimeline) {
         window.previewClipFromTimeline(clipData.id);
       }
       
-      // Setup dragging
       setupClipDrag(clip, clipData, e);
     }
   });
 
-  // Setup resize handles
   const leftHandle = clip.querySelector('.clip-resize-left');
   const rightHandle = clip.querySelector('.clip-resize-right');
   
@@ -529,7 +519,6 @@ function setupClipDrag(clip, clipData, startEvent) {
   function onUp() {
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
-    console.log('[Timeline] Clip moved to:', clipData.start.toFixed(2) + 's');
   }
 
   document.addEventListener('mousemove', onMove);
@@ -568,7 +557,6 @@ function setupResize(handle, isLeft, clip, clipData) {
     function onUp() {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      console.log('[Timeline] Clip resized - duration:', clipData.duration.toFixed(2) + 's');
     }
 
     document.addEventListener('mousemove', onMove);
@@ -583,7 +571,6 @@ function setupResize(handle, isLeft, clip, clipData) {
 export function setActiveTool(tool) {
   activeTool = tool;
   
-  // Update cursor
   if (tracksContainer) {
     if (tool === 'razor') {
       tracksContainer.style.cursor = 'crosshair';
@@ -592,11 +579,11 @@ export function setActiveTool(tool) {
     }
   }
   
-  console.log('[Timeline] Active tool:', tool);
+  console.log('[Timeline] Tool:', tool);
 }
 
 // ========================================
-// ZOOM MANAGEMENT
+// ZOOM
 // ========================================
 
 export function getZoom() {
@@ -611,10 +598,6 @@ export function setZoom(newZoom) {
 export function getPixelsPerSecond() {
   return PIXELS_PER_SECOND * zoom;
 }
-
-// ========================================
-// TIMELINE LOADING
-// ========================================
 
 export function loadTimeline() {
   renderTracks();
