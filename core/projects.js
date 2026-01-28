@@ -3,7 +3,7 @@ export const project = {
   title: "Untitled Project",
   media: [],
   timeline: [],
-  tracks: [], // Dynamic tracks
+  tracks: [],
   aspectRatio: "16:9"
 };
 
