@@ -1,5 +1,5 @@
 // ========================================
-// WASMFORGE - Timeline.js
+// WASMFORGE - Timeline.js v6.0
 // Timeline rendering and clip management
 // ========================================
 
@@ -42,7 +42,6 @@ function getMaxTrackNumber(type) {
 // TIMELINE INITIALIZATION
 // ========================================
 
-// Called from main.js to initialize timeline
 export function initTimeline(domElement) {
   tracksContainer = domElement;
   
@@ -59,9 +58,6 @@ export function initTimeline(domElement) {
     ];
   }
 
-  // Setup drag and drop
-  setupDragAndDrop();
-
   // Initial render
   renderTracks();
 
@@ -69,80 +65,9 @@ export function initTimeline(domElement) {
 }
 
 // ========================================
-// DRAG AND DROP SETUP
-// ========================================
-
-function setupDragAndDrop() {
-  if (!tracksContainer) return;
-
-  // Prevent default drag behavior on the entire timeline
-  tracksContainer.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  });
-
-  tracksContainer.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-  });
-
-  tracksContainer.addEventListener('drop', (e) => {
-    e.preventDefault();
-    handleDrop(e);
-  });
-
-  console.log('[Timeline] Drag and drop enabled');
-}
-
-function handleDrop(e) {
-  const mediaId = e.dataTransfer.getData('wasmforge-media-id');
-  if (!mediaId) {
-    console.warn('[Timeline] No media ID in drop data');
-    return;
-  }
-
-  const media = project.media.find(m => m.id === mediaId);
-  if (!media) {
-    console.warn('[Timeline] Media not found:', mediaId);
-    return;
-  }
-
-  // Find which track was dropped on
-  const trackElement = e.target.closest('.track');
-  let trackId = trackElement?.dataset.track;
-
-  // If not dropped on a track, use default track based on media type
-  if (!trackId) {
-    trackId = media.mediaType === 'audio' ? 'audio-1' : 'video-1';
-  }
-
-  // Verify the track exists
-  const track = project.tracks.find(t => t.id === trackId);
-  if (!track) {
-    console.warn('[Timeline] Track not found:', trackId);
-    return;
-  }
-
-  // Calculate drop position in seconds
-  const trackRect = trackElement?.getBoundingClientRect() || tracksContainer.getBoundingClientRect();
-  const relativeX = e.clientX - trackRect.left;
-  const timePosition = Math.max(0, relativeX / getPixelsPerSecond());
-
-  console.log('[Timeline] Drop detected:', {
-    mediaId,
-    trackId,
-    position: timePosition
-  });
-
-  // Add the clip
-  snapshot();
-  addClip(media, trackId, timePosition);
-}
-
-// ========================================
 // TRACK MANAGEMENT
 // ========================================
 
-// Add new track
 export function addTrack(type) {
   const nextNumber = getMaxTrackNumber(type) + 1;
   const trackId = `${type}-${nextNumber}`;
@@ -162,10 +87,11 @@ export function addTrack(type) {
   console.log('[Timeline] Track added:', trackId);
 }
 
-// Delete track
 export function deleteTrack(trackId) {
   const trackIndex = project.tracks.findIndex(t => t.id === trackId);
   if (trackIndex === -1) return;
+
+  snapshot();
 
   // Remove all clips on this track
   project.timeline = project.timeline.filter(clip => clip.track !== trackId);
@@ -221,9 +147,10 @@ export function renderTracks() {
       addTrack(btn.dataset.type);
     });
   });
+
+  console.log('[Timeline] Tracks rendered');
 }
 
-// Render track header
 function renderTrackHeader(track, container) {
   const header = document.createElement('div');
   header.className = 'track-header';
@@ -281,7 +208,6 @@ function renderTrackHeader(track, container) {
   });
 }
 
-// Render track
 function renderTrack(track, container) {
   const trackElement = document.createElement('div');
   trackElement.className = 'track';
@@ -290,6 +216,9 @@ function renderTrack(track, container) {
   if (!track.visible) {
     trackElement.classList.add('track-hidden');
   }
+
+  // **CRITICAL: Setup drag and drop on each track**
+  setupTrackDragDrop(trackElement, track);
 
   // Render clips on this track
   const clips = project.timeline.filter(clip => clip.track === track.id);
@@ -302,6 +231,69 @@ function renderTrack(track, container) {
   });
 
   container.appendChild(trackElement);
+}
+
+// ========================================
+// DRAG AND DROP
+// ========================================
+
+function setupTrackDragDrop(trackElement, track) {
+  // Prevent default drag behavior
+  trackElement.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+    trackElement.classList.add('drag-over');
+  });
+
+  trackElement.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    trackElement.classList.remove('drag-over');
+  });
+
+  trackElement.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  trackElement.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    trackElement.classList.remove('drag-over');
+    
+    handleDrop(e, track, trackElement);
+  });
+}
+
+function handleDrop(e, track, trackElement) {
+  const mediaId = e.dataTransfer.getData('wasmforge-media-id');
+  
+  if (!mediaId) {
+    console.warn('[Timeline] No media ID in drop data');
+    return;
+  }
+
+  const media = project.media.find(m => m.id === mediaId);
+  if (!media) {
+    console.warn('[Timeline] Media not found:', mediaId);
+    return;
+  }
+
+  // Calculate drop position in seconds
+  const trackRect = trackElement.getBoundingClientRect();
+  const relativeX = e.clientX - trackRect.left;
+  const timePosition = Math.max(0, relativeX / getPixelsPerSecond());
+
+  console.log('[Timeline] Drop:', {
+    media: media.name,
+    track: track.name,
+    position: timePosition.toFixed(2) + 's'
+  });
+
+  // Add the clip
+  snapshot();
+  addClip(media, track.id, timePosition);
 }
 
 // ========================================
@@ -351,7 +343,6 @@ export function renderClip(clipData, media) {
 // ========================================
 
 export function addClip(media, trackId = "video-1", startTime = null) {
-  // Find the track
   const track = project.tracks.find(t => t.id === trackId);
   if (!track) {
     console.error('[Timeline] Track not found:', trackId);
@@ -377,7 +368,7 @@ export function addClip(media, trackId = "video-1", startTime = null) {
     mediaId: media.id,
     track: trackId,
     start: startTime,
-    duration: 5, // Default duration
+    duration: 5,
     inPoint: 0,
     outPoint: 5,
     effects: []
@@ -386,7 +377,12 @@ export function addClip(media, trackId = "video-1", startTime = null) {
   project.timeline.push(clipData);
   renderTracks();
 
-  console.log('[Timeline] Clip added:', clipData.id);
+  console.log('[Timeline] Clip added:', {
+    id: clipData.id,
+    media: media.name,
+    track: trackId,
+    start: startTime
+  });
 }
 
 export function deleteSelectedClip() {
@@ -533,6 +529,7 @@ function setupClipDrag(clip, clipData, startEvent) {
   function onUp() {
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
+    console.log('[Timeline] Clip moved to:', clipData.start.toFixed(2) + 's');
   }
 
   document.addEventListener('mousemove', onMove);
@@ -571,6 +568,7 @@ function setupResize(handle, isLeft, clip, clipData) {
     function onUp() {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      console.log('[Timeline] Clip resized - duration:', clipData.duration.toFixed(2) + 's');
     }
 
     document.addEventListener('mousemove', onMove);
