@@ -1450,3 +1450,49 @@ body {
     padding: 8px;
   }
 }
+
+.preview-controls-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-controls-top .resize-btn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: white;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.preview-controls-top .resize-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.preview-controls-top .resize-btn:active {
+  transform: translateY(0);
+}
+
+.preview-controls-top select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.preview-controls-top select:hover {
+  background: var(--bg-hover);
+}
