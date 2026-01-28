@@ -60,6 +60,7 @@ const importArea = document.getElementById("import-area");
 const previewVideo = document.getElementById("preview-video");
 const previewPlaceholder = document.getElementById("preview-placeholder");
 const aspectSelect = document.getElementById("aspect-select");
+const resizeMediaBtn = document.getElementById("resize-media-btn");
 
 // Project
 const projectTitleInput = document.getElementById("project-title-input");
@@ -176,12 +177,14 @@ function showStatusDetails() {
   
   if (wasmStatus.ffmpegLoaded) {
     features.push('✓ Video Export');
+    features.push('✓ Video Resize');
     features.push('✓ Advanced Effects');
     features.push('✓ Video Trimming');
     features.push('✓ Format Conversion');
     features.push('✓ Audio Mixing');
   } else {
     features.push('✗ Video Export (unavailable)');
+    features.push('✗ Video Resize (CSS preview only)');
     features.push('✗ Advanced Effects (unavailable)');
     features.push('✗ Video Trimming (unavailable)');
     features.push('✗ Format Conversion (unavailable)');
@@ -566,9 +569,205 @@ aspectSelect.addEventListener("change", (e) => {
   snapshot();
   project.aspectRatio = e.target.value;
   setAspect(project.aspectRatio);
+  
+  // Reset video transform when aspect ratio changes
+  if (previewVideo) {
+    previewVideo.style.transform = '';
+    previewVideo.style.objectFit = 'contain';
+  }
 });
 
 setAspect(project.aspectRatio);
+
+// ========================================
+// VIDEO RESIZE FEATURE
+// ========================================
+
+// Resize video to match aspect ratio
+async function resizeVideoToAspect() {
+  // Check if video is loaded
+  if (!previewVideo.src || previewVideo.src === window.location.href) {
+    alert("No video loaded in preview.\n\nPlease import and preview a video first.");
+    return;
+  }
+
+  // Check if video metadata is loaded
+  if (!previewVideo.videoWidth || !previewVideo.videoHeight) {
+    alert("Video not ready. Please wait for the video to load.");
+    return;
+  }
+
+  const selectedRatio = aspectSelect.value;
+  const [targetW, targetH] = selectedRatio.split(":").map(Number);
+  const targetRatio = targetW / targetH;
+
+  const currentW = previewVideo.videoWidth;
+  const currentH = previewVideo.videoHeight;
+  const currentRatio = currentW / currentH;
+
+  console.log('[Resize] Current video:', currentW, 'x', currentH, '(ratio:', currentRatio.toFixed(2) + ')');
+  console.log('[Resize] Target aspect:', selectedRatio, '(ratio:', targetRatio.toFixed(2) + ')');
+
+  // Check if already correct ratio
+  if (Math.abs(currentRatio - targetRatio) < 0.01) {
+    alert(`Video is already ${selectedRatio}!\n\nNo resize needed.`);
+    return;
+  }
+
+  // Show options
+  const useFFmpeg = wasmStatus.ffmpegLoaded && confirm(
+    `Resize Video to ${selectedRatio}?\n\n` +
+    `Current: ${currentW}x${currentH} (${currentRatio.toFixed(2)}:1)\n` +
+    `Target: ${selectedRatio}\n\n` +
+    `Click OK to re-encode with FFmpeg (slow but permanent)\n` +
+    `Click Cancel for CSS preview only (fast)`
+  );
+
+  if (useFFmpeg) {
+    await resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRatio);
+  } else {
+    resizeWithCSS(currentRatio, targetRatio, selectedRatio);
+  }
+}
+
+// CSS-based resize (fast, preview only)
+function resizeWithCSS(currentRatio, targetRatio, selectedRatio) {
+  // Reset any previous transforms
+  previewVideo.style.transform = '';
+  previewVideo.style.transformOrigin = '';
+  previewVideo.style.objectFit = 'cover';
+  
+  // Calculate scale to fill container while maintaining aspect
+  let videoScale = 1;
+  let resizeType = '';
+  
+  if (currentRatio > targetRatio) {
+    // Video wider - scale up to fill height, crop sides
+    videoScale = currentRatio / targetRatio;
+    resizeType = 'sides';
+  } else {
+    // Video taller - scale up to fill width, crop top/bottom
+    videoScale = targetRatio / currentRatio;
+    resizeType = 'top/bottom';
+  }
+
+  previewVideo.style.transform = `scale(${videoScale})`;
+  previewVideo.style.transformOrigin = 'center center';
+  
+  alert(
+    `✓ Preview Resized!\n\n` +
+    `Target: ${selectedRatio}\n` +
+    `Crop: ${resizeType}\n` +
+    `Scale: ${videoScale.toFixed(2)}x\n\n` +
+    `This is a CSS preview.\n` +
+    `Use FFmpeg resize for permanent change.`
+  );
+
+  console.log('[Resize] CSS applied - scale:', videoScale, 'crop:', resizeType);
+}
+
+// FFmpeg-based resize (slow, permanent)
+async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRatio) {
+  if (!ffmpegManager || !ffmpegManager.isLoaded()) {
+    alert("FFmpeg not loaded. Using CSS preview instead.");
+    const currentRatio = currentW / currentH;
+    const targetRatio = targetW / targetH;
+    resizeWithCSS(currentRatio, targetRatio, selectedRatio);
+    return;
+  }
+
+  // Calculate output dimensions
+  const currentRatio = currentW / currentH;
+  const targetRatio = targetW / targetH;
+  
+  let outputW, outputH, cropX, cropY;
+  
+  if (currentRatio > targetRatio) {
+    // Crop sides
+    outputH = currentH;
+    outputW = Math.round(currentH * targetRatio);
+    cropX = Math.round((currentW - outputW) / 2);
+    cropY = 0;
+  } else {
+    // Crop top/bottom
+    outputW = currentW;
+    outputH = Math.round(currentW / targetRatio);
+    cropX = 0;
+    cropY = Math.round((currentH - outputH) / 2);
+  }
+
+  // Update modal text
+  if (ffmpegLoadingModal) {
+    ffmpegLoadingModal.querySelector('h3').textContent = 'Resizing Video...';
+    ffmpegLoadingModal.querySelector('p').textContent = `Cropping to ${outputW}x${outputH}`;
+    ffmpegLoadingModal.classList.add('visible');
+  }
+
+  try {
+    // Get the current video file
+    const videoBlob = await fetch(previewVideo.src).then(r => r.blob());
+    
+    const inputFileName = 'input.mp4';
+    const outputFileName = 'output.mp4';
+
+    await ffmpegManager.ffmpeg.writeFile(inputFileName, await ffmpegManager.fetchFileData(videoBlob));
+
+    // Execute FFmpeg crop command
+    await ffmpegManager.ffmpeg.exec([
+      '-i', inputFileName,
+      '-vf', `crop=${outputW}:${outputH}:${cropX}:${cropY}`,
+      '-c:a', 'copy',
+      outputFileName
+    ]);
+
+    const data = await ffmpegManager.ffmpeg.readFile(outputFileName);
+    const outputBlob = new Blob([data.buffer], { type: 'video/mp4' });
+    
+    // Clean up
+    await ffmpegManager.ffmpeg.deleteFile(inputFileName);
+    await ffmpegManager.ffmpeg.deleteFile(outputFileName);
+
+    // Load the resized video into preview
+    const url = URL.createObjectURL(outputBlob);
+    previewVideo.src = url;
+    
+    if (ffmpegLoadingModal) {
+      ffmpegLoadingModal.classList.remove('visible');
+    }
+
+    alert(
+      `✓ Video Resized Successfully!\n\n` +
+      `New dimensions: ${outputW}x${outputH}\n` +
+      `Aspect ratio: ${selectedRatio}\n\n` +
+      `The resized video is now in the preview.`
+    );
+
+    console.log('[Resize] FFmpeg complete - output:', outputW, 'x', outputH);
+
+  } catch (error) {
+    console.error('[Resize] FFmpeg failed:', error);
+    
+    if (ffmpegLoadingModal) {
+      ffmpegLoadingModal.classList.remove('visible');
+    }
+    
+    alert(
+      `Resize failed!\n\n` +
+      `Error: ${error.message}\n\n` +
+      `Falling back to CSS preview.`
+    );
+    
+    // Fallback to CSS
+    const currentRatio = currentW / currentH;
+    const targetRatio = targetW / targetH;
+    resizeWithCSS(currentRatio, targetRatio, selectedRatio);
+  }
+}
+
+// Add click handler
+if (resizeMediaBtn) {
+  resizeMediaBtn.addEventListener("click", resizeVideoToAspect);
+}
 
 // ========================================
 // PROJECT TITLE
