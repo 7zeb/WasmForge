@@ -54,6 +54,7 @@ const filePickerLabel = document.getElementById("file-picker-label");
 // Media panel
 const mediaList = document.getElementById("media-list");
 const mediaPanel = document.getElementById("media-panel");
+const importArea = document.getElementById("import-area");
 
 // Preview section
 const previewVideo = document.getElementById("preview-video");
@@ -434,6 +435,74 @@ fileInput.addEventListener("change", (event) => {
   handleImportedFiles(event.target.files, mediaList, registerImportedFile);
   fileInput.value = "";
 });
+
+// ========================================
+// DRAG & DROP - MEDIA IMPORT
+// ========================================
+
+// Drag & drop on media panel
+mediaPanel.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  mediaPanel.classList.add("dragover");
+});
+
+mediaPanel.addEventListener("dragleave", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  // Only remove dragover if we're leaving the media panel itself
+  if (e.target === mediaPanel) {
+    mediaPanel.classList.remove("dragover");
+  }
+});
+
+mediaPanel.addEventListener("drop", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  mediaPanel.classList.remove("dragover");
+
+  if (e.dataTransfer.files.length > 0) {
+    handleImportedFiles(e.dataTransfer.files, mediaList, registerImportedFile);
+  }
+});
+
+// Also add handlers to the import area to prevent event blocking
+if (importArea) {
+  importArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mediaPanel.classList.add("dragover");
+  });
+
+  importArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mediaPanel.classList.remove("dragover");
+    
+    if (e.dataTransfer.files.length > 0) {
+      handleImportedFiles(e.dataTransfer.files, mediaList, registerImportedFile);
+    }
+  });
+}
+
+// Also add to file picker label
+if (filePickerLabel) {
+  filePickerLabel.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mediaPanel.classList.add("dragover");
+  });
+  
+  filePickerLabel.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mediaPanel.classList.remove("dragover");
+    
+    if (e.dataTransfer.files.length > 0) {
+      handleImportedFiles(e.dataTransfer.files, mediaList, registerImportedFile);
+    }
+  });
+}
 
 // ========================================
 // ASPECT RATIO
@@ -1104,4 +1173,3 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded');
-
