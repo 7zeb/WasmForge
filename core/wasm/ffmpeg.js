@@ -25,7 +25,7 @@ class FFmpegManager {
       
       this.FFmpegClass = ffmpegModule.FFmpeg;
       this.toBlobURL = utilModule.toBlobURL;
-      this.fetchFile = utilModule.fetchFile;
+      this.fetchFile = utilModule.fetchFile; //never used in the code (might be removed)
       
       console.log('[FFmpeg] Modules loaded successfully');
       return true;
