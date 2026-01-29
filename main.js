@@ -555,7 +555,7 @@ if (filePickerLabel) {
 }
 
 // ========================================
-// ASPECT RATIO
+// ASPECT RATIO & VIDEO RESIZE FEATURE
 // ========================================
 
 function setAspect(ratio) {
@@ -565,6 +565,7 @@ function setAspect(ratio) {
   container.style.aspectRatio = `${w} / ${h}`;
 }
 
+// Aspect ratio change handler
 aspectSelect.addEventListener("change", (e) => {
   snapshot();
   project.aspectRatio = e.target.value;
@@ -578,12 +579,6 @@ aspectSelect.addEventListener("change", (e) => {
 });
 
 setAspect(project.aspectRatio);
-
-// ========================================
-// VIDEO RESIZE FEATURE (v8-beta)
-// ========================================
-
-const resizeMediaBtn = document.getElementById("resize-media-btn");
 
 // Resize video to match aspect ratio
 async function resizeVideoToAspect() {
@@ -616,7 +611,7 @@ async function resizeVideoToAspect() {
     return;
   }
 
-  // Check FFmpeg availability using wasmStatus instead of direct check
+  // Check FFmpeg availability
   const ffmpegAvailable = wasmStatus.ffmpegLoaded && ffmpegManager && ffmpegManager.isLoaded();
 
   console.log('[Resize] FFmpeg available:', ffmpegAvailable);
@@ -826,23 +821,11 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
   }
 }
 
-// Add click handler
+// Add click handler for resize button
 if (resizeMediaBtn) {
   resizeMediaBtn.addEventListener("click", resizeVideoToAspect);
 }
 
-// Reset video transform when aspect ratio changes
-aspectSelect.addEventListener("change", (e) => {
-  snapshot();
-  project.aspectRatio = e.target.value;
-  setAspect(project.aspectRatio);
-  
-  // Reset video transform
-  if (previewVideo) {
-    previewVideo.style.transform = '';
-    previewVideo.style.objectFit = 'contain';
-  }
-});
 // ========================================
 // PROJECT TITLE
 // ========================================
@@ -1518,6 +1501,55 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ========================================
+// DEBUG COMMANDS
+// ========================================
+
+// Add global debug commands for troubleshooting
+window.wasmForgeDebug = {
+  // Check FFmpeg status
+  ffmpeg: () => {
+    console.log('=== FFmpeg Status ===');
+    console.log('WASM Status:', wasmStatus);
+    console.log('FFmpeg Manager:', {
+      exists: !!ffmpegManager,
+      loaded: ffmpegManager?.isLoaded(),
+      loading: ffmpegManager?.loading
+    });
+    if (ffmpegManager && ffmpegManager.getDebugInfo) {
+      console.log('Debug Info:', ffmpegManager.getDebugInfo());
+    }
+  },
+  
+  // Force reload FFmpeg
+  reloadFFmpeg: async () => {
+    console.log('Forcing FFmpeg reload...');
+    if (ffmpegManager) {
+      ffmpegManager.loaded = false;
+      ffmpegManager.loading = false;
+      const result = await ffmpegManager.load();
+      console.log('Reload result:', result);
+      updateStatusIndicator();
+    }
+  },
+  
+  // Test FFmpeg
+  testFFmpeg: async () => {
+    console.log('Testing FFmpeg...');
+    if (!ffmpegManager || !ffmpegManager.isLoaded()) {
+      console.error('FFmpeg not loaded!');
+      return;
+    }
+    console.log('✓ FFmpeg is ready!');
+    console.log('FFmpeg object:', ffmpegManager.ffmpeg);
+  }
+};
+
+console.log('💡 Debug commands available:');
+console.log('  wasmForgeDebug.ffmpeg() - Check FFmpeg status');
+console.log('  wasmForgeDebug.reloadFFmpeg() - Force reload FFmpeg');
+console.log('  wasmForgeDebug.testFFmpeg() - Test if FFmpeg is working');
+
+// ========================================
 // ERROR HANDLING
 // ========================================
 
@@ -1540,9 +1572,3 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded (v8.0.0)');
-
-
-
-
-
-
