@@ -1,6 +1,6 @@
 // ========================================
 // WASMFORGE v8-beta - FFmpeg WASM Integration
-// Single-threaded version for GitHub Pages (UMD-only, no workers)
+// Single-threaded, LOCAL FILES FIRST (GitHub Pages optimized)
 // ========================================
 
 class FFmpegManager {
@@ -17,7 +17,6 @@ class FFmpegManager {
     this.loadAttempts = [];
   }
 
-  // Log with timestamp
   log(message, data = null) {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
     if (data) {
@@ -27,83 +26,81 @@ class FFmpegManager {
     }
   }
 
-  // Load FFmpeg modules dynamically (UMD ONLY, NO ESM)
+  // Load FFmpeg modules (UMD from CDN)
   async loadModules() {
     if (this.FFmpegClass && this.toBlobURL) {
       this.log('Modules already loaded');
       return true;
     }
 
-    this.log('Starting module load (single-threaded UMD mode for GitHub Pages)...');
+    this.log('Starting module load (single-threaded UMD mode)...');
 
     const strategies = [
       {
         name: 'unpkg-umd',
         load: async () => {
           this.log('Trying unpkg UMD...');
-          await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
-          await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
+          
+          const ffmpegModule = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
+          const utilModule = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
 
-          // UMD exposes globals on window
-          this.FFmpegClass =
+          this.FFmpegClass = 
+            ffmpegModule.FFmpeg || 
+            ffmpegModule.default?.FFmpeg ||
+            ffmpegModule.default ||
             window.FFmpeg ||
-            (window.FFmpegWASM && window.FFmpegWASM.FFmpeg) ||
-            null;
+            window.FFmpegWASM?.FFmpeg;
 
-          // util UMD may expose toBlobURL/fetchFile directly or under a namespace
-          const utilGlobal =
-            window.FFmpegUtil ||
-            window.FFmpegUtilWASM ||
-            window.ffmpegUtil ||
-            window.ffmpegUtilWASM ||
-            window;
+          this.toBlobURL = 
+            utilModule.toBlobURL ||
+            utilModule.default?.toBlobURL ||
+            utilModule.default ||
+            window.FFmpegUtil?.toBlobURL ||
+            window.toBlobURL;
 
-          this.toBlobURL =
-            utilGlobal.toBlobURL ||
-            (utilGlobal.default && utilGlobal.default.toBlobURL) ||
-            null;
+          this.fetchFile = 
+            utilModule.fetchFile ||
+            utilModule.default?.fetchFile ||
+            window.FFmpegUtil?.fetchFile ||
+            window.fetchFile;
 
-          this.fetchFile =
-            utilGlobal.fetchFile ||
-            (utilGlobal.default && utilGlobal.default.fetchFile) ||
-            null;
-
-          this.log('unpkg UMD loaded');
+          this.log('unpkg UMD loaded', {
+            hasFFmpegClass: !!this.FFmpegClass,
+            hasToBlobURL: !!this.toBlobURL
+          });
         }
       },
       {
         name: 'jsdelivr-umd',
         load: async () => {
           this.log('Trying jsdelivr UMD...');
-          await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
-          await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js');
+          
+          const ffmpegModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
+          const utilModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js');
 
-          this.FFmpegClass =
+          this.FFmpegClass = 
+            ffmpegModule.FFmpeg || 
+            ffmpegModule.default?.FFmpeg ||
+            ffmpegModule.default ||
             window.FFmpeg ||
-            (window.FFmpegWASM && window.FFmpegWASM.FFmpeg) ||
-            null;
+            window.FFmpegWASM?.FFmpeg;
 
-          const utilGlobal =
-            window.FFmpegUtil ||
-            window.FFmpegUtilWASM ||
-            window.ffmpegUtil ||
-            window.ffmpegUtilWASM ||
-            window;
+          this.toBlobURL = 
+            utilModule.toBlobURL ||
+            utilModule.default?.toBlobURL ||
+            utilModule.default ||
+            window.FFmpegUtil?.toBlobURL ||
+            window.toBlobURL;
 
-          this.toBlobURL =
-            utilGlobal.toBlobURL ||
-            (utilGlobal.default && utilGlobal.default.toBlobURL) ||
-            null;
-
-          this.fetchFile =
-            utilGlobal.fetchFile ||
-            (utilGlobal.default && utilGlobal.default.fetchFile) ||
-            null;
+          this.fetchFile = 
+            utilModule.fetchFile ||
+            utilModule.default?.fetchFile ||
+            window.FFmpegUtil?.fetchFile ||
+            window.fetchFile;
 
           this.log('jsdelivr UMD loaded');
         }
       }
-      // IMPORTANT: no ESM strategy here – ESM always tries to use a worker
     ];
 
     for (const strategy of strategies) {
@@ -113,13 +110,16 @@ class FFmpegManager {
 
         await strategy.load();
 
-        if (this.FFmpegClass && typeof this.toBlobURL === 'function') {
+        const hasValidFFmpeg = this.FFmpegClass && typeof this.FFmpegClass === 'function';
+        const hasValidToBlobURL = typeof this.toBlobURL === 'function';
+
+        if (hasValidFFmpeg && hasValidToBlobURL) {
           this.log(`✓ Success with ${strategy.name}`);
           this.loadAttempts[this.loadAttempts.length - 1].status = 'success';
           return true;
         } else {
           throw new Error(
-            `Missing required exports (FFmpegClass: ${!!this.FFmpegClass}, toBlobURL: ${typeof this.toBlobURL})`
+            `Invalid exports (FFmpegClass: ${typeof this.FFmpegClass}, toBlobURL: ${typeof this.toBlobURL})`
           );
         }
       } catch (error) {
@@ -152,7 +152,7 @@ class FFmpegManager {
     }
   }
 
-  // Load FFmpeg WASM (SINGLE-THREADED ONLY)
+  // Load FFmpeg WASM (LOCAL FILES FIRST!)
   async load() {
     if (this.loaded) {
       this.log('Already loaded');
@@ -168,7 +168,7 @@ class FFmpegManager {
 
     this.loading = true;
     this.loaded = false;
-    this.log('==== Starting FFmpeg Load (Single-Threaded Mode) ====');
+    this.log('==== Starting FFmpeg Load (Single-Threaded, Local Files) ====');
 
     try {
       // Step 1: Load modules
@@ -201,16 +201,20 @@ class FFmpegManager {
       });
       this.log('✓ Event listeners set up');
 
-      // Step 4: Load SINGLE-THREADED core files only
-      this.log('Step 4: Loading FFmpeg core (single-threaded, no workers)...');
+      // Step 4: Load core files - YOUR GITHUB PAGES URL FIRST!
+      this.log('Step 4: Loading FFmpeg core files...');
 
       const coreStrategies = [
         {
-          name: 'unpkg-st',
+          name: 'github-pages-local',
+          baseURL: 'https://7zeb.github.io/WasmForge/wasm/ffmpeg'  // YOUR LOCAL FILES!
+        },
+        {
+          name: 'unpkg-fallback',
           baseURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
         },
         {
-          name: 'jsdelivr-st',
+          name: 'jsdelivr-fallback',
           baseURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd'
         }
       ];
@@ -248,7 +252,7 @@ class FFmpegManager {
       }
 
       if (!coreLoaded) {
-        throw new Error('Failed to load single-threaded FFmpeg core from any CDN');
+        throw new Error('Failed to load FFmpeg core from local or CDN');
       }
 
       // Step 5: Verify FFmpeg is ready
@@ -261,8 +265,8 @@ class FFmpegManager {
       this.loaded = true;
       this.loading = false;
 
-      this.log('==== FFmpeg Load Complete (Single-Threaded) ====');
-      this.log('⚠️  Running in single-threaded mode (slower but GitHub Pages compatible)');
+      this.log('==== FFmpeg Load Complete ====');
+      this.log('✓ Running in single-threaded mode (GitHub Pages compatible)');
       this.log('Final status:', {
         loaded: this.loaded,
         hasFFmpeg: !!this.ffmpeg,
@@ -288,7 +292,6 @@ class FFmpegManager {
     }
   }
 
-  // Extract frame from video at specific time
   async extractFrame(videoFile, timeInSeconds = 0) {
     if (!this.isLoaded()) {
       this.log('Cannot extract frame - FFmpeg not loaded');
@@ -302,14 +305,10 @@ class FFmpegManager {
       await this.ffmpeg.writeFile(inputFileName, await this.fetchFileData(videoFile));
 
       await this.ffmpeg.exec([
-        '-ss',
-        timeInSeconds.toString(),
-        '-i',
-        inputFileName,
-        '-vframes',
-        '1',
-        '-q:v',
-        '2',
+        '-ss', timeInSeconds.toString(),
+        '-i', inputFileName,
+        '-vframes', '1',
+        '-q:v', '2',
         outputFileName
       ]);
 
@@ -339,16 +338,11 @@ class FFmpegManager {
       await this.ffmpeg.writeFile(inputFileName, await this.fetchFileData(videoFile));
 
       await this.ffmpeg.exec([
-        '-ss',
-        timeInSeconds.toString(),
-        '-i',
-        inputFileName,
-        '-vf',
-        `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}`,
-        '-vframes',
-        '1',
-        '-q:v',
-        '2',
+        '-ss', timeInSeconds.toString(),
+        '-i', inputFileName,
+        '-vf', `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}`,
+        '-vframes', '1',
+        '-q:v', '2',
         outputFileName
       ]);
 
@@ -380,14 +374,10 @@ class FFmpegManager {
       const duration = endTime - startTime;
 
       await this.ffmpeg.exec([
-        '-ss',
-        startTime.toString(),
-        '-i',
-        inputFileName,
-        '-t',
-        duration.toString(),
-        '-c',
-        'copy',
+        '-ss', startTime.toString(),
+        '-i', inputFileName,
+        '-t', duration.toString(),
+        '-c', 'copy',
         outputFileName
       ]);
 
@@ -420,12 +410,9 @@ class FFmpegManager {
       this.log('Input file written');
 
       await this.ffmpeg.exec([
-        '-i',
-        inputFileName,
-        '-vf',
-        `crop=${width}:${height}:${x}:${y}`,
-        '-c:a',
-        'copy',
+        '-i', inputFileName,
+        '-vf', `crop=${width}:${height}:${x}:${y}`,
+        '-c:a', 'copy',
         outputFileName
       ]);
       this.log('FFmpeg exec complete');
@@ -481,7 +468,7 @@ class FFmpegManager {
 
   getDebugInfo() {
     return {
-      mode: 'single-threaded (GitHub Pages, UMD-only)',
+      mode: 'single-threaded (GitHub Pages local files)',
       loaded: this.loaded,
       loading: this.loading,
       hasFFmpeg: !!this.ffmpeg,
