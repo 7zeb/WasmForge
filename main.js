@@ -274,7 +274,7 @@ async function initFFmpeg() {
     const loadResult = await ffmpegManager.load();
     
     if (!loadResult) {
-      throw new Error('FFmpeg load returned false');
+      throw new Error('Failed to load FFmpeg: initialization returned false. Check console for details.');
     }
     
     console.log('[WasmForge] FFmpeg loaded successfully');
