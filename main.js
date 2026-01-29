@@ -1146,7 +1146,7 @@ helpMenu.addEventListener("click", (e) => {
       showAboutDialog();
       break;
     case "github":
-      window.open("https://github.com/8zeb/WasmForge", "_blank");
+      window.open("https://github.com/7zeb/WasmForge", "_blank");
       break;
   }
 });
@@ -1161,7 +1161,7 @@ function showAboutDialog() {
     "Version 8.0.0\n\n" +
     `Current Mode: ${mode}\n` +
     `FFmpeg: ${wasmStatus.ffmpegLoaded ? 'Active' : 'Not Loaded'}\n\n` +
-    "Created by 8Zeb\n" +
+    "Created by 7zeb\n" +
     "Powered by FFmpeg.wasm\n\n" +
     "MIT License\n" +
     "© 2026"
@@ -1476,6 +1476,7 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded (v8.0.0)');
+
 
 
 
