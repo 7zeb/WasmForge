@@ -1,6 +1,6 @@
 // ========================================
 // WASMFORGE v8-beta - FFmpeg WASM Integration
-// Fixed CORS Worker issue
+// Single-threaded version for GitHub Pages
 // ========================================
 
 class FFmpegManager {
@@ -34,9 +34,9 @@ class FFmpegManager {
       return true;
     }
 
-    this.log('Starting module load...');
+    this.log('Starting module load (single-threaded mode for GitHub Pages)...');
 
-    // Use UMD versions to avoid worker CORS issues
+    // Try UMD builds first - better compatibility
     const strategies = [
       {
         name: 'unpkg-umd',
@@ -46,8 +46,14 @@ class FFmpegManager {
           const utilModule = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
           
           this.FFmpegClass = ffmpegModule.FFmpeg || ffmpegModule.default?.FFmpeg || window.FFmpeg;
-          this.toBlobURL = utilModule.toBlobURL || utilModule.default?.toBlobURL || utilModule.default;
+          this.toBlobURL = utilModule.toBlobURL || utilModule.default?.toBlobURL;
           this.fetchFile = utilModule.fetchFile || utilModule.default?.fetchFile;
+          
+          // Handle case where entire module is exported as default
+          if (!this.toBlobURL && utilModule.default) {
+            this.toBlobURL = utilModule.default.toBlobURL;
+            this.fetchFile = utilModule.default.fetchFile;
+          }
           
           this.log('unpkg UMD loaded');
         }
@@ -60,8 +66,13 @@ class FFmpegManager {
           const utilModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js');
           
           this.FFmpegClass = ffmpegModule.FFmpeg || ffmpegModule.default?.FFmpeg || window.FFmpeg;
-          this.toBlobURL = utilModule.toBlobURL || utilModule.default?.toBlobURL || utilModule.default;
+          this.toBlobURL = utilModule.toBlobURL || utilModule.default?.toBlobURL;
           this.fetchFile = utilModule.fetchFile || utilModule.default?.fetchFile;
+          
+          if (!this.toBlobURL && utilModule.default) {
+            this.toBlobURL = utilModule.default.toBlobURL;
+            this.fetchFile = utilModule.default.fetchFile;
+          }
           
           this.log('jsdelivr UMD loaded');
         }
@@ -90,19 +101,13 @@ class FFmpegManager {
         
         await strategy.load();
         
-        // Handle case where toBlobURL might be the whole util module
-        if (typeof this.toBlobURL !== 'function' && this.toBlobURL && typeof this.toBlobURL.toBlobURL === 'function') {
-          this.fetchFile = this.toBlobURL.fetchFile;
-          this.toBlobURL = this.toBlobURL.toBlobURL;
-        }
-        
         // Verify we got what we need
-        if (this.FFmpegClass && this.toBlobURL) {
+        if (this.FFmpegClass && typeof this.toBlobURL === 'function') {
           this.log(`✓ Success with ${strategy.name}`);
           this.loadAttempts[this.loadAttempts.length - 1].status = 'success';
           return true;
         } else {
-          throw new Error('Missing required exports');
+          throw new Error(`Missing required exports (FFmpegClass: ${!!this.FFmpegClass}, toBlobURL: ${typeof this.toBlobURL})`);
         }
       } catch (error) {
         this.log(`✗ ${strategy.name} failed: ${error.message}`);
@@ -125,7 +130,7 @@ class FFmpegManager {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.blob();
-      this.log(`Fetched ${data.size} bytes for ${url}`);
+      this.log(`Fetched ${data.size} bytes`);
       const blob = new Blob([data], { type: mimeType });
       return URL.createObjectURL(blob);
     } catch (error) {
@@ -134,7 +139,7 @@ class FFmpegManager {
     }
   }
 
-  // Load FFmpeg WASM
+  // Load FFmpeg WASM (SINGLE-THREADED ONLY)
   async load() {
     if (this.loaded) {
       this.log('Already loaded');
@@ -150,7 +155,7 @@ class FFmpegManager {
 
     this.loading = true;
     this.loaded = false;
-    this.log('==== Starting FFmpeg Load ====');
+    this.log('==== Starting FFmpeg Load (Single-Threaded Mode) ====');
 
     try {
       // Step 1: Load modules
@@ -183,30 +188,20 @@ class FFmpegManager {
       });
       this.log('✓ Event listeners set up');
 
-      // Step 4: Load core files WITH proper worker handling
-      this.log('Step 4: Loading FFmpeg core files...');
+      // Step 4: Load SINGLE-THREADED core files only
+      this.log('Step 4: Loading FFmpeg core (single-threaded, no workers)...');
       
+      // ONLY use @ffmpeg/core (NOT @ffmpeg/core-mt)
       const coreStrategies = [
         {
           name: 'unpkg-st',
-          baseURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd',
-          singleThread: true
+          baseURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
         },
         {
           name: 'jsdelivr-st',
-          baseURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd',
-          singleThread: true
-        },
-        {
-          name: 'unpkg-mt',
-          baseURL: 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/umd',
-          singleThread: false
-        },
-        {
-          name: 'jsdelivr-mt',
-          baseURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/umd',
-          singleThread: false
+          baseURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd'
         }
+        // DO NOT include @ffmpeg/core-mt - it requires workers
       ];
 
       let coreLoaded = false;
@@ -224,32 +219,17 @@ class FFmpegManager {
             'application/wasm'
           );
 
-          const loadConfig = {
-            coreURL,
-            wasmURL
-          };
-
-          // For multi-threaded, also load worker
-          if (!coreStrategy.singleThread) {
-            try {
-              const workerURL = await this.createBlobURL(
-                `${coreStrategy.baseURL}/ffmpeg-core.worker.js`,
-                'text/javascript'
-              );
-              loadConfig.workerURL = workerURL;
-              this.log('Worker URL added for multi-threaded mode');
-            } catch (workerError) {
-              this.log('Worker load failed, will try single-threaded:', workerError.message);
-              throw workerError; // Skip this strategy
-            }
-          }
-
           this.log('Blob URLs created, calling ffmpeg.load()...');
           
-          await this.ffmpeg.load(loadConfig);
+          // CRITICAL: NO workerURL - single-threaded only
+          await this.ffmpeg.load({
+            coreURL,
+            wasmURL
+            // NO workerURL property
+          });
           
           coreLoaded = true;
-          this.log(`✓ Core loaded successfully from ${coreStrategy.name} (${coreStrategy.singleThread ? 'single' : 'multi'}-threaded)`);
+          this.log(`✓ Core loaded successfully from ${coreStrategy.name} (SINGLE-THREADED)`);
           break;
         } catch (error) {
           this.log(`✗ Core load failed from ${coreStrategy.name}: ${error.message}`);
@@ -258,26 +238,26 @@ class FFmpegManager {
       }
 
       if (!coreLoaded) {
-        throw new Error('Failed to load FFmpeg core from any CDN');
+        throw new Error('Failed to load single-threaded FFmpeg core from any CDN');
       }
 
-      // Step 5: Verify FFmpeg is actually ready
+      // Step 5: Verify FFmpeg is ready
       this.log('Step 5: Verifying FFmpeg is ready...');
       if (!this.ffmpeg || typeof this.ffmpeg.exec !== 'function') {
         throw new Error('FFmpeg loaded but exec method not available');
       }
       this.log('✓ FFmpeg verified and ready');
 
-      // NOW set loaded to true
+      // Set loaded to true
       this.loaded = true;
       this.loading = false;
       
-      this.log('==== FFmpeg Load Complete ====');
+      this.log('==== FFmpeg Load Complete (Single-Threaded) ====');
+      this.log('⚠️  Running in single-threaded mode (slower but GitHub Pages compatible)');
       this.log('Final status:', {
         loaded: this.loaded,
         hasFFmpeg: !!this.ffmpeg,
-        hasExec: !!(this.ffmpeg && this.ffmpeg.exec),
-        attempts: this.loadAttempts.length
+        hasExec: !!(this.ffmpeg && this.ffmpeg.exec)
       });
 
       this.onLoadCallbacks.forEach(cb => cb(true));
@@ -299,8 +279,6 @@ class FFmpegManager {
     }
   }
 
-  // ... rest of the methods remain the same (extractFrame, generateThumbnail, trimVideo, cropVideo, fetchFileData, etc.)
-  
   // Extract frame from video at specific time
   async extractFrame(videoFile, timeInSeconds = 0) {
     if (!this.isLoaded()) {
@@ -479,6 +457,7 @@ class FFmpegManager {
 
   getDebugInfo() {
     return {
+      mode: 'single-threaded (GitHub Pages)',
       loaded: this.loaded,
       loading: this.loading,
       hasFFmpeg: !!this.ffmpeg,
