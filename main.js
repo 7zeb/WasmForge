@@ -580,8 +580,10 @@ aspectSelect.addEventListener("change", (e) => {
 setAspect(project.aspectRatio);
 
 // ========================================
-// VIDEO RESIZE FEATURE
+// VIDEO RESIZE FEATURE (v8-beta)
 // ========================================
+
+const resizeMediaBtn = document.getElementById("resize-media-btn");
 
 // Resize video to match aspect ratio
 async function resizeVideoToAspect() {
@@ -614,14 +616,35 @@ async function resizeVideoToAspect() {
     return;
   }
 
+  // Check FFmpeg availability using wasmStatus instead of direct check
+  const ffmpegAvailable = wasmStatus.ffmpegLoaded && ffmpegManager && ffmpegManager.isLoaded();
+
+  console.log('[Resize] FFmpeg available:', ffmpegAvailable);
+  console.log('[Resize] WASM status:', wasmStatus);
+
   // Show options
-  const useFFmpeg = wasmStatus.ffmpegLoaded && confirm(
-    `Resize Video to ${selectedRatio}?\n\n` +
-    `Current: ${currentW}x${currentH} (${currentRatio.toFixed(2)}:1)\n` +
-    `Target: ${selectedRatio}\n\n` +
-    `Click OK to re-encode with FFmpeg (slow but permanent)\n` +
-    `Click Cancel for CSS preview only (fast)`
-  );
+  let useFFmpeg = false;
+  
+  if (ffmpegAvailable) {
+    useFFmpeg = confirm(
+      `Resize Video to ${selectedRatio}?\n\n` +
+      `Current: ${currentW}x${currentH} (${currentRatio.toFixed(2)}:1)\n` +
+      `Target: ${selectedRatio}\n\n` +
+      `Click OK to re-encode with FFmpeg (slow but permanent)\n` +
+      `Click Cancel for CSS preview only (fast)`
+    );
+  } else {
+    alert(
+      `FFmpeg Not Available\n\n` +
+      `Current status: ${wasmStatus.mode}\n` +
+      `FFmpeg loaded: ${wasmStatus.ffmpegLoaded ? 'Yes' : 'No'}\n\n` +
+      `Using CSS preview instead (fast, temporary).\n\n` +
+      `To use FFmpeg resize:\n` +
+      `• Refresh the page\n` +
+      `• Wait for "Full Mode" status\n` +
+      `• Then try again`
+    );
+  }
 
   if (useFFmpeg) {
     await resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRatio);
@@ -659,8 +682,11 @@ function resizeWithCSS(currentRatio, targetRatio, selectedRatio) {
     `Target: ${selectedRatio}\n` +
     `Crop: ${resizeType}\n` +
     `Scale: ${videoScale.toFixed(2)}x\n\n` +
-    `This is a CSS preview.\n` +
-    `Use FFmpeg resize for permanent change.`
+    `⚠ This is a CSS preview only.\n` +
+    `Changes are NOT permanent.\n\n` +
+    `For permanent resize:\n` +
+    `• Wait for FFmpeg to load (Full Mode)\n` +
+    `• Then use "Resize Media" again`
   );
 
   console.log('[Resize] CSS applied - scale:', videoScale, 'crop:', resizeType);
@@ -668,8 +694,21 @@ function resizeWithCSS(currentRatio, targetRatio, selectedRatio) {
 
 // FFmpeg-based resize (slow, permanent)
 async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRatio) {
-  if (!ffmpegManager || !ffmpegManager.isLoaded()) {
-    alert("FFmpeg not loaded. Using CSS preview instead.");
+  // Double-check FFmpeg is ready
+  if (!wasmStatus.ffmpegLoaded || !ffmpegManager || !ffmpegManager.isLoaded()) {
+    console.error('[Resize] FFmpeg check failed:', {
+      wasmStatus: wasmStatus.ffmpegLoaded,
+      managerExists: !!ffmpegManager,
+      managerLoaded: ffmpegManager ? ffmpegManager.isLoaded() : false
+    });
+    
+    alert(
+      "FFmpeg Not Ready\n\n" +
+      `Status: ${wasmStatus.mode}\n` +
+      `FFmpeg loaded: ${wasmStatus.ffmpegLoaded}\n\n` +
+      "Falling back to CSS preview..."
+    );
+    
     const currentRatio = currentW / currentH;
     const targetRatio = targetW / targetH;
     resizeWithCSS(currentRatio, targetRatio, selectedRatio);
@@ -696,23 +735,39 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
     cropY = Math.round((currentH - outputH) / 2);
   }
 
+  console.log('[Resize] FFmpeg crop parameters:', { outputW, outputH, cropX, cropY });
+
   // Update modal text
   if (ffmpegLoadingModal) {
-    ffmpegLoadingModal.querySelector('h3').textContent = 'Resizing Video...';
-    ffmpegLoadingModal.querySelector('p').textContent = `Cropping to ${outputW}x${outputH}`;
+    const modalTitle = ffmpegLoadingModal.querySelector('h3');
+    const modalText = ffmpegLoadingModal.querySelector('p');
+    const progressBar = ffmpegLoadingModal.querySelector('#ffmpeg-progress');
+    const progressText = ffmpegLoadingModal.querySelector('#ffmpeg-progress-text');
+    
+    if (modalTitle) modalTitle.textContent = 'Resizing Video...';
+    if (modalText) modalText.textContent = `Cropping to ${outputW}x${outputH}`;
+    if (progressBar) progressBar.style.width = '0%';
+    if (progressText) progressText.textContent = '0%';
+    
     ffmpegLoadingModal.classList.add('visible');
   }
 
   try {
+    console.log('[Resize] Starting FFmpeg processing...');
+    
     // Get the current video file
     const videoBlob = await fetch(previewVideo.src).then(r => r.blob());
+    console.log('[Resize] Video blob size:', videoBlob.size, 'bytes');
     
     const inputFileName = 'input.mp4';
     const outputFileName = 'output.mp4';
 
+    // Write input file
+    console.log('[Resize] Writing input file...');
     await ffmpegManager.ffmpeg.writeFile(inputFileName, await ffmpegManager.fetchFileData(videoBlob));
 
     // Execute FFmpeg crop command
+    console.log('[Resize] Executing FFmpeg crop...');
     await ffmpegManager.ffmpeg.exec([
       '-i', inputFileName,
       '-vf', `crop=${outputW}:${outputH}:${cropX}:${cropY}`,
@@ -720,26 +775,20 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
       outputFileName
     ]);
 
+    console.log('[Resize] Reading output file...');
     const data = await ffmpegManager.ffmpeg.readFile(outputFileName);
     const outputBlob = new Blob([data.buffer], { type: 'video/mp4' });
     
+    console.log('[Resize] Output blob size:', outputBlob.size, 'bytes');
+    
     // Clean up
+    console.log('[Resize] Cleaning up temp files...');
     await ffmpegManager.ffmpeg.deleteFile(inputFileName);
     await ffmpegManager.ffmpeg.deleteFile(outputFileName);
 
     // Load the resized video into preview
-      // Revoke any previous object URL to prevent memory leaks
-      if (previewVideo && typeof previewVideo.src === 'string' && previewVideo.src.startsWith('blob:')) {
-        URL.revokeObjectURL(previewVideo.src);
-      }
-    
     const url = URL.createObjectURL(outputBlob);
     previewVideo.src = url;
-    // Reset any inline transforms or object-fit styles from previous CSS resizing
-    if (previewVideo && previewVideo.style) {
-      previewVideo.style.transform = '';
-      previewVideo.style.objectFit = '';
-    }
     
     if (ffmpegLoadingModal) {
       ffmpegLoadingModal.classList.remove('visible');
@@ -747,12 +796,15 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
 
     alert(
       `✓ Video Resized Successfully!\n\n` +
-      `New dimensions: ${outputW}x${outputH}\n` +
+      `Original: ${currentW}x${currentH}\n` +
+      `New: ${outputW}x${outputH}\n` +
       `Aspect ratio: ${selectedRatio}\n\n` +
-      `The resized video is now in the preview.`
+      `The resized video is now in the preview.\n\n` +
+      `Note: This is a new video file.\n` +
+      `To save it, you'll need to export your project.`
     );
 
-    console.log('[Resize] FFmpeg complete - output:', outputW, 'x', outputH);
+    console.log('[Resize] FFmpeg resize complete!');
 
   } catch (error) {
     console.error('[Resize] FFmpeg failed:', error);
@@ -762,9 +814,9 @@ async function resizeWithFFmpeg(currentW, currentH, targetW, targetH, selectedRa
     }
     
     alert(
-      `Resize failed!\n\n` +
+      `Resize Failed!\n\n` +
       `Error: ${error.message}\n\n` +
-      `Falling back to CSS preview.`
+      `Falling back to CSS preview...`
     );
     
     // Fallback to CSS
@@ -779,6 +831,18 @@ if (resizeMediaBtn) {
   resizeMediaBtn.addEventListener("click", resizeVideoToAspect);
 }
 
+// Reset video transform when aspect ratio changes
+aspectSelect.addEventListener("change", (e) => {
+  snapshot();
+  project.aspectRatio = e.target.value;
+  setAspect(project.aspectRatio);
+  
+  // Reset video transform
+  if (previewVideo) {
+    previewVideo.style.transform = '';
+    previewVideo.style.objectFit = 'contain';
+  }
+});
 // ========================================
 // PROJECT TITLE
 // ========================================
@@ -1476,6 +1540,7 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded (v8.0.0)');
+
 
 
 
