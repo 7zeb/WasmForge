@@ -1161,7 +1161,7 @@ function showAboutDialog() {
     "Version 8.0.0\n\n" +
     `Current Mode: ${mode}\n` +
     `FFmpeg: ${wasmStatus.ffmpegLoaded ? 'Active' : 'Not Loaded'}\n\n` +
-    "Created by 7zeb\n" +
+    "Created by 7Zeb\n" +
     "Powered by FFmpeg.wasm\n\n" +
     "MIT License\n" +
     "© 2026"
@@ -1476,6 +1476,7 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[WasmForge] Module loaded (v8.0.0)');
+
 
 
 
