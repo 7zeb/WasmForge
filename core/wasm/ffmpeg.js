@@ -1,6 +1,6 @@
 // ========================================
 // WASMFORGE v8-beta - FFmpeg WASM Integration
-// Multi-CDN with extensive debugging
+// Fixed state synchronization
 // ========================================
 
 class FFmpegManager {
@@ -36,7 +36,6 @@ class FFmpegManager {
 
     this.log('Starting module load...');
 
-    // Strategy 1: Try ES modules from unpkg (most reliable)
     const strategies = [
       {
         name: 'unpkg-esm',
@@ -161,6 +160,7 @@ class FFmpegManager {
     }
 
     this.loading = true;
+    this.loaded = false; // Explicitly set to false
     this.log('==== Starting FFmpeg Load ====');
 
     try {
@@ -176,6 +176,10 @@ class FFmpegManager {
       // Step 2: Create FFmpeg instance
       this.log('Step 2: Creating FFmpeg instance...');
       this.ffmpeg = new this.FFmpegClass();
+      
+      if (!this.ffmpeg) {
+        throw new Error('FFmpeg instance is null');
+      }
       this.log('✓ FFmpeg instance created');
 
       // Step 3: Set up event listeners
@@ -243,13 +247,22 @@ class FFmpegManager {
         throw new Error('Failed to load FFmpeg core from any CDN');
       }
 
+      // Step 5: Verify FFmpeg is actually ready
+      this.log('Step 5: Verifying FFmpeg is ready...');
+      if (!this.ffmpeg || typeof this.ffmpeg.exec !== 'function') {
+        throw new Error('FFmpeg loaded but exec method not available');
+      }
+      this.log('✓ FFmpeg verified and ready');
+
+      // NOW set loaded to true
       this.loaded = true;
       this.loading = false;
       
       this.log('==== FFmpeg Load Complete ====');
-      this.log('Status:', {
+      this.log('Final status:', {
         loaded: this.loaded,
         hasFFmpeg: !!this.ffmpeg,
+        hasExec: !!(this.ffmpeg && this.ffmpeg.exec),
         attempts: this.loadAttempts.length
       });
 
@@ -261,7 +274,10 @@ class FFmpegManager {
       this.log('❌ Load FAILED:', error);
       this.log('Error stack:', error.stack);
       
+      this.loaded = false;
       this.loading = false;
+      this.ffmpeg = null; // Clear the instance
+      
       this.onLoadCallbacks.forEach(cb => cb(false));
       this.onLoadCallbacks = [];
       
@@ -271,7 +287,10 @@ class FFmpegManager {
 
   // Extract frame from video at specific time
   async extractFrame(videoFile, timeInSeconds = 0) {
-    if (!await this.load()) return null;
+    if (!this.isLoaded()) {
+      this.log('Cannot extract frame - FFmpeg not loaded');
+      return null;
+    }
 
     const inputFileName = 'input_video';
     const outputFileName = 'output_frame.jpg';
@@ -302,7 +321,10 @@ class FFmpegManager {
 
   // Generate thumbnail with specific dimensions
   async generateThumbnail(videoFile, width = 160, height = 90, timeInSeconds = 1) {
-    if (!await this.load()) return null;
+    if (!this.isLoaded()) {
+      this.log('Cannot generate thumbnail - FFmpeg not loaded');
+      return null;
+    }
 
     const inputFileName = 'input_video';
     const outputFileName = 'thumbnail.jpg';
@@ -334,7 +356,10 @@ class FFmpegManager {
 
   // Trim video
   async trimVideo(videoFile, startTime, endTime, outputFormat = 'mp4') {
-    if (!await this.load()) return null;
+    if (!this.isLoaded()) {
+      this.log('Cannot trim video - FFmpeg not loaded');
+      return null;
+    }
 
     const inputFileName = 'input_video';
     const outputFileName = `output.${outputFormat}`;
@@ -367,7 +392,10 @@ class FFmpegManager {
 
   // Crop/Resize video
   async cropVideo(videoFile, width, height, x = 0, y = 0) {
-    if (!await this.load()) return null;
+    if (!this.isLoaded()) {
+      this.log('Cannot crop video - FFmpeg not loaded');
+      return null;
+    }
 
     const inputFileName = 'input_video';
     const outputFileName = 'output.mp4';
@@ -422,9 +450,18 @@ class FFmpegManager {
     this.onProgressCallbacks.forEach(cb => cb(progress, time));
   }
 
-  // Check if loaded
+  // Check if loaded - STRICT CHECK
   isLoaded() {
-    return this.loaded;
+    const isActuallyLoaded = this.loaded && 
+                            this.ffmpeg !== null && 
+                            typeof this.ffmpeg.exec === 'function';
+    
+    if (!isActuallyLoaded && this.loaded) {
+      this.log('WARNING: loaded flag is true but FFmpeg is not actually ready!');
+      this.loaded = false; // Fix the inconsistency
+    }
+    
+    return isActuallyLoaded;
   }
 
   // Get load progress
@@ -440,6 +477,8 @@ class FFmpegManager {
       hasFFmpeg: !!this.ffmpeg,
       hasFFmpegClass: !!this.FFmpegClass,
       hasToBlobURL: !!this.toBlobURL,
+      hasExec: !!(this.ffmpeg && this.ffmpeg.exec),
+      isActuallyReady: this.isLoaded(),
       loadAttempts: this.loadAttempts
     };
   }
