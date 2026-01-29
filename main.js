@@ -1,5 +1,5 @@
 // ========================================
-// WASMFORGE - VIDEO EDITOR v7.0.0
+// WASMFORGE - VIDEO EDITOR v8.0.0
 // Main Application Entry Point
 // ========================================
 
@@ -206,7 +206,7 @@ function showStatusDetails() {
                    'Basic (Core Features Only)';
 
   alert(
-    `WasmForge Status - Version 7.0.0\n\n` +
+    `WasmForge Status - Version 8.0.0\n\n` +
     `Mode: ${modeText}\n` +
     `FFmpeg WASM: ${wasmStatus.ffmpegLoaded ? 'Loaded ✓' : wasmStatus.mode === 'loading' ? 'Loading...' : 'Not Available ✗'}\n\n` +
     `Features:\n${features.join('\n')}\n\n` +
@@ -314,7 +314,7 @@ function initDarkMode() {
 
 // Initialize application
 async function init() {
-  console.log('[WasmForge] Initializing version 7.0.0...');
+  console.log('[WasmForge] Initializing version 8.0.0...');
   
   initIcons();
   initTimeline(tracksContainer);
@@ -1146,7 +1146,7 @@ helpMenu.addEventListener("click", (e) => {
       showAboutDialog();
       break;
     case "github":
-      window.open("https://github.com/7zeb/WasmForge", "_blank");
+      window.open("https://github.com/8zeb/WasmForge", "_blank");
       break;
   }
 });
@@ -1158,10 +1158,10 @@ function showAboutDialog() {
   
   alert(
     "WasmForge - Open Source Video Editor\n" +
-    "Version 7.0.0\n\n" +
+    "Version 8.0.0\n\n" +
     `Current Mode: ${mode}\n` +
     `FFmpeg: ${wasmStatus.ffmpegLoaded ? 'Active' : 'Not Loaded'}\n\n` +
-    "Created by 7Zeb\n" +
+    "Created by 8Zeb\n" +
     "Powered by FFmpeg.wasm\n\n" +
     "MIT License\n" +
     "© 2026"
@@ -1475,6 +1475,7 @@ if (document.readyState === 'loading') {
   init();
 }
 
-console.log('[WasmForge] Module loaded (v7.0.0)');
+console.log('[WasmForge] Module loaded (v8.0.0)');
+
 
 
