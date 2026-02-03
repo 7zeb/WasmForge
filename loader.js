@@ -11,8 +11,8 @@
     './core/timeline.js',
     './core/media.js',
     './core/assets/icons/icons.js',
-    './core/wasm/preview.js',
     './core/wasm/ffmpeg.js',
+    './core/wasm/preview.js',
     './main.js',
   ];
 
@@ -43,6 +43,13 @@
     loadScript(scripts[index], () => loadNext(index + 1));
   }
 
-  // Start loading scripts
-  loadNext(0);
+  function startLoading() {
+    loadNext(0);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startLoading);
+  } else {
+    startLoading();
+  }
 })();
