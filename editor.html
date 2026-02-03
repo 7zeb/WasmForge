@@ -6,6 +6,39 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <meta name="theme-color" content="#1a1a2e">
+
+  <script>
+    // Detect OS or environment and load the appropriate script
+    (function detectEnvironmentAndLoad() {
+      function detectEnvironment() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+        if (userAgent.includes('CrOS')) return 'ChromeOS';
+        if (navigator.appVersion.indexOf('Mac') !== -1) return 'MacOS';
+        if (navigator.appVersion.indexOf('Win') !== -1) return 'Windows';
+        if (navigator.appVersion.indexOf('Linux') !== -1) return 'Linux';
+
+        return 'Unknown';
+      }
+
+      const environment = detectEnvironment();
+      console.log('[WasmForge] Detected environment:', environment);
+
+      if (environment === 'ChromeOS') {
+        console.log('[WasmForge] Using ChromeOS-compatible loader...');
+        const loader = document.createElement('script');
+        loader.src = './loader.js'; // Sequential loader for ChromeOS
+        loader.type = 'text/javascript';
+        document.head.appendChild(loader);
+      } else {
+        console.log('[WasmForge] Using modern module loader...');
+        const moduleLoader = document.createElement('script');
+        moduleLoader.src = './main-bundle.js'; // Modern ES6 module version
+        moduleLoader.type = 'module';
+        document.head.appendChild(moduleLoader);
+      }
+    })();
+  </script>
 </head>
 
 <body>
@@ -390,6 +423,7 @@
   <script type="module" src="./main.js"></script>
 </body>
 </html>
+
 
 
 
