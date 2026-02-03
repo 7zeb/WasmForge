@@ -1,6 +1,6 @@
 // ========================================
 // WASMFORGE v8-beta - FFmpeg WASM Integration
-// Single-threaded, LOCAL FILES FIRST (GitHub Pages optimized)
+// ALL FILES HOSTED LOCALLY on GitHub Pages
 // ========================================
 
 class FFmpegManager {
@@ -26,20 +26,52 @@ class FFmpegManager {
     }
   }
 
-  // Load FFmpeg modules (UMD from CDN)
+  // Load FFmpeg modules from LOCAL files or CDN fallback
   async loadModules() {
     if (this.FFmpegClass && this.toBlobURL) {
       this.log('Modules already loaded');
       return true;
     }
 
-    this.log('Starting module load (single-threaded UMD mode)...');
+    this.log('Starting module load (local files first)...');
 
     const strategies = [
       {
-        name: 'unpkg-umd',
+        name: 'github-pages-local',
         load: async () => {
-          this.log('Trying unpkg UMD...');
+          this.log('Trying local GitHub Pages files...');
+          
+          // Load from YOUR hosted files
+          const ffmpegModule = await import('https://7zeb.github.io/WasmForge/wasm/ffmpeg/ffmpeg.min.js');
+          const utilModule = await import('https://7zeb.github.io/WasmForge/wasm/ffmpeg/util.min.js');
+
+          this.FFmpegClass = 
+            ffmpegModule.FFmpeg || 
+            ffmpegModule.default?.FFmpeg ||
+            ffmpegModule.default ||
+            window.FFmpeg;
+
+          this.toBlobURL = 
+            utilModule.toBlobURL ||
+            utilModule.default?.toBlobURL ||
+            utilModule.default ||
+            window.toBlobURL;
+
+          this.fetchFile = 
+            utilModule.fetchFile ||
+            utilModule.default?.fetchFile ||
+            window.fetchFile;
+
+          this.log('Local files loaded', {
+            hasFFmpegClass: !!this.FFmpegClass,
+            hasToBlobURL: !!this.toBlobURL
+          });
+        }
+      },
+      {
+        name: 'unpkg-fallback',
+        load: async () => {
+          this.log('Trying unpkg fallback...');
           
           const ffmpegModule = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
           const utilModule = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
@@ -48,32 +80,26 @@ class FFmpegManager {
             ffmpegModule.FFmpeg || 
             ffmpegModule.default?.FFmpeg ||
             ffmpegModule.default ||
-            window.FFmpeg ||
-            window.FFmpegWASM?.FFmpeg;
+            window.FFmpeg;
 
           this.toBlobURL = 
             utilModule.toBlobURL ||
             utilModule.default?.toBlobURL ||
             utilModule.default ||
-            window.FFmpegUtil?.toBlobURL ||
             window.toBlobURL;
 
           this.fetchFile = 
             utilModule.fetchFile ||
             utilModule.default?.fetchFile ||
-            window.FFmpegUtil?.fetchFile ||
             window.fetchFile;
 
-          this.log('unpkg UMD loaded', {
-            hasFFmpegClass: !!this.FFmpegClass,
-            hasToBlobURL: !!this.toBlobURL
-          });
+          this.log('unpkg fallback loaded');
         }
       },
       {
-        name: 'jsdelivr-umd',
+        name: 'jsdelivr-fallback',
         load: async () => {
-          this.log('Trying jsdelivr UMD...');
+          this.log('Trying jsdelivr fallback...');
           
           const ffmpegModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
           const utilModule = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js');
@@ -82,23 +108,20 @@ class FFmpegManager {
             ffmpegModule.FFmpeg || 
             ffmpegModule.default?.FFmpeg ||
             ffmpegModule.default ||
-            window.FFmpeg ||
-            window.FFmpegWASM?.FFmpeg;
+            window.FFmpeg;
 
           this.toBlobURL = 
             utilModule.toBlobURL ||
             utilModule.default?.toBlobURL ||
             utilModule.default ||
-            window.FFmpegUtil?.toBlobURL ||
             window.toBlobURL;
 
           this.fetchFile = 
             utilModule.fetchFile ||
             utilModule.default?.fetchFile ||
-            window.FFmpegUtil?.fetchFile ||
             window.fetchFile;
 
-          this.log('jsdelivr UMD loaded');
+          this.log('jsdelivr fallback loaded');
         }
       }
     ];
@@ -134,7 +157,6 @@ class FFmpegManager {
     return false;
   }
 
-  // Create blob URL from fetch
   async createBlobURL(url, mimeType) {
     this.log(`Creating blob URL: ${url}`);
     try {
@@ -152,7 +174,6 @@ class FFmpegManager {
     }
   }
 
-  // Load FFmpeg WASM (LOCAL FILES FIRST!)
   async load() {
     if (this.loaded) {
       this.log('Already loaded');
@@ -168,7 +189,7 @@ class FFmpegManager {
 
     this.loading = true;
     this.loaded = false;
-    this.log('==== Starting FFmpeg Load (Single-Threaded, Local Files) ====');
+    this.log('==== Starting FFmpeg Load (Single-Threaded, All Local Files) ====');
 
     try {
       // Step 1: Load modules
@@ -176,7 +197,7 @@ class FFmpegManager {
       const modulesLoaded = await this.loadModules();
 
       if (!modulesLoaded) {
-        throw new Error('Failed to load FFmpeg modules from any CDN');
+        throw new Error('Failed to load FFmpeg modules from local or CDN');
       }
       this.log('✓ Modules loaded successfully');
 
@@ -201,13 +222,13 @@ class FFmpegManager {
       });
       this.log('✓ Event listeners set up');
 
-      // Step 4: Load core files - YOUR GITHUB PAGES URL FIRST!
+      // Step 4: Load core files - LOCAL FIRST
       this.log('Step 4: Loading FFmpeg core files...');
 
       const coreStrategies = [
         {
           name: 'github-pages-local',
-          baseURL: 'https://7zeb.github.io/WasmForge/wasm/ffmpeg'  // YOUR LOCAL FILES!
+          baseURL: 'https://7zeb.github.io/WasmForge/wasm/ffmpeg'
         },
         {
           name: 'unpkg-fallback',
@@ -239,11 +260,10 @@ class FFmpegManager {
           await this.ffmpeg.load({
             coreURL,
             wasmURL
-            // NO workerURL – single-threaded only
           });
 
           coreLoaded = true;
-          this.log(`✓ Core loaded successfully from ${coreStrategy.name} (SINGLE-THREADED)`);
+          this.log(`✓ Core loaded successfully from ${coreStrategy.name}`);
           break;
         } catch (error) {
           this.log(`✗ Core load failed from ${coreStrategy.name}: ${error.message}`);
@@ -266,7 +286,7 @@ class FFmpegManager {
       this.loading = false;
 
       this.log('==== FFmpeg Load Complete ====');
-      this.log('✓ Running in single-threaded mode (GitHub Pages compatible)');
+      this.log('✓ Running in single-threaded mode (all files local)');
       this.log('Final status:', {
         loaded: this.loaded,
         hasFFmpeg: !!this.ffmpeg,
@@ -291,6 +311,8 @@ class FFmpegManager {
       return false;
     }
   }
+
+  // ... (keep all other methods the same: extractFrame, generateThumbnail, etc.)
 
   async extractFrame(videoFile, timeInSeconds = 0) {
     if (!this.isLoaded()) {
@@ -468,7 +490,7 @@ class FFmpegManager {
 
   getDebugInfo() {
     return {
-      mode: 'single-threaded (GitHub Pages local files)',
+      mode: 'single-threaded (all files local on GitHub Pages)',
       loaded: this.loaded,
       loading: this.loading,
       hasFFmpeg: !!this.ffmpeg,
