@@ -1,6 +1,6 @@
 // ========================================
 // WASMFORGE v8.0.0 - Legacy Script Tag Loader
-// ChromeOS-Compatible
+// ChromeOS-Compatible (ES Module Support)
 // ========================================
 
 (function loadScriptsSequentially() {
@@ -21,7 +21,7 @@
   function loadScript(src, callback) {
     const script = document.createElement('script');
     script.src = src;
-    script.type = 'text/javascript';
+    script.type = 'module'; // ✅ Changed to 'module' to support ES6 export/import
     script.onload = () => {
       loadedCount++;
       console.log(`[WasmForge] Loaded ${loadedCount}/${scripts.length}: ${src}`);
