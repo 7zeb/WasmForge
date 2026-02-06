@@ -27,14 +27,28 @@
       if (environment === 'ChromeOS') {
         console.log('[WasmForge] Using ChromeOS-compatible loader...');
         const loader = document.createElement('script');
-        loader.src = './loader.js'; // Sequential loader for ChromeOS
+        loader.src = './loader.js';
         loader.type = 'text/javascript';
+        loader.onerror = () => {
+          console.error('[WasmForge] Loader failed, falling back to direct module load');
+          const fallback = document.createElement('script');
+          fallback.src = './main.js';
+          fallback.type = 'module';
+          document.head.appendChild(fallback);
+        };
         document.head.appendChild(loader);
       } else {
         console.log('[WasmForge] Using modern module loader...');
         const moduleLoader = document.createElement('script');
-        moduleLoader.src = './main-bundle.js'; // Modern ES6 module version
+        moduleLoader.src = './main-bundle.js';
         moduleLoader.type = 'module';
+        moduleLoader.onerror = () => {
+          console.error('[WasmForge] Bundle failed, falling back to direct module load');
+          const fallback = document.createElement('script');
+          fallback.src = './main.js';
+          fallback.type = 'module';
+          document.head.appendChild(fallback);
+        };
         document.head.appendChild(moduleLoader);
       }
     })();
