@@ -25,12 +25,13 @@ class FFmpegManager {
       
       this.FFmpegClass = ffmpegModule.FFmpeg;
       this.toBlobURL = utilModule.toBlobURL;
-      this.fetchFile = utilModule.fetchFile; //never used in the code (might be removed)
+      this.fetchFile = utilModule.fetchFile;
       
       console.log('[FFmpeg] Modules loaded successfully');
       return true;
     } catch (error) {
       console.error('[FFmpeg] Failed to load modules:', error);
+      console.error('[FFmpeg] Make sure your environment supports dynamic imports from CDN URLs');
       return false;
     }
   }
@@ -68,9 +69,11 @@ class FFmpegManager {
       // Use jsDelivr CDN for core files
       const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
       
+      // Load all required files including worker
       await this.ffmpeg.load({
         coreURL: await this.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
         wasmURL: await this.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        workerURL: await this.toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
       });
 
       this.loaded = true;
@@ -110,13 +113,16 @@ class FFmpegManager {
 
       const data = await this.ffmpeg.readFile(outputFileName);
       
-      await this.ffmpeg.deleteFile(inputFileName);
-      await this.ffmpeg.deleteFile(outputFileName);
+      // Cleanup
+      await this.cleanup([inputFileName, outputFileName]);
 
-      const blob = new Blob([data.buffer], { type: 'image/jpeg' });
+      // Fixed: Use data directly, not data.buffer
+      const blob = new Blob([data], { type: 'image/jpeg' });
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('[FFmpeg] Extract frame failed:', error);
+      // Cleanup on error
+      await this.cleanup([inputFileName, outputFileName]);
       return null;
     }
   }
@@ -142,13 +148,16 @@ class FFmpegManager {
 
       const data = await this.ffmpeg.readFile(outputFileName);
       
-      await this.ffmpeg.deleteFile(inputFileName);
-      await this.ffmpeg.deleteFile(outputFileName);
+      // Cleanup
+      await this.cleanup([inputFileName, outputFileName]);
 
-      const blob = new Blob([data.buffer], { type: 'image/jpeg' });
+      // Fixed: Use data directly, not data.buffer
+      const blob = new Blob([data], { type: 'image/jpeg' });
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('[FFmpeg] Generate thumbnail failed:', error);
+      // Cleanup on error
+      await this.cleanup([inputFileName, outputFileName]);
       return null;
     }
   }
@@ -175,14 +184,31 @@ class FFmpegManager {
 
       const data = await this.ffmpeg.readFile(outputFileName);
       
-      await this.ffmpeg.deleteFile(inputFileName);
-      await this.ffmpeg.deleteFile(outputFileName);
+      // Cleanup
+      await this.cleanup([inputFileName, outputFileName]);
 
-      const blob = new Blob([data.buffer], { type: `video/${outputFormat}` });
+      // Fixed: Use data directly, not data.buffer
+      const blob = new Blob([data], { type: `video/${outputFormat}` });
       return blob;
     } catch (error) {
       console.error('[FFmpeg] Trim video failed:', error);
+      // Cleanup on error
+      await this.cleanup([inputFileName, outputFileName]);
       return null;
+    }
+  }
+
+  // Helper to safely cleanup files
+  async cleanup(fileNames) {
+    if (!this.ffmpeg) return;
+    
+    for (const fileName of fileNames) {
+      try {
+        // Check if file exists before deleting (ffmpeg 0.12+ doesn't have listDir)
+        await this.ffmpeg.deleteFile(fileName);
+      } catch (error) {
+        // File might not exist, ignore error
+      }
     }
   }
 
@@ -192,6 +218,9 @@ class FFmpegManager {
       return new Uint8Array(await file.arrayBuffer());
     } else if (typeof file === 'string') {
       const response = await fetch(file);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
       return new Uint8Array(await response.arrayBuffer());
     }
     throw new Error('Invalid file type');
