@@ -2,94 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WasmForge v8-Beta</title>
-  <link rel="stylesheet" href="./style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WasmForge v9 - Editor</title>
+  <link rel="stylesheet" href="./css/reset.css">
+  <link rel="stylesheet" href="./css/variables.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-  <meta name="theme-color" content="#1a1a2e">
-
-  <script>
-    // Detect OS or environment and load the appropriate script
-    (function detectEnvironmentAndLoad() {
-      function detectEnvironment() {
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-        if (userAgent.includes('CrOS')) return 'ChromeOS';
-        if (navigator.appVersion.indexOf('Mac') !== -1) return 'MacOS';
-        if (navigator.appVersion.indexOf('Win') !== -1) return 'Windows';
-        if (navigator.appVersion.indexOf('Linux') !== -1) return 'Linux';
-
-        return 'Unknown';
-      }
-
-      const environment = detectEnvironment();
-      console.log('[WasmForge] Detected environment:', environment);
-
-      if (environment === 'ChromeOS') {
-        console.log('[WasmForge] Using ChromeOS-compatible loader...');
-        const loader = document.createElement('script');
-        loader.src = './loader.js';
-        loader.type = 'text/javascript';
-        loader.onerror = () => {
-          console.error('[WasmForge] Loader failed, falling back to direct module load');
-          const fallback = document.createElement('script');
-          fallback.src = './main.js';
-          fallback.type = 'module';
-          document.head.appendChild(fallback);
-        };
-        document.head.appendChild(loader);
-      } else {
-        console.log('[WasmForge] Using modern module loader...');
-        const moduleLoader = document.createElement('script');
-        moduleLoader.src = './main-bundle.js';
-        moduleLoader.type = 'module';
-        moduleLoader.onerror = () => {
-          console.error('[WasmForge] Bundle failed, falling back to direct module load');
-          const fallback = document.createElement('script');
-          fallback.src = './main.js';
-          fallback.type = 'module';
-          document.head.appendChild(fallback);
-        };
-        document.head.appendChild(moduleLoader);
-      }
-    })();
-  </script>
 </head>
-
 <body>
 
-  <!-- TOP MENU BAR -->
-  <div id="top-menu">
-    <div class="menu-left">
-      <span id="app-logo">⚡</span>
-      <span id="app-title">WasmForge <i>v8</i></span>
-      <div class="menu-items">
-        <button id="file-button">File</button>
-        <button id="edit-button">Edit</button>
-        <button id="view-button">View</button>
-        <button id="help-button">Help</button>
+  <!-- Top Menu Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="app-logo">⚡</div>
+      <div class="app-title">WasmForge <span class="version">v9</span></div>
+      <nav class="menu">
+        <button class="menu-item" data-menu="file">File</button>
+        <button class="menu-item" data-menu="edit">Edit</button>
+        <button class="menu-item" data-menu="view">View</button>
+        <button class="menu-item" data-menu="help">Help</button>
+      </nav>
+    </div>
+    
+    <div class="topbar-center">
+      <input type="text" class="project-name" value="Untitled Project" spellcheck="false">
+    </div>
+    
+    <div class="topbar-right">
+      <button class="topbar-button" id="theme-toggle" title="Toggle Theme">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <div class="status-indicator" id="ffmpeg-status">
+        <span class="status-dot"></span>
+        <span class="status-text">Loading...</span>
       </div>
     </div>
+  </header>
 
-    <div class="menu-center">
-      <input type="text" id="project-title-input" value="Untitled Project" spellcheck="false">
-    </div>
-
-    <div class="menu-right">
-      <button id="dark-mode-toggle" title="Toggle Theme">
-        <span class="icon" data-icon="darkMode"></span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Hidden file inputs -->
-  <input type="file" id="load-file-input" accept=".wasmforge,.json" hidden>
-  <input type="file" id="file-input" multiple accept="video/*,audio/*,image/*" hidden>
-
-  <!-- MAIN EDITOR LAYOUT -->
-  <div id="editor">
-
-    <!-- LEFT PANEL: Media Browser -->
-    <aside id="media-panel">
+  <!-- Main Editor Layout -->
+  <div class="editor-layout">
+    
+    <!-- Left Sidebar - Media Pool -->
+    <aside class="sidebar sidebar-left">
       <div class="panel-header">
         <div class="panel-tabs">
           <button class="panel-tab active" data-tab="media">Media</button>
@@ -98,116 +63,188 @@
       </div>
       
       <div class="panel-content">
-        <div id="media-tab" class="tab-content active">
-          <div id="import-area">
-            <label id="file-picker-label">
-              <span class="import-icon" data-icon="folderOpen"></span>
-              <span class="import-text">Import Media</span>
-              <span class="import-hint">or drag & drop files here</span>
-            </label>
+        <!-- Media Tab -->
+        <div class="tab-pane active" id="media-tab">
+          <div class="import-zone" id="import-zone">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p>Import Media</p>
+            <span>Drag & drop or click to browse</span>
           </div>
-          <div id="media-list"></div>
+          <div class="media-grid" id="media-grid">
+            <!-- Media items will be inserted here -->
+          </div>
         </div>
         
-        <div id="effects-tab" class="tab-content">
-          <div class="effects-grid">
-            <div class="effect-item" data-effect="fade-in">Fade In</div>
-            <div class="effect-item" data-effect="fade-out">Fade Out</div>
-            <div class="effect-item" data-effect="blur">Blur</div>
-            <div class="effect-item" data-effect="grayscale">Grayscale</div>
+        <!-- Effects Tab -->
+        <div class="tab-pane" id="effects-tab">
+          <div class="effects-list">
+            <div class="effect-item">Fade In</div>
+            <div class="effect-item">Fade Out</div>
+            <div class="effect-item">Blur</div>
+            <div class="effect-item">Brightness</div>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- CENTER: Preview Monitor -->
-    <main id="preview-section">
-      <div class="panel-header">
-        <span class="panel-title">Preview</span>
-        <div class="preview-controls-top">
-          <button id="resize-media-btn" class="resize-btn" title="Resize video to match aspect ratio">
-            <span data-icon="zoomIn"></span> Resize Media
-          </button>
-          <select id="aspect-select" title="Aspect Ratio">
-            <option value="16:9">16:9</option>
-            <option value="9:16">9:16</option>
-            <option value="1:1">1:1</option>
-            <option value="4:5">4:5</option>
-            <option value="21:9">21:9</option>
-          </select>
+    <!-- Center - Preview Monitor -->
+    <main class="main-content">
+      <div class="preview-section">
+        <div class="preview-header">
+          <span class="preview-title">Preview</span>
+          <div class="preview-controls">
+            <select class="aspect-ratio-select" id="aspect-ratio">
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16</option>
+              <option value="1:1">1:1</option>
+              <option value="4:5">4:5</option>
+            </select>
+          </div>
         </div>
-      </div>
-      
-      <div id="preview-wrapper">
-        <div id="preview-container">
-          <video id="preview-video"></video>
-          <div id="preview-placeholder">
-            <span class="placeholder-icon" data-icon="video"></span>
-            <span>Import media to get started</span>
+        
+        <div class="preview-monitor">
+          <div class="preview-container" id="preview-container">
+            <video id="preview-video"></video>
+            <div class="preview-placeholder" id="preview-placeholder">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <p>Import media to start editing</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transport Controls -->
+        <div class="transport-bar">
+          <div class="transport-left">
+            <span class="timecode" id="current-time">00:00:00:00</span>
+          </div>
+          
+          <div class="transport-center">
+            <button class="transport-btn" id="btn-start" title="Go to Start">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 4h2v16H6V4zm4 0l10 8-10 8V4z"/>
+              </svg>
+            </button>
+            <button class="transport-btn" id="btn-prev" title="Previous Frame">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+              </svg>
+            </button>
+            <button class="transport-btn transport-btn-play" id="btn-play" title="Play/Pause">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+            <button class="transport-btn" id="btn-next" title="Next Frame">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+              </svg>
+            </button>
+            <button class="transport-btn" id="btn-end" title="Go to End">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 4v16h2V4h-2zM6 4v16l10-8z"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="transport-right">
+            <span class="timecode" id="total-time">00:00:00:00</span>
           </div>
         </div>
       </div>
 
-      <!-- Transport Controls -->
-      <div id="transport-controls">
-        <div class="transport-left">
-          <span id="current-time">00:00:00</span>
+      <!-- Timeline Section -->
+      <div class="timeline-section">
+        <div class="timeline-toolbar">
+          <div class="toolbar-left">
+            <button class="toolbar-btn active" id="tool-select" title="Select Tool (V)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 3h2l10 17-5-7-7 4V3z"/>
+              </svg>
+            </button>
+            <button class="toolbar-btn" id="tool-razor" title="Razor Tool (C)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="6" cy="6" r="3"/>
+                <circle cx="18" cy="18" r="3"/>
+                <line x1="8" y1="8" x2="16" y2="16"/>
+              </svg>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn" id="btn-undo" title="Undo">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 7v6h6"/>
+                <path d="M21 17a9 9 0 00-9-9 9 9 0 00-9 9"/>
+              </svg>
+            </button>
+            <button class="toolbar-btn" id="btn-redo" title="Redo">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 7v6h-6"/>
+                <path d="M3 17a9 9 0 019-9 9 9 0 019 9"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="toolbar-right">
+            <button class="toolbar-btn" id="btn-zoom-out">-</button>
+            <input type="range" class="zoom-slider" id="zoom-slider" min="20" max="200" value="100">
+            <button class="toolbar-btn" id="btn-zoom-in">+</button>
+            <span class="zoom-level" id="zoom-level">100%</span>
+          </div>
         </div>
-        
-        <div class="transport-center">
-          <button id="btn-start" title="Go to Start" data-icon="skipBack"></button>
-          <button id="btn-prev-frame" title="Previous Frame" data-icon="previous"></button>
-          <button id="btn-play" title="Play/Pause" data-icon="play"></button>
-          <button id="btn-next-frame" title="Next Frame" data-icon="next"></button>
-          <button id="btn-end" title="Go to End" data-icon="skipForward"></button>
-        </div>
-        
-        <div class="transport-right">
-          <span id="total-time">00:00:00</span>
+
+        <div class="timeline-container" id="timeline-container">
+          <div class="timeline-ruler" id="timeline-ruler"></div>
+          <div class="timeline-tracks" id="timeline-tracks">
+            <!-- Tracks will be generated here -->
+          </div>
+          <div class="timeline-playhead" id="playhead">
+            <div class="playhead-handle"></div>
+            <div class="playhead-line"></div>
+          </div>
         </div>
       </div>
     </main>
 
-    <!-- RIGHT PANEL: Inspector -->
-    <aside id="inspector-panel">
+    <!-- Right Sidebar - Inspector -->
+    <aside class="sidebar sidebar-right">
       <div class="panel-header">
         <span class="panel-title">Inspector</span>
       </div>
       
       <div class="panel-content">
-        <div id="no-selection" class="inspector-placeholder">
-          <span class="placeholder-icon" data-icon="cursor"></span>
-          <span>Select a clip to view properties</span>
+        <div class="inspector-empty" id="inspector-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3h2l10 17-5-7-7 4V3z"/>
+          </svg>
+          <p>Select a clip to edit</p>
         </div>
         
-        <div id="clip-properties" style="display: none;">
+        <div class="inspector-properties" id="inspector-properties" style="display: none;">
           <div class="property-group">
-            <div class="property-group-header">Transform</div>
+            <div class="property-label">Transform</div>
             <div class="property-row">
               <label>Scale</label>
               <input type="range" id="prop-scale" min="10" max="200" value="100">
-              <span class="range-value" id="scale-value">100%</span>
+              <span class="property-value" id="scale-value">100%</span>
             </div>
             <div class="property-row">
               <label>Opacity</label>
               <input type="range" id="prop-opacity" min="0" max="100" value="100">
-              <span class="range-value" id="opacity-value">100%</span>
+              <span class="property-value" id="opacity-value">100%</span>
             </div>
           </div>
           
           <div class="property-group">
-            <div class="property-group-header">Speed</div>
+            <div class="property-label">Audio</div>
             <div class="property-row">
-              <input type="range" id="prop-speed" min="25" max="400" value="100">
-              <span class="range-value" id="speed-value">1.0x</span>
-            </div>
-          </div>
-          
-          <div class="property-group">
-            <div class="property-group-header">Volume</div>
-            <div class="property-row">
+              <label>Volume</label>
               <input type="range" id="prop-volume" min="0" max="200" value="100">
-              <span class="range-value" id="volume-value">100%</span>
+              <span class="property-value" id="volume-value">100%</span>
             </div>
           </div>
         </div>
@@ -216,223 +253,21 @@
 
   </div>
 
-  <!-- TIMELINE SECTION -->
-  <div id="timeline-section">
-    
-    <!-- Timeline Toolbar -->
-    <div id="timeline-toolbar">
-      <div class="toolbar-left">
-        <button id="tool-select" class="tool-btn active" title="Select Tool (V)" data-icon="cursor"></button>
-        <button id="tool-razor" class="tool-btn" title="Razor Tool (C)" data-icon="scissors"></button>
-        <div class="toolbar-divider"></div>
-        <button id="btn-undo" title="Undo (Ctrl+Z)" data-icon="undo"></button>
-        <button id="btn-redo" title="Redo (Ctrl+Y)" data-icon="redo"></button>
-        <div class="toolbar-divider"></div>
-        <button id="btn-delete" title="Delete Selected" data-icon="delete"></button>
-      </div>
-      
-      <div class="toolbar-center">
-        <button id="btn-snap" class="toggle-btn active" title="Snapping">
-          <span data-icon="magnet"></span> Snap
-        </button>
-      </div>
-      
-      <div class="toolbar-right">
-        <button id="btn-zoom-out" title="Zoom Out" data-icon="subtract"></button>
-        <input type="range" id="timeline-zoom" min="20" max="200" value="100">
-        <button id="btn-zoom-in" title="Zoom In" data-icon="add"></button>
-        <span id="zoom-level">100%</span>
-      </div>
-    </div>
+  <!-- Hidden file input -->
+  <input type="file" id="file-input" multiple accept="video/*,audio/*,image/*" hidden>
 
-    <!-- Timeline Tracks Area -->
-    <div id="timeline-wrapper">
-      
-      <!-- Track Headers -->
-      <div id="track-headers">
-        <!-- Tracks will be dynamically rendered here -->
-      </div>
-
-      <!-- Timeline Content -->
-      <div id="timeline-area">
-        <!-- Time Ruler -->
-        <div id="time-ruler"></div>
-        
-        <!-- Playhead -->
-        <div id="playhead">
-          <div id="playhead-handle"></div>
-          <div id="playhead-line"></div>
-        </div>
-        
-        <!-- Tracks -->
-        <div id="tracks-container">
-          <!-- Tracks will be dynamically rendered here -->
-        </div>
-      </div>
-      
-    </div>
-  </div>
-
-  <!-- Dropdown Menus -->
-  <div id="file-menu" class="dropdown-menu">
-    <button data-action="new">
-      <span class="menu-icon" data-icon="documentAdd"></span> 
-      New Project 
-      <span class="shortcut">Ctrl+N</span>
-    </button>
-    <button data-action="open">
-      <span class="menu-icon" data-icon="folderOpen"></span> 
-      Open Project 
-      <span class="shortcut">Ctrl+O</span>
-    </button>
-    <button data-action="save">
-      <span class="menu-icon" data-icon="save"></span> 
-      Save Project 
-      <span class="shortcut">Ctrl+S</span>
-    </button>
-    <div class="menu-divider"></div>
-    <button data-action="import">
-      <span class="menu-icon" data-icon="arrowImport"></span> 
-      Import Media 
-      <span class="shortcut">Ctrl+I</span>
-    </button>
-    <button data-action="export">
-      <span class="menu-icon" data-icon="arrowExport"></span> 
-      Export Video 
-      <span class="shortcut">Ctrl+E</span>
-    </button>
-    <div class="menu-divider"></div>
-    <button data-action="home">
-      <span class="menu-icon" data-icon="home"></span> 
-      Back to Home
-    </button>
-  </div>
-
-  <div id="edit-menu" class="dropdown-menu">
-    <button data-action="undo">
-      <span class="menu-icon" data-icon="undo"></span> 
-      Undo 
-      <span class="shortcut">Ctrl+Z</span>
-    </button>
-    <button data-action="redo">
-      <span class="menu-icon" data-icon="redo"></span> 
-      Redo 
-      <span class="shortcut">Ctrl+Y</span>
-    </button>
-    <div class="menu-divider"></div>
-    <button data-action="cut">
-      <span class="menu-icon" data-icon="cut"></span> 
-      Cut 
-      <span class="shortcut">Ctrl+X</span>
-    </button>
-    <button data-action="copy">
-      <span class="menu-icon" data-icon="copy"></span> 
-      Copy 
-      <span class="shortcut">Ctrl+C</span>
-    </button>
-    <button data-action="paste">
-      <span class="menu-icon" data-icon="paste"></span> 
-      Paste 
-      <span class="shortcut">Ctrl+V</span>
-    </button>
-    <button data-action="delete">
-      <span class="menu-icon" data-icon="delete"></span> 
-      Delete 
-      <span class="shortcut">Del</span>
-    </button>
-    <div class="menu-divider"></div>
-    <button data-action="select-all">
-      <span class="menu-icon" data-icon="checkmark"></span> 
-      Select All 
-      <span class="shortcut">Ctrl+A</span>
-    </button>
-  </div>
-
-  <div id="view-menu" class="dropdown-menu">
-    <button data-action="zoom-in">
-      <span class="menu-icon" data-icon="zoomIn"></span> 
-      Zoom In 
-      <span class="shortcut">Ctrl++</span>
-    </button>
-    <button data-action="zoom-out">
-      <span class="menu-icon" data-icon="zoomOut"></span> 
-      Zoom Out 
-      <span class="shortcut">Ctrl+-</span>
-    </button>
-    <button data-action="fit-timeline">
-      <span class="menu-icon" data-icon="zoomOut"></span> 
-      Fit Timeline
-    </button>
-    <div class="menu-divider"></div>
-    <button data-action="toggle-snap">
-      <span class="menu-icon" data-icon="magnet"></span> 
-      Toggle Snapping
-    </button>
-  </div>
-
-  <div id="help-menu" class="dropdown-menu">
-    <button data-action="shortcuts">
-      <span class="menu-icon" data-icon="keyboard"></span> 
-      Keyboard Shortcuts
-    </button>
-    <button data-action="about">
-      <span class="menu-icon" data-icon="info"></span> 
-      About WasmForge
-    </button>
-    <button data-action="github">
-      <span class="menu-icon" data-icon="github"></span> 
-      GitHub Repository
-    </button>
-  </div>
-
-  <!-- Keyboard Shortcuts Modal -->
-  <div id="shortcuts-modal" class="modal">
+  <!-- Loading Modal -->
+  <div class="modal" id="loading-modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h2>Keyboard Shortcuts</h2>
-        <button class="modal-close" data-icon="dismiss"></button>
-      </div>
-      <div class="modal-body">
-        <div class="shortcut-group">
-          <h3>Playback</h3>
-          <div class="shortcut-item"><span>Space</span> Play/Pause</div>
-          <div class="shortcut-item"><span>←</span> Previous Frame</div>
-          <div class="shortcut-item"><span>→</span> Next Frame</div>
-          <div class="shortcut-item"><span>Home</span> Go to Start</div>
-          <div class="shortcut-item"><span>End</span> Go to End</div>
-        </div>
-        <div class="shortcut-group">
-          <h3>Editing</h3>
-          <div class="shortcut-item"><span>Ctrl+Z</span> Undo</div>
-          <div class="shortcut-item"><span>Ctrl+Y</span> Redo</div>
-          <div class="shortcut-item"><span>Delete</span> Delete Selected</div>
-          <div class="shortcut-item"><span>V</span> Select Tool</div>
-          <div class="shortcut-item"><span>C</span> Razor Tool</div>
-        </div>
-        <div class="shortcut-group">
-          <h3>File</h3>
-          <div class="shortcut-item"><span>Ctrl+S</span> Save Project</div>
-          <div class="shortcut-item"><span>Ctrl+O</span> Open Project</div>
-          <div class="shortcut-item"><span>Ctrl+I</span> Import Media</div>
-        </div>
+      <div class="loading-spinner"></div>
+      <h3>Loading FFmpeg</h3>
+      <p id="loading-status">Initializing...</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="loading-progress"></div>
       </div>
     </div>
   </div>
 
-  <!-- FFmpeg Loading Modal -->
-  <div id="ffmpeg-loading" class="modal">
-    <div class="modal-content loading-modal">
-      <div class="modal-body">
-        <div class="loading-icon" data-icon="video"></div>
-        <h3>Loading Video Engine</h3>
-        <p>Initializing FFmpeg WebAssembly...</p>
-        <div class="progress-bar">
-          <div class="progress-fill" id="ffmpeg-progress"></div>
-        </div>
-        <span class="progress-text" id="ffmpeg-progress-text">0%</span>
-      </div>
-    </div>
-  </div>
-
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
