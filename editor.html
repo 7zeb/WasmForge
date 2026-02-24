@@ -4,77 +4,911 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WasmForge - Video Editor</title>
-    <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --bg-card: #1e2a4a;
+            --bg-hover: #2a3a5e;
+            --accent: #e94560;
+            --accent-hover: #ff6b81;
+            --accent2: #0ea5e9;
+            --text1: #e8e8e8;
+            --text2: #a0a0b8;
+            --text3: #6b7280;
+            --border: #2a3a5e;
+            --success: #10b981;
+            --danger: #ef4444;
+            --track-video: #3b82f6;
+            --track-audio: #10b981;
+            --track-text: #f59e0b;
+            --track-image: #8b5cf6;
+            --radius: 8px;
+            --radius-sm: 4px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text1);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--bg-tertiary); }
+
+        /* TOP BAR */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            height: 46px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .logo i { font-size: 20px; }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .top-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text2);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .top-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text1);
+            border-color: var(--border);
+        }
+
+        .export-btn {
+            background: var(--accent) !important;
+            color: white !important;
+            border-color: var(--accent) !important;
+            font-weight: 600;
+        }
+        .export-btn:hover { background: var(--accent-hover) !important; }
+
+        .sep {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            margin: 0 6px;
+        }
+
+        /* MAIN LAYOUT */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* LEFT PANEL */
+        .left-panel {
+            width: 270px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 8px 2px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 10px;
+            font-family: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            transition: all 0.2s;
+        }
+        .panel-tab i { font-size: 13px; }
+        .panel-tab:hover { color: var(--text1); background: var(--bg-hover); }
+        .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .panel-content {
+            display: none;
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .panel-content.active { display: block; }
+
+        .import-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .import-area:hover, .import-area.drag-over {
+            border-color: var(--accent);
+            background: rgba(233, 69, 96, 0.1);
+        }
+        .import-area i { font-size: 28px; color: var(--text3); margin-bottom: 6px; display: block; }
+        .import-area p { font-size: 12px; color: var(--text2); }
+        .import-area span { font-size: 10px; color: var(--text3); }
+
+        .media-library {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .media-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            cursor: grab;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .media-item:hover { border-color: var(--border); background: var(--bg-hover); }
+
+        .media-thumb {
+            width: 44px;
+            height: 32px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .media-thumb img, .media-thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .media-thumb i { color: var(--text3); font-size: 14px; }
+
+        .media-info { flex: 1; min-width: 0; }
+        .media-info .name {
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .media-info .meta { font-size: 9px; color: var(--text3); }
+
+        .media-item-actions { display: flex; gap: 2px; }
+        .media-item-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text3);
+            cursor: pointer;
+            padding: 3px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .media-item-actions button:hover { color: var(--accent); background: var(--bg-primary); }
+
+        /* TOOL GROUPS */
+        .tool-group {
+            margin-bottom: 10px;
+        }
+        .tool-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tool-group input[type="text"],
+        .tool-group input[type="number"],
+        .tool-group textarea,
+        .tool-group select {
+            width: 100%;
+            padding: 6px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text1);
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+        }
+        .tool-group input:focus, .tool-group textarea:focus, .tool-group select:focus {
+            border-color: var(--accent);
+        }
+
+        .tool-group input[type="color"] {
+            width: 36px;
+            height: 28px;
+            padding: 1px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .tool-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+
+        .tool-row {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+        }
+        .tool-group.half { flex: 1; }
+
+        .btn-group { display: flex; gap: 3px; }
+
+        .align-btn, .style-btn {
+            padding: 6px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        .align-btn:hover, .style-btn:hover { border-color: var(--accent); color: var(--text1); }
+        .align-btn.active, .style-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        .action-btn {
+            width: 100%;
+            padding: 8px;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius);
+            color: white;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.2s;
+            margin-top: 6px;
+        }
+        .action-btn:hover { background: var(--accent-hover); }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .effects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .effect-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 10px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 10px;
+        }
+        .effect-card:hover { border-color: var(--accent); background: var(--bg-hover); }
+        .effect-card.active { border-color: var(--accent); background: rgba(233,69,96,0.15); }
+        .effect-card i { font-size: 16px; color: var(--accent2); }
+
+        .effect-controls {
+            padding: 10px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            margin-bottom: 10px;
+        }
+        .effect-controls h4 { margin-bottom: 6px; font-size: 12px; text-transform: capitalize; }
+
+        /* CENTER PANEL */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: #111;
+        }
+
+        .preview-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            min-height: 0;
+            overflow: hidden;
+            background: #0a0a0a;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+        }
+
+        #previewCanvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        .preview-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--text2);
+            min-width: 160px;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .playback-controls button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .playback-controls button:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        #playBtn {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .zoom-controls select {
+            padding: 3px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text1);
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        /* RIGHT PANEL */
+        .right-panel {
+            width: 250px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            flex-shrink: 0;
+            padding: 10px;
+        }
+        .right-panel h3 {
+            font-size: 13px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text2);
+        }
+        .placeholder-text {
+            font-size: 12px;
+            color: var(--text3);
+            text-align: center;
+            padding: 20px 8px;
+        }
+
+        /* TIMELINE */
+        .timeline-section {
+            height: 220px;
+            background: var(--bg-secondary);
+            border-top: 2px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .timeline-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 3px 8px;
+            gap: 3px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            background: var(--bg-primary);
+        }
+
+        .timeline-toolbar button {
+            padding: 4px 8px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text2);
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .timeline-toolbar button:hover {
+            background: var(--bg-hover);
+            color: var(--text1);
+            border-color: var(--border);
+        }
+
+        .snap-toggle {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text2);
+            margin-left: auto;
+        }
+        .snap-toggle input { accent-color: var(--accent); }
+
+        .timeline-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timeline-labels {
+            width: 110px;
+            flex-shrink: 0;
+            overflow-y: hidden;
+            overflow-x: hidden;
+            border-right: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .track-label {
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px;
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text2);
+        }
+
+        .track-label-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow: hidden;
+        }
+        .track-label-info span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .track-type-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .track-label-actions { display: flex; gap: 1px; }
+        .track-label-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text3);
+            cursor: pointer;
+            padding: 2px 3px;
+            font-size: 9px;
+            border-radius: 2px;
+        }
+        .track-label-actions button:hover { color: var(--text1); }
+        .track-label-actions button.active-warn { color: var(--danger); }
+
+        .timeline-scroll {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            position: relative;
+        }
+
+        .timeline-ruler {
+            height: 24px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            min-width: 100%;
+            cursor: pointer;
+        }
+
+        .ruler-mark {
+            position: absolute;
+            top: 0;
+            font-size: 8px;
+            color: var(--text3);
+            padding-top: 2px;
+            padding-left: 3px;
+            height: 100%;
+            pointer-events: none;
+        }
+        .ruler-mark.major { border-left: 1px solid var(--text3); }
+        .ruler-mark.minor { border-left: 1px solid var(--border); }
+
+        .timeline-tracks-wrapper {
+            min-width: 100%;
+            position: relative;
+        }
+
+        .timeline-track {
+            height: 46px;
+            position: relative;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .timeline-track.drag-over { background: rgba(233,69,96,0.06); }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 20;
+            pointer-events: none;
+            width: 2px;
+            left: 0;
+        }
+        .playhead-handle {
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            position: absolute;
+            top: 6px;
+            left: -5px;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            pointer-events: all;
+            cursor: ew-resize;
+            z-index: 21;
+        }
+        .playhead-line {
+            width: 2px;
+            background: var(--accent);
+            position: absolute;
+            top: 18px;
+            bottom: 0;
+        }
+
+        /* CLIPS */
+        .timeline-clip {
+            position: absolute;
+            height: 36px;
+            top: 5px;
+            border-radius: 4px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            font-size: 10px;
+            font-weight: 500;
+            color: white;
+            min-width: 16px;
+            border: 2px solid transparent;
+            transition: border-color 0.1s;
+        }
+        .timeline-clip:hover { filter: brightness(1.15); }
+        .timeline-clip.selected { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+
+        .timeline-clip.video { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .timeline-clip.audio { background: linear-gradient(135deg, #10b981, #059669); }
+        .timeline-clip.text { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .timeline-clip.image { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+        .clip-label {
+            padding: 0 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            pointer-events: none;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .clip-handle {
+            width: 6px;
+            height: 100%;
+            cursor: ew-resize;
+            position: absolute;
+            top: 0;
+            z-index: 2;
+        }
+        .clip-handle-left { left: 0; border-radius: 4px 0 0 4px; }
+        .clip-handle-right { right: 0; border-radius: 0 4px 4px 0; }
+        .clip-handle:hover { background: rgba(255,255,255,0.25); }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            width: 400px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h2 {
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+        .modal-close:hover { color: var(--accent); }
+        .modal-body { padding: 18px; }
+        .modal-body .tool-group { margin-bottom: 14px; }
+
+        .progress-bar {
+            height: 22px;
+            background: var(--bg-card);
+            border-radius: 11px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 14px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 11px;
+            transition: width 0.3s;
+            width: 0;
+        }
+        #exportProgressText {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* CONTEXT MENU */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 500;
+            min-width: 150px;
+            padding: 4px;
+        }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            color: var(--text1);
+        }
+        .context-menu-item:hover { background: var(--bg-hover); }
+        .context-menu-item.danger { color: var(--danger); }
+        .context-menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
+
+        .cb-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h3.section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text2);
+            margin: 14px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        h3.section-title:first-child { margin-top: 0; }
+
+        @media (max-width: 1100px) {
+            .right-panel { display: none; }
+            .left-panel { width: 230px; }
+        }
+        @media (max-width: 800px) {
+            .left-panel { width: 200px; }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
-        <!-- Top Bar -->
         <header class="top-bar">
-            <div class="logo">
-                <i class="fas fa-film"></i>
-                <span>WasmForge</span>
-            </div>
+            <div class="logo"><i class="fas fa-film"></i><span>WasmForge</span></div>
             <div class="top-actions">
-                <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo"></i></button>
-                <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo"></i></button>
-                <div class="separator"></div>
-                <button id="newProjectBtn" class="top-btn" title="New Project"><i class="fas fa-file"></i> New</button>
-                <button id="saveProjectBtn" class="top-btn" title="Save Project"><i class="fas fa-save"></i> Save</button>
-                <button id="loadProjectBtn" class="top-btn" title="Load Project"><i class="fas fa-folder-open"></i> Load</button>
-                <div class="separator"></div>
-                <button id="exportBtn" class="top-btn export-btn"><i class="fas fa-download"></i> Export Video</button>
+                <button id="undoBtn" class="top-btn" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+                <button id="redoBtn" class="top-btn" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+                <div class="sep"></div>
+                <button id="newProjectBtn" class="top-btn"><i class="fas fa-file"></i> New</button>
+                <button id="saveProjectBtn" class="top-btn"><i class="fas fa-save"></i> Save</button>
+                <button id="loadProjectBtn" class="top-btn"><i class="fas fa-folder-open"></i> Load</button>
+                <div class="sep"></div>
+                <button id="exportBtn" class="top-btn export-btn"><i class="fas fa-download"></i> Export</button>
             </div>
         </header>
 
         <div class="main-layout">
-            <!-- Left Panel - Media & Tools -->
             <aside class="left-panel">
                 <div class="panel-tabs">
                     <button class="panel-tab active" data-tab="media"><i class="fas fa-photo-video"></i> Media</button>
                     <button class="panel-tab" data-tab="text"><i class="fas fa-font"></i> Text</button>
-                    <button class="panel-tab" data-tab="effects"><i class="fas fa-magic"></i> Effects</button>
+                    <button class="panel-tab" data-tab="effects"><i class="fas fa-magic"></i> FX</button>
                     <button class="panel-tab" data-tab="audio"><i class="fas fa-music"></i> Audio</button>
                 </div>
 
-                <!-- Media Tab -->
                 <div class="panel-content active" id="media-tab">
                     <div class="import-area" id="importArea">
                         <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Drop files here or click to import</p>
+                        <p>Drop files or click to import</p>
                         <span>Video, Audio, Images</span>
                         <input type="file" id="fileInput" multiple accept="video/*,audio/*,image/*" hidden>
                     </div>
-                    <div class="media-library" id="mediaLibrary">
-                        <!-- Imported media items appear here -->
-                    </div>
+                    <div class="media-library" id="mediaLibrary"></div>
                 </div>
 
-                <!-- Text Tab -->
                 <div class="panel-content" id="text-tab">
-                    <h3>Add Text</h3>
+                    <h3 class="section-title">Add Text Overlay</h3>
                     <div class="tool-group">
-                        <label>Text Content</label>
-                        <textarea id="textContent" rows="3" placeholder="Enter your text...">Hello World</textarea>
+                        <label>Text</label>
+                        <textarea id="textContent" rows="2" placeholder="Type here...">Hello World</textarea>
                     </div>
                     <div class="tool-group">
-                        <label>Font Family</label>
+                        <label>Font</label>
                         <select id="textFont">
                             <option value="Inter">Inter</option>
                             <option value="Arial">Arial</option>
                             <option value="Georgia">Georgia</option>
                             <option value="Courier New">Courier New</option>
                             <option value="Impact">Impact</option>
-                            <option value="Comic Sans MS">Comic Sans MS</option>
-                            <option value="Times New Roman">Times New Roman</option>
                             <option value="Verdana">Verdana</option>
+                            <option value="Times New Roman">Times New Roman</option>
                         </select>
                     </div>
                     <div class="tool-row">
                         <div class="tool-group half">
                             <label>Size</label>
-                            <input type="number" id="textSize" value="48" min="8" max="200">
+                            <input type="number" id="textSize" value="48" min="8" max="300">
                         </div>
                         <div class="tool-group half">
                             <label>Color</label>
@@ -83,35 +917,35 @@
                     </div>
                     <div class="tool-row">
                         <div class="tool-group half">
-                            <label>Stroke</label>
+                            <label>Stroke Color</label>
                             <input type="color" id="textStroke" value="#000000">
                         </div>
                         <div class="tool-group half">
                             <label>Stroke Width</label>
-                            <input type="number" id="textStrokeWidth" value="0" min="0" max="20">
+                            <input type="number" id="textStrokeWidth" value="2" min="0" max="20">
                         </div>
                     </div>
                     <div class="tool-group">
-                        <label>Background</label>
+                        <label>Background Opacity</label>
                         <div class="tool-row">
                             <input type="color" id="textBgColor" value="#000000">
-                            <input type="range" id="textBgOpacity" min="0" max="100" value="0">
-                            <span id="textBgOpacityVal">0%</span>
+                            <input type="range" id="textBgOpacity" min="0" max="100" value="0" style="flex:1">
+                            <span id="textBgOpacityVal" style="font-size:11px;min-width:30px;text-align:right">0%</span>
                         </div>
                     </div>
                     <div class="tool-group">
-                        <label>Alignment</label>
+                        <label>Align</label>
                         <div class="btn-group">
-                            <button class="align-btn active" data-align="left"><i class="fas fa-align-left"></i></button>
-                            <button class="align-btn" data-align="center"><i class="fas fa-align-center"></i></button>
+                            <button class="align-btn" data-align="left"><i class="fas fa-align-left"></i></button>
+                            <button class="align-btn active" data-align="center"><i class="fas fa-align-center"></i></button>
                             <button class="align-btn" data-align="right"><i class="fas fa-align-right"></i></button>
                         </div>
                     </div>
                     <div class="tool-group">
                         <label>Style</label>
                         <div class="btn-group">
-                            <button class="style-btn" id="textBold" data-style="bold"><i class="fas fa-bold"></i></button>
-                            <button class="style-btn" id="textItalic" data-style="italic"><i class="fas fa-italic"></i></button>
+                            <button class="style-btn" id="textBold"><i class="fas fa-bold"></i></button>
+                            <button class="style-btn" id="textItalic"><i class="fas fa-italic"></i></button>
                         </div>
                     </div>
                     <div class="tool-group">
@@ -128,91 +962,46 @@
                     <button id="addTextBtn" class="action-btn"><i class="fas fa-plus"></i> Add Text to Timeline</button>
                 </div>
 
-                <!-- Effects Tab -->
                 <div class="panel-content" id="effects-tab">
-                    <h3>Video Effects</h3>
+                    <h3 class="section-title">Video / Image Effects</h3>
                     <div class="effects-grid" id="effectsGrid">
-                        <div class="effect-card" data-effect="brightness">
-                            <i class="fas fa-sun"></i>
-                            <span>Brightness</span>
-                        </div>
-                        <div class="effect-card" data-effect="contrast">
-                            <i class="fas fa-adjust"></i>
-                            <span>Contrast</span>
-                        </div>
-                        <div class="effect-card" data-effect="saturation">
-                            <i class="fas fa-palette"></i>
-                            <span>Saturation</span>
-                        </div>
-                        <div class="effect-card" data-effect="blur">
-                            <i class="fas fa-eye-slash"></i>
-                            <span>Blur</span>
-                        </div>
-                        <div class="effect-card" data-effect="grayscale">
-                            <i class="fas fa-chess-board"></i>
-                            <span>Grayscale</span>
-                        </div>
-                        <div class="effect-card" data-effect="sepia">
-                            <i class="fas fa-image"></i>
-                            <span>Sepia</span>
-                        </div>
-                        <div class="effect-card" data-effect="invert">
-                            <i class="fas fa-exchange-alt"></i>
-                            <span>Invert</span>
-                        </div>
-                        <div class="effect-card" data-effect="hue-rotate">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Hue Rotate</span>
-                        </div>
-                        <div class="effect-card" data-effect="vignette">
-                            <i class="fas fa-circle"></i>
-                            <span>Vignette</span>
-                        </div>
-                        <div class="effect-card" data-effect="sharpen">
-                            <i class="fas fa-crosshairs"></i>
-                            <span>Sharpen</span>
-                        </div>
+                        <div class="effect-card" data-effect="brightness"><i class="fas fa-sun"></i><span>Brightness</span></div>
+                        <div class="effect-card" data-effect="contrast"><i class="fas fa-adjust"></i><span>Contrast</span></div>
+                        <div class="effect-card" data-effect="saturate"><i class="fas fa-palette"></i><span>Saturation</span></div>
+                        <div class="effect-card" data-effect="blur"><i class="fas fa-eye-slash"></i><span>Blur</span></div>
+                        <div class="effect-card" data-effect="grayscale"><i class="fas fa-chess-board"></i><span>Grayscale</span></div>
+                        <div class="effect-card" data-effect="sepia"><i class="fas fa-image"></i><span>Sepia</span></div>
+                        <div class="effect-card" data-effect="invert"><i class="fas fa-exchange-alt"></i><span>Invert</span></div>
+                        <div class="effect-card" data-effect="hue-rotate"><i class="fas fa-sync-alt"></i><span>Hue Rotate</span></div>
                     </div>
                     <div id="effectControls" class="effect-controls" style="display:none;">
                         <h4 id="effectName"></h4>
-                        <input type="range" id="effectIntensity" min="0" max="200" value="100">
-                        <span id="effectIntensityVal">100%</span>
-                        <button id="applyEffectBtn" class="action-btn"><i class="fas fa-check"></i> Apply to Selected</button>
+                        <div class="tool-row" style="align-items:center">
+                            <input type="range" id="effectIntensity" min="0" max="200" value="100" style="flex:1">
+                            <span id="effectIntensityVal" style="font-size:11px;min-width:35px;text-align:right">100</span>
+                        </div>
+                        <button id="applyEffectBtn" class="action-btn"><i class="fas fa-check"></i> Apply to Selected Clip</button>
                     </div>
 
-                    <h3 style="margin-top:20px;">Transitions</h3>
+                    <h3 class="section-title">Transitions</h3>
                     <div class="effects-grid">
-                        <div class="effect-card transition-card" data-transition="fade">
-                            <i class="fas fa-ghost"></i>
-                            <span>Fade</span>
-                        </div>
-                        <div class="effect-card transition-card" data-transition="wipeLeft">
-                            <i class="fas fa-arrow-left"></i>
-                            <span>Wipe Left</span>
-                        </div>
-                        <div class="effect-card transition-card" data-transition="wipeRight">
-                            <i class="fas fa-arrow-right"></i>
-                            <span>Wipe Right</span>
-                        </div>
-                        <div class="effect-card transition-card" data-transition="dissolve">
-                            <i class="fas fa-water"></i>
-                            <span>Dissolve</span>
-                        </div>
+                        <div class="effect-card transition-card" data-transition="fade"><i class="fas fa-ghost"></i><span>Fade</span></div>
+                        <div class="effect-card transition-card" data-transition="wipeLeft"><i class="fas fa-arrow-left"></i><span>Wipe Left</span></div>
+                        <div class="effect-card transition-card" data-transition="wipeRight"><i class="fas fa-arrow-right"></i><span>Wipe Right</span></div>
+                        <div class="effect-card transition-card" data-transition="dissolve"><i class="fas fa-water"></i><span>Dissolve</span></div>
                     </div>
                 </div>
 
-                <!-- Audio Tab -->
                 <div class="panel-content" id="audio-tab">
-                    <h3>Audio Controls</h3>
+                    <h3 class="section-title">Master Audio</h3>
                     <div class="tool-group">
                         <label>Master Volume</label>
-                        <input type="range" id="masterVolume" min="0" max="100" value="100">
-                        <span id="masterVolumeVal">100%</span>
+                        <div class="tool-row" style="align-items:center">
+                            <input type="range" id="masterVolume" min="0" max="100" value="100" style="flex:1">
+                            <span id="masterVolumeVal" style="font-size:11px;min-width:30px;text-align:right">100%</span>
+                        </div>
                     </div>
-                    <div id="trackVolumeControls">
-                        <!-- Per-track volume controls appear here -->
-                    </div>
-                    <h3>Audio Effects</h3>
+                    <h3 class="section-title">Selected Clip Audio</h3>
                     <div class="tool-group">
                         <label>Fade In (seconds)</label>
                         <input type="number" id="audioFadeIn" value="0" min="0" max="10" step="0.1">
@@ -225,35 +1014,30 @@
                 </div>
             </aside>
 
-            <!-- Center - Preview -->
             <main class="center-panel">
                 <div class="preview-container">
                     <div class="canvas-wrapper" id="canvasWrapper">
                         <canvas id="previewCanvas" width="1280" height="720"></canvas>
-                        <!-- Text overlay for dragging -->
-                        <div id="textOverlays"></div>
                     </div>
                 </div>
                 <div class="preview-controls">
                     <div class="time-display">
-                        <span id="currentTime">00:00.000</span>
-                        <span>/</span>
-                        <span id="totalTime">00:00.000</span>
+                        <span id="currentTime">00:00.000</span> / <span id="totalTime">00:00.000</span>
                     </div>
                     <div class="playback-controls">
                         <button id="skipStartBtn" title="Skip to Start"><i class="fas fa-step-backward"></i></button>
-                        <button id="playBtn" title="Play/Pause"><i class="fas fa-play"></i></button>
+                        <button id="playBtn" title="Play/Pause (Space)"><i class="fas fa-play" id="playIcon"></i></button>
                         <button id="stopBtn" title="Stop"><i class="fas fa-stop"></i></button>
                         <button id="skipEndBtn" title="Skip to End"><i class="fas fa-step-forward"></i></button>
                     </div>
                     <div class="zoom-controls">
-                        <label>Canvas:</label>
+                        <label>Size:</label>
                         <select id="canvasSize">
                             <option value="1920x1080">1920×1080</option>
                             <option value="1280x720" selected>1280×720</option>
                             <option value="854x480">854×480</option>
-                            <option value="1080x1920">1080×1920 (Vertical)</option>
-                            <option value="1080x1080">1080×1080 (Square)</option>
+                            <option value="1080x1920">1080×1920</option>
+                            <option value="1080x1080">1080×1080</option>
                         </select>
                         <label>FPS:</label>
                         <select id="fpsSelect">
@@ -265,52 +1049,44 @@
                 </div>
             </main>
 
-            <!-- Right Panel - Properties -->
             <aside class="right-panel" id="propertiesPanel">
                 <h3><i class="fas fa-sliders-h"></i> Properties</h3>
                 <div id="propertiesContent">
-                    <p class="placeholder-text">Select a clip on the timeline to edit its properties.</p>
+                    <p class="placeholder-text">Select a clip on the timeline to edit properties.</p>
                 </div>
             </aside>
         </div>
 
-        <!-- Timeline -->
         <div class="timeline-section">
             <div class="timeline-toolbar">
                 <button id="zoomInBtn" title="Zoom In"><i class="fas fa-search-plus"></i></button>
                 <button id="zoomOutBtn" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
-                <button id="fitTimelineBtn" title="Fit to View"><i class="fas fa-expand"></i></button>
-                <div class="separator"></div>
-                <button id="splitBtn" title="Split Clip"><i class="fas fa-cut"></i> Split</button>
-                <button id="deleteBtn" title="Delete Selected"><i class="fas fa-trash"></i> Delete</button>
-                <button id="duplicateBtn" title="Duplicate"><i class="fas fa-copy"></i> Duplicate</button>
-                <div class="separator"></div>
-                <button id="addTrackBtn" title="Add Track"><i class="fas fa-plus"></i> Add Track</button>
-                <div class="separator"></div>
+                <button id="fitBtn" title="Fit"><i class="fas fa-expand"></i></button>
+                <div class="sep"></div>
+                <button id="splitBtn"><i class="fas fa-cut"></i> Split</button>
+                <button id="deleteBtn"><i class="fas fa-trash"></i> Delete</button>
+                <button id="duplicateBtn"><i class="fas fa-copy"></i> Duplicate</button>
+                <div class="sep"></div>
+                <button id="addTrackBtn"><i class="fas fa-plus"></i> Track</button>
                 <span class="snap-toggle">
                     <input type="checkbox" id="snapToggle" checked>
                     <label for="snapToggle"><i class="fas fa-magnet"></i> Snap</label>
                 </span>
             </div>
             <div class="timeline-container" id="timelineContainer">
-                <div class="timeline-labels" id="timelineLabels">
-                    <!-- Track labels -->
-                </div>
+                <div class="timeline-labels" id="timelineLabels"></div>
                 <div class="timeline-scroll" id="timelineScroll">
                     <div class="timeline-ruler" id="timelineRuler"></div>
                     <div class="playhead" id="playhead">
                         <div class="playhead-handle"></div>
                         <div class="playhead-line"></div>
                     </div>
-                    <div class="timeline-tracks" id="timelineTracks">
-                        <!-- Timeline tracks -->
-                    </div>
+                    <div class="timeline-tracks-wrapper" id="timelineTracks"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Export Modal -->
     <div class="modal-overlay" id="exportModal" style="display:none;">
         <div class="modal">
             <div class="modal-header">
@@ -321,44 +1097,1148 @@
                 <div class="tool-group">
                     <label>Format</label>
                     <select id="exportFormat">
-                        <option value="webm">WebM (VP8)</option>
-                        <option value="mp4">MP4 (H.264 - if supported)</option>
+                        <option value="webm">WebM</option>
                     </select>
                 </div>
                 <div class="tool-group">
                     <label>Quality</label>
                     <select id="exportQuality">
-                        <option value="high">High (8 Mbps)</option>
-                        <option value="medium" selected>Medium (4 Mbps)</option>
-                        <option value="low">Low (2 Mbps)</option>
+                        <option value="8000000">High (8 Mbps)</option>
+                        <option value="4000000" selected>Medium (4 Mbps)</option>
+                        <option value="2000000">Low (2 Mbps)</option>
                     </select>
-                </div>
-                <div class="tool-group">
-                    <label>Include Audio</label>
-                    <input type="checkbox" id="exportAudio" checked>
                 </div>
                 <div class="progress-bar" id="exportProgress" style="display:none;">
                     <div class="progress-fill" id="exportProgressFill"></div>
                     <span id="exportProgressText">0%</span>
                 </div>
-                <button id="startExportBtn" class="action-btn full-width"><i class="fas fa-download"></i> Start Export</button>
+                <button id="startExportBtn" class="action-btn"><i class="fas fa-download"></i> Start Export</button>
             </div>
         </div>
     </div>
 
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
-        <div class="spinner"></div>
-        <p id="loadingText">Processing...</p>
-    </div>
-
-    <!-- Hidden file input for project load -->
     <input type="file" id="loadProjectInput" accept=".json" hidden>
 
-    <script src="js/effects.js"></script>
-    <script src="js/canvas-renderer.js"></script>
-    <script src="js/timeline.js"></script>
-    <script src="js/export.js"></script>
-    <script src="js/app.js"></script>
+<script>
+// =====================================================
+// EFFECTS
+// =====================================================
+const Effects = {
+    getCSSFilter(effects) {
+        if (!effects || !effects.length) return 'none';
+        return effects.map(e => {
+            const v = e.intensity;
+            switch (e.type) {
+                case 'brightness': return `brightness(${v}%)`;
+                case 'contrast': return `contrast(${v}%)`;
+                case 'saturate': return `saturate(${v}%)`;
+                case 'grayscale': return `grayscale(${Math.min(v, 100)}%)`;
+                case 'sepia': return `sepia(${Math.min(v, 100)}%)`;
+                case 'invert': return `invert(${Math.min(v, 100)}%)`;
+                case 'hue-rotate': return `hue-rotate(${v * 3.6}deg)`;
+                case 'blur': return `blur(${v / 10}px)`;
+                default: return '';
+            }
+        }).filter(Boolean).join(' ') || 'none';
+    },
+
+    getTextAnimation(type, progress) {
+        const t = Math.min(1, progress / 0.5);
+        const ease = 1 - Math.pow(1 - t, 3);
+        switch (type) {
+            case 'fadeIn': return { opacity: ease, ox: 0, oy: 0, scale: 1, chars: -1 };
+            case 'slideUp': return { opacity: ease, ox: 0, oy: 60 * (1 - ease), scale: 1, chars: -1 };
+            case 'slideLeft': return { opacity: ease, ox: 120 * (1 - ease), oy: 0, scale: 1, chars: -1 };
+            case 'scale': return { opacity: ease, ox: 0, oy: 0, scale: 0.2 + 0.8 * ease, chars: -1 };
+            case 'typewriter': return { opacity: 1, ox: 0, oy: 0, scale: 1, chars: Math.floor(t * 100) };
+            default: return { opacity: 1, ox: 0, oy: 0, scale: 1, chars: -1 };
+        }
+    }
+};
+
+// =====================================================
+// CANVAS RENDERER
+// =====================================================
+class CanvasRenderer {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+    }
+
+    resize(w, h) {
+        this.canvas.width = w;
+        this.canvas.height = h;
+    }
+
+    clear() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    renderFrame(time, tracks, assets) {
+        this.clear();
+        const visible = [];
+        tracks.forEach((track, ti) => {
+            if (track.hidden) return;
+            track.clips.forEach(clip => {
+                if (time >= clip.startTime && time < clip.startTime + clip.duration) {
+                    visible.push({ ...clip, _trackIndex: ti });
+                }
+            });
+        });
+        visible.sort((a, b) => a._trackIndex - b._trackIndex);
+        visible.forEach(clip => this._renderClip(clip, time, assets));
+    }
+
+    _renderClip(clip, time, assets) {
+        const progress = time - clip.startTime;
+        const ctx = this.ctx;
+        const W = this.canvas.width, H = this.canvas.height;
+
+        // transition
+        let tProg = 1;
+        if (clip.transition && clip.transitionDuration && progress < clip.transitionDuration) {
+            tProg = progress / clip.transitionDuration;
+        }
+
+        if (clip.type === 'video' || clip.type === 'image') {
+            const asset = assets[clip.assetId];
+            if (!asset || !asset.element) return;
+
+            const el = asset.element;
+            let srcW, srcH;
+            if (clip.type === 'video') {
+                srcW = el.videoWidth || W;
+                srcH = el.videoHeight || H;
+                const mt = progress + (clip.trimStart || 0);
+                if (Math.abs(el.currentTime - mt) > 0.15) el.currentTime = mt;
+            } else {
+                srcW = el.naturalWidth || W;
+                srcH = el.naturalHeight || H;
+            }
+
+            const fit = this._fit(srcW, srcH, W, H);
+
+            ctx.save();
+            // transition
+            if (clip.transition) {
+                if (clip.transition === 'fade' || clip.transition === 'dissolve') {
+                    ctx.globalAlpha = tProg;
+                } else if (clip.transition === 'wipeLeft') {
+                    ctx.beginPath();
+                    ctx.rect(0, 0, W * tProg, H);
+                    ctx.clip();
+                } else if (clip.transition === 'wipeRight') {
+                    ctx.beginPath();
+                    ctx.rect(W * (1 - tProg), 0, W * tProg, H);
+                    ctx.clip();
+                }
+            }
+            ctx.globalAlpha *= (clip.opacity != null ? clip.opacity : 1);
+            ctx.filter = Effects.getCSSFilter(clip.effects);
+
+            try { ctx.drawImage(el, fit.x, fit.y, fit.w, fit.h); } catch(e) {}
+
+            ctx.restore();
+
+        } else if (clip.type === 'text') {
+            const td = clip.textData;
+            if (!td) return;
+            const anim = Effects.getTextAnimation(td.animation || 'none', progress);
+
+            ctx.save();
+            ctx.globalAlpha = anim.opacity * (clip.opacity != null ? clip.opacity : 1);
+
+            const x = (td.x != null ? td.x : W / 2) + anim.ox;
+            const y = (td.y != null ? td.y : H / 2) + anim.oy;
+
+            if (anim.scale !== 1) {
+                ctx.translate(x, y);
+                ctx.scale(anim.scale, anim.scale);
+                ctx.translate(-x, -y);
+            }
+
+            const sz = td.fontSize || 48;
+            const b = td.bold ? 'bold ' : '';
+            const it = td.italic ? 'italic ' : '';
+            ctx.font = `${it}${b}${sz}px "${td.fontFamily || 'Inter'}", sans-serif`;
+            ctx.textAlign = td.align || 'center';
+            ctx.textBaseline = 'middle';
+
+            let txt = td.text || '';
+            if (anim.chars >= 0) txt = txt.substring(0, Math.floor(anim.chars / 100 * txt.length));
+
+            const lines = txt.split('\n');
+
+            // bg
+            if (td.bgOpacity > 0) {
+                const maxW = Math.max(...lines.map(l => ctx.measureText(l).width));
+                const totalH = lines.length * sz * 1.3;
+                let bx = x;
+                if (td.align === 'center') bx -= maxW / 2;
+                else if (td.align === 'right') bx -= maxW;
+                const by = y - totalH / 2;
+
+                ctx.save();
+                ctx.globalAlpha *= td.bgOpacity / 100;
+                ctx.fillStyle = td.bgColor || '#000';
+                ctx.fillRect(bx - 10, by - 6, maxW + 20, totalH + 12);
+                ctx.restore();
+            }
+
+            lines.forEach((line, i) => {
+                const ly = y + (i - (lines.length - 1) / 2) * sz * 1.3;
+                if (td.strokeWidth > 0) {
+                    ctx.strokeStyle = td.strokeColor || '#000';
+                    ctx.lineWidth = td.strokeWidth;
+                    ctx.lineJoin = 'round';
+                    ctx.strokeText(line, x, ly);
+                }
+                ctx.fillStyle = td.color || '#fff';
+                ctx.fillText(line, x, ly);
+            });
+
+            ctx.restore();
+        }
+    }
+
+    _fit(sw, sh, dw, dh) {
+        const sr = sw / sh, dr = dw / dh;
+        let w, h, x, y;
+        if (sr > dr) { w = dw; h = w / sr; x = 0; y = (dh - h) / 2; }
+        else { h = dh; w = h * sr; x = (dw - w) / 2; y = 0; }
+        return { x, y, w, h };
+    }
+}
+
+// =====================================================
+// TIMELINE
+// =====================================================
+class TimelineManager {
+    constructor(app) {
+        this.app = app;
+        this.tracks = [];
+        this.selectedClip = null;
+        this.zoom = 80;
+        this.clipId = 0;
+        this.snap = true;
+
+        this.labelsEl = document.getElementById('timelineLabels');
+        this.tracksEl = document.getElementById('timelineTracks');
+        this.rulerEl = document.getElementById('timelineRuler');
+        this.scrollEl = document.getElementById('timelineScroll');
+        this.playheadEl = document.getElementById('playhead');
+
+        this._initTracks();
+        this._bind();
+        this.render();
+    }
+
+    _initTracks() {
+        this.tracks = [
+            { name: 'Video 1', type: 'video', clips: [], muted: false, hidden: false },
+            { name: 'Video 2', type: 'video', clips: [], muted: false, hidden: false },
+            { name: 'Text', type: 'text', clips: [], muted: false, hidden: false },
+            { name: 'Audio 1', type: 'audio', clips: [], muted: false, hidden: false },
+        ];
+    }
+
+    addTrack(name, type) {
+        this.tracks.push({ name: name || 'Track', type: type || 'video', clips: [], muted: false, hidden: false });
+        this.render();
+    }
+
+    totalDuration() {
+        let m = 5;
+        this.tracks.forEach(t => t.clips.forEach(c => { m = Math.max(m, c.startTime + c.duration); }));
+        return m + 3;
+    }
+
+    t2px(t) { return t * this.zoom; }
+    px2t(p) { return p / this.zoom; }
+
+    snapTime(t) {
+        if (!this.snap) return t;
+        const th = 5 / this.zoom;
+        for (const track of this.tracks) {
+            for (const c of track.clips) {
+                if (Math.abs(t - c.startTime) < th) return c.startTime;
+                if (Math.abs(t - (c.startTime + c.duration)) < th) return c.startTime + c.duration;
+            }
+        }
+        const r = Math.round(t * 2) / 2;
+        if (Math.abs(t - r) < th / 2) return r;
+        return t;
+    }
+
+    overlap(ti, id, st, dur) {
+        return this.tracks[ti].clips.some(c => c.id !== id && st < c.startTime + c.duration && st + dur > c.startTime);
+    }
+
+    addClip(ti, data) {
+        const clip = { id: this.clipId++, effects: [], opacity: 1, volume: 1, transition: null, transitionDuration: 0.5, fadeIn: 0, fadeOut: 0, trimStart: 0, ...data };
+        this.tracks[ti].clips.push(clip);
+        this.tracks[ti].clips.sort((a, b) => a.startTime - b.startTime);
+        this.render();
+        return clip;
+    }
+
+    removeClip(id) {
+        for (const t of this.tracks) {
+            const i = t.clips.findIndex(c => c.id === id);
+            if (i !== -1) { t.clips.splice(i, 1); if (this.selectedClip?.id === id) this.selectedClip = null; this.render(); return; }
+        }
+    }
+
+    findClip(id) {
+        for (let ti = 0; ti < this.tracks.length; ti++) {
+            const c = this.tracks[ti].clips.find(c => c.id === id);
+            if (c) return { clip: c, trackIndex: ti };
+        }
+        return null;
+    }
+
+    splitClip(id, time) {
+        const f = this.findClip(id);
+        if (!f) return;
+        const { clip, trackIndex } = f;
+        const sp = time - clip.startTime;
+        if (sp <= 0.05 || sp >= clip.duration - 0.05) return;
+
+        const nc = JSON.parse(JSON.stringify(clip));
+        nc.id = this.clipId++;
+        nc.startTime = time;
+        nc.duration = clip.duration - sp;
+        nc.trimStart = (clip.trimStart || 0) + sp;
+        clip.duration = sp;
+        this.tracks[trackIndex].clips.push(nc);
+        this.tracks[trackIndex].clips.sort((a, b) => a.startTime - b.startTime);
+        this.render();
+    }
+
+    dupClip(id) {
+        const f = this.findClip(id);
+        if (!f) return;
+        const nc = JSON.parse(JSON.stringify(f.clip));
+        nc.id = this.clipId++;
+        nc.startTime = f.clip.startTime + f.clip.duration + 0.1;
+        this.tracks[f.trackIndex].clips.push(nc);
+        this.tracks[f.trackIndex].clips.sort((a, b) => a.startTime - b.startTime);
+        this.render();
+    }
+
+    selectClip(clip) {
+        this.selectedClip = clip;
+        this.render();
+        this.app.showProperties(clip);
+    }
+
+    deselect() {
+        this.selectedClip = null;
+        this.render();
+        this.app.hideProperties();
+    }
+
+    render() {
+        this._renderLabels();
+        this._renderTracks();
+        this._renderRuler();
+        this.updatePlayhead();
+    }
+
+    _renderLabels() {
+        const colors = { video: '#3b82f6', audio: '#10b981', text: '#f59e0b', image: '#8b5cf6' };
+        this.labelsEl.innerHTML = this.tracks.map((t, i) => `
+            <div class="track-label">
+                <div class="track-label-info">
+                    <div class="track-type-dot" style="background:${colors[t.type] || '#888'}"></div>
+                    <span>${t.name}</span>
+                </div>
+                <div class="track-label-actions">
+                    <button data-action="mute" data-i="${i}" class="${t.muted ? 'active-warn' : ''}" title="Mute">
+                        <i class="fas fa-volume-${t.muted ? 'mute' : 'up'}"></i>
+                    </button>
+                    <button data-action="hide" data-i="${i}" class="${t.hidden ? 'active-warn' : ''}" title="Visibility">
+                        <i class="fas fa-eye${t.hidden ? '-slash' : ''}"></i>
+                    </button>
+                    <button data-action="remove" data-i="${i}" title="Remove"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        `).join('');
+
+        this.labelsEl.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const i = +btn.dataset.i, a = btn.dataset.action;
+                if (a === 'mute') this.tracks[i].muted = !this.tracks[i].muted;
+                else if (a === 'hide') this.tracks[i].hidden = !this.tracks[i].hidden;
+                else if (a === 'remove' && this.tracks.length > 1) this.tracks.splice(i, 1);
+                this.render();
+            });
+        });
+    }
+
+    _renderTracks() {
+        const dur = this.totalDuration();
+        const w = this.t2px(dur);
+        this.tracksEl.style.width = w + 'px';
+        this.tracksEl.innerHTML = '';
+
+        this.tracks.forEach((track, ti) => {
+            const el = document.createElement('div');
+            el.className = 'timeline-track';
+            el.dataset.ti = ti;
+            el.style.width = w + 'px';
+
+            track.clips.forEach(clip => {
+                const ce = document.createElement('div');
+                ce.className = `timeline-clip ${clip.type}${this.selectedClip?.id === clip.id ? ' selected' : ''}`;
+                ce.style.left = this.t2px(clip.startTime) + 'px';
+                ce.style.width = Math.max(16, this.t2px(clip.duration)) + 'px';
+                ce.dataset.clipId = clip.id;
+
+                const icons = { video: 'fa-film', audio: 'fa-music', image: 'fa-image', text: 'fa-font' };
+                ce.innerHTML = `<div class="clip-handle clip-handle-left"></div>
+                    <span class="clip-label"><i class="fas ${icons[clip.type] || 'fa-file'}"></i> ${clip.name || ''}</span>
+                    <div class="clip-handle clip-handle-right"></div>`;
+
+                ce.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    if (e.target.classList.contains('clip-handle-left')) this._startResize(e, clip, ti, 'left');
+                    else if (e.target.classList.contains('clip-handle-right')) this._startResize(e, clip, ti, 'right');
+                    else { this.selectClip(clip); this._startDrag(e, clip, ti); }
+                });
+
+                ce.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    this.selectClip(clip);
+                    this._contextMenu(e, clip);
+                });
+
+                el.appendChild(ce);
+            });
+
+            // drop
+            el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+            el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+            el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag-over'); this._onDrop(e, ti); });
+
+            el.addEventListener('mousedown', (e) => {
+                if (e.target === el) this.deselect();
+            });
+
+            this.tracksEl.appendChild(el);
+        });
+    }
+
+    _renderRuler() {
+        const dur = this.totalDuration();
+        const w = this.t2px(dur);
+        this.rulerEl.style.width = w + 'px';
+        this.rulerEl.innerHTML = '';
+        const step = this.zoom >= 60 ? 1 : this.zoom >= 30 ? 2 : 5;
+        for (let t = 0; t <= dur; t += step) {
+            const m = document.createElement('div');
+            m.className = 'ruler-mark major';
+            m.style.left = this.t2px(t) + 'px';
+            m.textContent = this._fmt(t);
+            this.rulerEl.appendChild(m);
+        }
+    }
+
+    updatePlayhead() {
+        this.playheadEl.style.left = this.t2px(this.app.currentTime) + 'px';
+    }
+
+    _fmt(s) {
+        return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+    }
+
+    _startDrag(e, clip, ti) {
+        const sx = e.clientX, st = clip.startTime;
+        const move = e2 => {
+            let nt = st + this.px2t(e2.clientX - sx);
+            nt = Math.max(0, this.snapTime(nt));
+            if (!this.overlap(ti, clip.id, nt, clip.duration)) { clip.startTime = nt; this.render(); }
+        };
+        const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); this.app.saveState(); };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    }
+
+    _startResize(e, clip, ti, side) {
+        const sx = e.clientX, sSt = clip.startTime, sDur = clip.duration, sTrim = clip.trimStart || 0;
+        const move = e2 => {
+            const dt = this.px2t(e2.clientX - sx);
+            if (side === 'left') {
+                let ns = Math.max(0, this.snapTime(sSt + dt));
+                let nd = sDur - (ns - sSt);
+                if (nd < 0.1) return;
+                if (!this.overlap(ti, clip.id, ns, nd)) {
+                    clip.startTime = ns;
+                    clip.duration = nd;
+                    clip.trimStart = sTrim + (ns - sSt);
+                    this.render();
+                }
+            } else {
+                let nd = Math.max(0.1, sDur + dt);
+                const asset = this.app.mediaAssets[clip.assetId];
+                if (asset?.duration) nd = Math.min(nd, asset.duration - (clip.trimStart || 0));
+                nd = Math.max(0.1, nd);
+                if (!this.overlap(ti, clip.id, clip.startTime, nd)) { clip.duration = nd; this.render(); }
+            }
+        };
+        const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); this.app.saveState(); };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    }
+
+    _onDrop(e, ti) {
+        const mid = e.dataTransfer.getData('mediaId');
+        if (!mid) return;
+        const asset = this.app.mediaAssets[mid];
+        if (!asset) return;
+        const rect = this.scrollEl.getBoundingClientRect();
+        let st = Math.max(0, this.snapTime(this.px2t(e.clientX - rect.left + this.scrollEl.scrollLeft)));
+        const dur = asset.duration || 5;
+        if (!this.overlap(ti, -1, st, dur)) {
+            this.addClip(ti, { type: asset.type, name: asset.name, assetId: mid, startTime: st, duration: dur });
+            this.app.saveState();
+        }
+    }
+
+    _contextMenu(e, clip) {
+        document.querySelectorAll('.context-menu').forEach(m => m.remove());
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+        menu.innerHTML = `
+            <div class="context-menu-item" data-a="split"><i class="fas fa-cut"></i> Split at Playhead</div>
+            <div class="context-menu-item" data-a="dup"><i class="fas fa-copy"></i> Duplicate</div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item danger" data-a="del"><i class="fas fa-trash"></i> Delete</div>`;
+        document.body.appendChild(menu);
+        menu.querySelectorAll('.context-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (item.dataset.a === 'split') { this.splitClip(clip.id, this.app.currentTime); this.app.saveState(); }
+                else if (item.dataset.a === 'dup') { this.dupClip(clip.id); this.app.saveState(); }
+                else if (item.dataset.a === 'del') { this.removeClip(clip.id); this.app.saveState(); }
+                menu.remove();
+            });
+        });
+        setTimeout(() => {
+            const close = e2 => { if (!menu.contains(e2.target)) { menu.remove(); document.removeEventListener('mousedown', close); } };
+            document.addEventListener('mousedown', close);
+        }, 0);
+    }
+
+    _bind() {
+        // ruler click seek
+        this.rulerEl.addEventListener('mousedown', e => {
+            const rect = this.scrollEl.getBoundingClientRect();
+            const seek = e2 => this.app.seek(Math.max(0, this.px2t(e2.clientX - rect.left + this.scrollEl.scrollLeft)));
+            seek(e);
+            const up = () => { document.removeEventListener('mousemove', seek); document.removeEventListener('mouseup', up); };
+            document.addEventListener('mousemove', seek);
+            document.addEventListener('mouseup', up);
+        });
+
+        // playhead drag
+        this.playheadEl.querySelector('.playhead-handle').addEventListener('mousedown', e => {
+            e.stopPropagation();
+            const rect = this.scrollEl.getBoundingClientRect();
+            const move = e2 => this.app.seek(Math.max(0, this.px2t(e2.clientX - rect.left + this.scrollEl.scrollLeft)));
+            const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', up);
+        });
+
+        // sync label scroll
+        this.scrollEl.addEventListener('scroll', () => { this.labelsEl.scrollTop = this.scrollEl.scrollTop; });
+
+        document.getElementById('snapToggle').addEventListener('change', e => { this.snap = e.target.checked; });
+        document.getElementById('zoomInBtn').addEventListener('click', () => { this.zoom = Math.min(400, this.zoom * 1.3); this.render(); });
+        document.getElementById('zoomOutBtn').addEventListener('click', () => { this.zoom = Math.max(10, this.zoom / 1.3); this.render(); });
+        document.getElementById('fitBtn').addEventListener('click', () => { this.zoom = Math.max(10, (this.scrollEl.clientWidth - 40) / this.totalDuration()); this.render(); });
+        document.getElementById('splitBtn').addEventListener('click', () => { if (this.selectedClip) { this.splitClip(this.selectedClip.id, this.app.currentTime); this.app.saveState(); } });
+        document.getElementById('deleteBtn').addEventListener('click', () => { if (this.selectedClip) { this.removeClip(this.selectedClip.id); this.app.saveState(); } });
+        document.getElementById('duplicateBtn').addEventListener('click', () => { if (this.selectedClip) { this.dupClip(this.selectedClip.id); this.app.saveState(); } });
+        document.getElementById('addTrackBtn').addEventListener('click', () => {
+            const n = prompt('Track name:', `Track ${this.tracks.length + 1}`);
+            if (!n) return;
+            const tp = prompt('Type (video/audio/text):', 'video') || 'video';
+            this.addTrack(n, tp);
+            this.app.saveState();
+        });
+    }
+
+    getState() {
+        return { tracks: JSON.parse(JSON.stringify(this.tracks)), zoom: this.zoom, clipId: this.clipId };
+    }
+
+    loadState(s) {
+        this.tracks = s.tracks;
+        this.zoom = s.zoom;
+        this.clipId = s.clipId;
+        this.selectedClip = null;
+        this.render();
+    }
+}
+
+// =====================================================
+// MAIN APP
+// =====================================================
+class VideoEditorApp {
+    constructor() {
+        this.mediaAssets = {};
+        this.mediaId = 0;
+        this.currentTime = 0;
+        this.isPlaying = false;
+        this.lastTick = 0;
+        this.raf = null;
+        this.undoStack = [];
+        this.redoStack = [];
+        this.masterVolume = 1;
+
+        this.canvas = document.getElementById('previewCanvas');
+        this.renderer = new CanvasRenderer(this.canvas);
+        this.timeline = new TimelineManager(this);
+
+        this._bind();
+        this.render();
+    }
+
+    // ---- Media ----
+    async importFile(file) {
+        const id = 'media_' + (this.mediaId++);
+        const type = file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : file.type.startsWith('image/') ? 'image' : null;
+        if (!type) return;
+        const url = URL.createObjectURL(file);
+        const asset = { id, name: file.name, type, url, duration: type === 'image' ? 5 : 0, element: null };
+
+        await new Promise((resolve, reject) => {
+            if (type === 'video') {
+                const v = document.createElement('video');
+                v.src = url; v.preload = 'auto'; v.muted = true; v.playsInline = true;
+                v.onloadedmetadata = () => { asset.duration = v.duration; asset.element = v; resolve(); };
+                v.onerror = reject;
+            } else if (type === 'audio') {
+                const a = document.createElement('audio');
+                a.src = url; a.preload = 'auto';
+                a.onloadedmetadata = () => { asset.duration = a.duration; asset.element = a; resolve(); };
+                a.onerror = reject;
+            } else {
+                const img = new Image();
+                img.src = url;
+                img.onload = () => { asset.element = img; resolve(); };
+                img.onerror = reject;
+            }
+        });
+
+        this.mediaAssets[id] = asset;
+        this._renderLibrary();
+        return asset;
+    }
+
+    _renderLibrary() {
+        const lib = document.getElementById('mediaLibrary');
+        lib.innerHTML = '';
+        Object.values(this.mediaAssets).forEach(a => {
+            const el = document.createElement('div');
+            el.className = 'media-item';
+            el.draggable = true;
+
+            let thumb = '<i class="fas fa-music"></i>';
+            if (a.type === 'video') thumb = `<video src="${a.url}" muted preload="metadata"></video>`;
+            else if (a.type === 'image') thumb = `<img src="${a.url}">`;
+
+            const durStr = a.duration ? this._fmtDetail(a.duration) : '';
+            el.innerHTML = `<div class="media-thumb">${thumb}</div>
+                <div class="media-info"><div class="name">${a.name}</div><div class="meta">${a.type}${durStr ? ' • ' + durStr : ''}</div></div>
+                <div class="media-item-actions">
+                    <button class="add-btn" title="Add to timeline"><i class="fas fa-plus"></i></button>
+                    <button class="del-btn" title="Remove"><i class="fas fa-trash"></i></button>
+                </div>`;
+
+            el.addEventListener('dragstart', e => e.dataTransfer.setData('mediaId', a.id));
+            el.querySelector('.add-btn').addEventListener('click', () => this._autoAdd(a.id));
+            el.querySelector('.del-btn').addEventListener('click', () => { URL.revokeObjectURL(a.url); delete this.mediaAssets[a.id]; this._renderLibrary(); });
+
+            lib.appendChild(el);
+        });
+    }
+
+    _autoAdd(mid) {
+        const a = this.mediaAssets[mid];
+        if (!a) return;
+        let ti = this.timeline.tracks.findIndex(t => t.type === (a.type === 'audio' ? 'audio' : a.type === 'image' ? 'video' : 'video'));
+        if (ti === -1) { this.timeline.addTrack(a.type, a.type); ti = this.timeline.tracks.length - 1; }
+        let st = 0;
+        const clips = this.timeline.tracks[ti].clips;
+        if (clips.length) st = clips[clips.length - 1].startTime + clips[clips.length - 1].duration;
+        this.timeline.addClip(ti, { type: a.type, name: a.name, assetId: mid, startTime: st, duration: a.duration || 5 });
+        this.saveState();
+    }
+
+    addTextClip() {
+        const td = {
+            text: document.getElementById('textContent').value || 'Text',
+            fontFamily: document.getElementById('textFont').value,
+            fontSize: +document.getElementById('textSize').value || 48,
+            color: document.getElementById('textColor').value,
+            strokeColor: document.getElementById('textStroke').value,
+            strokeWidth: +document.getElementById('textStrokeWidth').value || 0,
+            bgColor: document.getElementById('textBgColor').value,
+            bgOpacity: +document.getElementById('textBgOpacity').value || 0,
+            align: document.querySelector('.align-btn.active')?.dataset.align || 'center',
+            bold: document.getElementById('textBold').classList.contains('active'),
+            italic: document.getElementById('textItalic').classList.contains('active'),
+            animation: document.getElementById('textAnimation').value,
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2,
+        };
+
+        let ti = this.timeline.tracks.findIndex(t => t.type === 'text');
+        if (ti === -1) { this.timeline.addTrack('Text', 'text'); ti = this.timeline.tracks.length - 1; }
+
+        let st = this.currentTime;
+        if (this.timeline.overlap(ti, -1, st, 5)) {
+            const clips = this.timeline.tracks[ti].clips;
+            if (clips.length) st = clips[clips.length - 1].startTime + clips[clips.length - 1].duration;
+        }
+
+        this.timeline.addClip(ti, { type: 'text', name: td.text.substring(0, 20), startTime: st, duration: 5, textData: td });
+        this.saveState();
+    }
+
+    // ---- Playback ----
+    play() {
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+        this.lastTick = performance.now();
+        document.getElementById('playIcon').className = 'fas fa-pause';
+        this._tick();
+    }
+
+    pause() {
+        this.isPlaying = false;
+        if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+        document.getElementById('playIcon').className = 'fas fa-play';
+        this._pauseAll();
+    }
+
+    stop() { this.pause(); this.currentTime = 0; this.render(); this._updateTime(); }
+
+    seek(t) {
+        this.currentTime = Math.max(0, t);
+        this.render();
+        this._updateTime();
+        this.timeline.updatePlayhead();
+        if (this.isPlaying) this._syncAudio();
+    }
+
+    _tick() {
+        if (!this.isPlaying) return;
+        const now = performance.now();
+        this.currentTime += (now - this.lastTick) / 1000;
+        this.lastTick = now;
+
+        const maxT = this.timeline.totalDuration() - 3;
+        if (this.currentTime >= maxT) { this.currentTime = maxT; this.pause(); return; }
+
+        this.render();
+        this._syncAudio();
+        this._updateTime();
+        this.timeline.updatePlayhead();
+        this.raf = requestAnimationFrame(() => this._tick());
+    }
+
+    render() {
+        this.renderer.renderFrame(this.currentTime, this.timeline.tracks, this.mediaAssets);
+    }
+
+    _syncAudio() {
+        this.timeline.tracks.forEach(track => {
+            if (track.muted) return;
+            track.clips.forEach(clip => {
+                if (clip.type !== 'audio' && clip.type !== 'video') return;
+                const asset = this.mediaAssets[clip.assetId];
+                if (!asset?.element) return;
+                const el = asset.element;
+                const end = clip.startTime + clip.duration;
+
+                if (this.currentTime >= clip.startTime && this.currentTime < end) {
+                    const mt = (this.currentTime - clip.startTime) + (clip.trimStart || 0);
+                    if (Math.abs(el.currentTime - mt) > 0.3) el.currentTime = mt;
+
+                    let vol = (clip.volume ?? 1) * this.masterVolume;
+                    if (clip.fadeIn && this.currentTime - clip.startTime < clip.fadeIn) vol *= (this.currentTime - clip.startTime) / clip.fadeIn;
+                    if (clip.fadeOut && end - this.currentTime < clip.fadeOut) vol *= (end - this.currentTime) / clip.fadeOut;
+                    el.volume = Math.max(0, Math.min(1, vol));
+                    if (clip.type === 'audio') el.muted = false;
+                    if (el.paused && this.isPlaying) el.play().catch(() => {});
+                } else {
+                    if (!el.paused) el.pause();
+                }
+            });
+        });
+    }
+
+    _pauseAll() {
+        Object.values(this.mediaAssets).forEach(a => { if (a.element?.pause) a.element.pause(); });
+    }
+
+    _updateTime() {
+        document.getElementById('currentTime').textContent = this._fmtDetail(this.currentTime);
+        document.getElementById('totalTime').textContent = this._fmtDetail(Math.max(0, this.timeline.totalDuration() - 3));
+    }
+
+    _fmtDetail(s) {
+        const m = Math.floor(s / 60), sec = Math.floor(s % 60), ms = Math.floor((s % 1) * 1000);
+        return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+    }
+
+    // ---- Properties ----
+    showProperties(clip) {
+        const p = document.getElementById('propertiesContent');
+        let h = `<h4 style="margin-bottom:10px;font-size:13px">${clip.name || 'Clip'} <span style="color:var(--text3);font-size:10px">(${clip.type})</span></h4>`;
+
+        h += `<div class="tool-group"><label>Start (s)</label><input type="number" id="pSt" value="${clip.startTime.toFixed(2)}" step="0.1" min="0"></div>`;
+        h += `<div class="tool-group"><label>Duration (s)</label><input type="number" id="pDur" value="${clip.duration.toFixed(2)}" step="0.1" min="0.1"></div>`;
+        h += `<div class="tool-group"><label>Opacity</label><div class="tool-row" style="align-items:center"><input type="range" id="pOp" min="0" max="100" value="${Math.round((clip.opacity ?? 1) * 100)}" style="flex:1"><span id="pOpV" style="font-size:11px;min-width:30px;text-align:right">${Math.round((clip.opacity ?? 1) * 100)}%</span></div></div>`;
+
+        if (clip.type === 'video' || clip.type === 'audio') {
+            h += `<div class="tool-group"><label>Volume</label><div class="tool-row" style="align-items:center"><input type="range" id="pVol" min="0" max="100" value="${Math.round((clip.volume ?? 1) * 100)}" style="flex:1"><span id="pVolV" style="font-size:11px;min-width:30px;text-align:right">${Math.round((clip.volume ?? 1) * 100)}%</span></div></div>`;
+            h += `<div class="tool-group"><label>Trim Start (s)</label><input type="number" id="pTrim" value="${(clip.trimStart || 0).toFixed(2)}" step="0.1" min="0"></div>`;
+            h += `<div class="tool-group"><label>Fade In (s)</label><input type="number" id="pFI" value="${clip.fadeIn || 0}" step="0.1" min="0"></div>`;
+            h += `<div class="tool-group"><label>Fade Out (s)</label><input type="number" id="pFO" value="${clip.fadeOut || 0}" step="0.1" min="0"></div>`;
+        }
+
+        if (clip.type === 'video' || clip.type === 'image') {
+            h += `<div class="tool-group"><label>Transition</label><select id="pTrans">
+                <option value="">None</option>
+                <option value="fade" ${clip.transition==='fade'?'selected':''}>Fade</option>
+                <option value="wipeLeft" ${clip.transition==='wipeLeft'?'selected':''}>Wipe Left</option>
+                <option value="wipeRight" ${clip.transition==='wipeRight'?'selected':''}>Wipe Right</option>
+                <option value="dissolve" ${clip.transition==='dissolve'?'selected':''}>Dissolve</option>
+            </select></div>`;
+            h += `<div class="tool-group"><label>Transition Duration (s)</label><input type="number" id="pTD" value="${clip.transitionDuration||0.5}" step="0.1" min="0.1" max="5"></div>`;
+
+            h += `<h4 style="margin:10px 0 6px;font-size:12px">Effects</h4>`;
+            if (clip.effects?.length) {
+                clip.effects.forEach((ef, i) => {
+                    h += `<div class="tool-row" style="margin-bottom:3px;align-items:center"><span style="flex:1;font-size:11px">${ef.type} (${ef.intensity}%)</span><button class="rm-fx" data-i="${i}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px"><i class="fas fa-times"></i></button></div>`;
+                });
+            } else {
+                h += `<p style="font-size:11px;color:var(--text3)">No effects</p>`;
+            }
+        }
+
+        if (clip.type === 'text' && clip.textData) {
+            const td = clip.textData;
+            h += `<div class="tool-group"><label>Text</label><textarea id="pTxt" rows="2">${td.text}</textarea></div>`;
+            h += `<div class="tool-row"><div class="tool-group half"><label>X</label><input type="number" id="pTX" value="${Math.round(td.x||0)}"></div><div class="tool-group half"><label>Y</label><input type="number" id="pTY" value="${Math.round(td.y||0)}"></div></div>`;
+            h += `<div class="tool-row"><div class="tool-group half"><label>Size</label><input type="number" id="pFS" value="${td.fontSize||48}" min="8"></div><div class="tool-group half"><label>Color</label><input type="color" id="pTC" value="${td.color||'#ffffff'}"></div></div>`;
+        }
+
+        p.innerHTML = h;
+
+        // bind
+        const bind = (id, fn) => { const e = document.getElementById(id); if (e) { e.addEventListener('input', () => { fn(e); this.render(); this.timeline.render(); }); e.addEventListener('change', () => this.saveState()); } };
+
+        bind('pSt', e => { clip.startTime = Math.max(0, +e.value || 0); });
+        bind('pDur', e => { clip.duration = Math.max(0.1, +e.value || 1); });
+        bind('pOp', e => { clip.opacity = +e.value / 100; document.getElementById('pOpV').textContent = e.value + '%'; });
+        bind('pVol', e => { clip.volume = +e.value / 100; document.getElementById('pVolV').textContent = e.value + '%'; });
+        bind('pTrim', e => { clip.trimStart = Math.max(0, +e.value || 0); });
+        bind('pFI', e => { clip.fadeIn = +e.value || 0; });
+        bind('pFO', e => { clip.fadeOut = +e.value || 0; });
+        bind('pTrans', e => { clip.transition = e.value || null; });
+        bind('pTD', e => { clip.transitionDuration = +e.value || 0.5; });
+        bind('pTxt', e => { if (clip.textData) { clip.textData.text = e.value; clip.name = e.value.substring(0, 20); } });
+        bind('pTX', e => { if (clip.textData) clip.textData.x = +e.value || 0; });
+        bind('pTY', e => { if (clip.textData) clip.textData.y = +e.value || 0; });
+        bind('pFS', e => { if (clip.textData) clip.textData.fontSize = +e.value || 48; });
+        bind('pTC', e => { if (clip.textData) clip.textData.color = e.value; });
+
+        p.querySelectorAll('.rm-fx').forEach(btn => {
+            btn.addEventListener('click', () => {
+                clip.effects.splice(+btn.dataset.i, 1);
+                this.showProperties(clip);
+                this.render();
+                this.saveState();
+            });
+        });
+    }
+
+    hideProperties() {
+        document.getElementById('propertiesContent').innerHTML = '<p class="placeholder-text">Select a clip on the timeline to edit properties.</p>';
+    }
+
+    applyEffect(type, intensity) {
+        const c = this.timeline.selectedClip;
+        if (!c) return alert('Select a clip first');
+        if (c.type !== 'video' && c.type !== 'image') return alert('Effects apply to video/image clips');
+        if (!c.effects) c.effects = [];
+        c.effects.push({ type, intensity });
+        this.render();
+        this.showProperties(c);
+        this.saveState();
+    }
+
+    applyTransition(type) {
+        const c = this.timeline.selectedClip;
+        if (!c) return alert('Select a clip first');
+        c.transition = type;
+        c.transitionDuration = 0.5;
+        this.render();
+        this.showProperties(c);
+        this.saveState();
+    }
+
+    // ---- Undo / Redo ----
+    saveState() {
+        this.undoStack.push(JSON.stringify(this.timeline.getState()));
+        if (this.undoStack.length > 50) this.undoStack.shift();
+        this.redoStack = [];
+    }
+
+    undo() {
+        if (!this.undoStack.length) return;
+        this.redoStack.push(JSON.stringify(this.timeline.getState()));
+        this.timeline.loadState(JSON.parse(this.undoStack.pop()));
+        this.render();
+    }
+
+    redo() {
+        if (!this.redoStack.length) return;
+        this.undoStack.push(JSON.stringify(this.timeline.getState()));
+        this.timeline.loadState(JSON.parse(this.redoStack.pop()));
+        this.render();
+    }
+
+    // ---- Project ----
+    saveProject() {
+        const data = { v: 1, canvas: document.getElementById('canvasSize').value, fps: document.getElementById('fpsSelect').value, timeline: this.timeline.getState() };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'project.WasmForge.json';
+        a.click();
+    }
+
+    loadProject(file) {
+        const r = new FileReader();
+        r.onload = e => {
+            try {
+                const d = JSON.parse(e.target.result);
+                if (d.canvas) { document.getElementById('canvasSize').value = d.canvas; const [w, h] = d.canvas.split('x').map(Number); this.renderer.resize(w, h); }
+                if (d.fps) document.getElementById('fpsSelect').value = d.fps;
+                if (d.timeline) this.timeline.loadState(d.timeline);
+                this.render();
+                alert('Project loaded. Re-import media files to restore clips.');
+            } catch (err) { alert('Load failed: ' + err.message); }
+        };
+        r.readAsText(file);
+    }
+
+    newProject() {
+        if (!confirm('Start new project? Unsaved changes will be lost.')) return;
+        Object.values(this.mediaAssets).forEach(a => { if (a.url) URL.revokeObjectURL(a.url); });
+        this.mediaAssets = {};
+        this.mediaId = 0;
+        this.currentTime = 0;
+        this.pause();
+        this.undoStack = [];
+        this.redoStack = [];
+        this.timeline._initTracks();
+        this.timeline.clipId = 0;
+        this.timeline.render();
+        this._renderLibrary();
+        this.render();
+        this._updateTime();
+        this.hideProperties();
+    }
+
+    // ---- Export ----
+    async exportVideo() {
+        const btn = document.getElementById('startExportBtn');
+        const bar = document.getElementById('exportProgress');
+        const fill = document.getElementById('exportProgressFill');
+        const txt = document.getElementById('exportProgressText');
+        const bitrate = +document.getElementById('exportQuality').value;
+        const fps = +document.getElementById('fpsSelect').value || 30;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        bar.style.display = 'block';
+
+        try {
+            const stream = this.canvas.captureStream(fps);
+            let mime = 'video/webm;codecs=vp9';
+            if (!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm;codecs=vp8';
+            if (!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm';
+
+            const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
+            const chunks = [];
+            rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+
+            const done = new Promise(res => { rec.onstop = () => res(); });
+
+            rec.start(100);
+
+            const wasPlaying = this.isPlaying;
+            if (wasPlaying) this.pause();
+
+            const duration = this.timeline.totalDuration() - 3;
+            const totalFrames = Math.ceil(duration * fps);
+
+            for (let f = 0; f <= totalFrames; f++) {
+                this.currentTime = f / fps;
+                this.renderer.renderFrame(this.currentTime, this.timeline.tracks, this.mediaAssets);
+                this._syncAudio();
+
+                const pct = Math.round(f / totalFrames * 100);
+                fill.style.width = pct + '%';
+                txt.textContent = pct + '%';
+
+                await new Promise(r => setTimeout(r, 1000 / fps / 2));
+            }
+
+            rec.stop();
+            this._pauseAll();
+            await done;
+
+            const blob = new Blob(chunks, { type: rec.mimeType });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'WasmForge_export.webm';
+            a.click();
+
+            fill.style.width = '100%';
+            txt.textContent = 'Done!';
+        } catch (err) {
+            alert('Export failed: ' + err.message);
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-download"></i> Start Export';
+            setTimeout(() => { bar.style.display = 'none'; fill.style.width = '0'; }, 2000);
+        }
+    }
+
+    // ---- Event Binding ----
+    _bind() {
+        const importArea = document.getElementById('importArea');
+        const fileInput = document.getElementById('fileInput');
+
+        importArea.addEventListener('click', () => fileInput.click());
+        importArea.addEventListener('dragover', e => { e.preventDefault(); importArea.classList.add('drag-over'); });
+        importArea.addEventListener('dragleave', () => importArea.classList.remove('drag-over'));
+        importArea.addEventListener('drop', e => {
+            e.preventDefault();
+            importArea.classList.remove('drag-over');
+            Array.from(e.dataTransfer.files).forEach(f => this.importFile(f).catch(console.error));
+        });
+        fileInput.addEventListener('change', e => {
+            Array.from(e.target.files).forEach(f => this.importFile(f).catch(console.error));
+            fileInput.value = '';
+        });
+
+        document.querySelectorAll('.panel-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            });
+        });
+
+        document.getElementById('playBtn').addEventListener('click', () => { this.isPlaying ? this.pause() : this.play(); });
+        document.getElementById('stopBtn').addEventListener('click', () => this.stop());
+        document.getElementById('skipStartBtn').addEventListener('click', () => this.seek(0));
+        document.getElementById('skipEndBtn').addEventListener('click', () => this.seek(this.timeline.totalDuration() - 3));
+
+        document.addEventListener('keydown', e => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+            switch (e.key) {
+                case ' ': e.preventDefault(); this.isPlaying ? this.pause() : this.play(); break;
+                case 'Delete': case 'Backspace': if (this.timeline.selectedClip) { this.timeline.removeClip(this.timeline.selectedClip.id); this.saveState(); } break;
+                case 'z': if (e.ctrlKey || e.metaKey) { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); } break;
+                case 'y': if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.redo(); } break;
+                case 's': if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.saveProject(); } break;
+                case 'ArrowLeft': this.seek(this.currentTime - (e.shiftKey ? 1 : 0.1)); break;
+                case 'ArrowRight': this.seek(this.currentTime + (e.shiftKey ? 1 : 0.1)); break;
+            }
+        });
+
+        document.getElementById('canvasSize').addEventListener('change', e => {
+            const [w, h] = e.target.value.split('x').map(Number);
+            this.renderer.resize(w, h);
+            this.render();
+        });
+
+        // Text
+        document.getElementById('addTextBtn').addEventListener('click', () => this.addTextClip());
+        document.querySelectorAll('.align-btn').forEach(btn => {
+            btn.addEventListener('click', () => { document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); });
+        });
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.addEventListener('click', () => btn.classList.toggle('active'));
+        });
+        document.getElementById('textBgOpacity').addEventListener('input', e => { document.getElementById('textBgOpacityVal').textContent = e.target.value + '%'; });
+
+        // Effects
+        let selEffect = null;
+        document.querySelectorAll('.effect-card:not(.transition-card)').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.effect-card:not(.transition-card)').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                selEffect = card.dataset.effect;
+                document.getElementById('effectControls').style.display = 'block';
+                document.getElementById('effectName').textContent = selEffect;
+                document.getElementById('effectIntensity').value = 100;
+                document.getElementById('effectIntensityVal').textContent = '100';
+            });
+        });
+        document.getElementById('effectIntensity').addEventListener('input', e => { document.getElementById('effectIntensityVal').textContent = e.target.value; });
+        document.getElementById('applyEffectBtn').addEventListener('click', () => { if (selEffect) this.applyEffect(selEffect, +document.getElementById('effectIntensity').value); });
+        document.querySelectorAll('.transition-card').forEach(c => { c.addEventListener('click', () => this.applyTransition(c.dataset.transition)); });
+
+        // Audio
+        document.getElementById('masterVolume').addEventListener('input', e => { this.masterVolume = +e.target.value / 100; document.getElementById('masterVolumeVal').textContent = e.target.value + '%'; });
+        document.getElementById('applyAudioEffects').addEventListener('click', () => {
+            const c = this.timeline.selectedClip;
+            if (!c || (c.type !== 'audio' && c.type !== 'video')) return alert('Select audio/video clip');
+            c.fadeIn = +document.getElementById('audioFadeIn').value || 0;
+            c.fadeOut = +document.getElementById('audioFadeOut').value || 0;
+            this.showProperties(c);
+            this.saveState();
+        });
+
+        // Top bar
+        document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+        document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+        document.getElementById('newProjectBtn').addEventListener('click', () => this.newProject());
+        document.getElementById('saveProjectBtn').addEventListener('click', () => this.saveProject());
+        document.getElementById('loadProjectBtn').addEventListener('click', () => document.getElementById('loadProjectInput').click());
+        document.getElementById('loadProjectInput').addEventListener('change', e => { if (e.target.files[0]) { this.loadProject(e.target.files[0]); e.target.value = ''; } });
+
+        // Export
+        document.getElementById('exportBtn').addEventListener('click', () => { document.getElementById('exportModal').style.display = 'flex'; });
+        document.getElementById('closeExportModal').addEventListener('click', () => { document.getElementById('exportModal').style.display = 'none'; });
+        document.getElementById('exportModal').addEventListener('click', e => { if (e.target.id === 'exportModal') e.target.style.display = 'none'; });
+        document.getElementById('startExportBtn').addEventListener('click', () => this.exportVideo());
+
+        document.body.addEventListener('dragover', e => e.preventDefault());
+        document.body.addEventListener('drop', e => e.preventDefault());
+    }
+}
+
+// ---- INIT ----
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new VideoEditorApp();
+});
+</script>
 </body>
 </html>
