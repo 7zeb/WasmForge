@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClipForge - Video Editor</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <span>ClipForge</span>
+            </div>
+            <div class="top-actions">
+                <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo"></i></button>
+                <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo"></i></button>
+                <div class="separator"></div>
+                <button id="newProjectBtn" class="top-btn" title="New Project"><i class="fas fa-file"></i> New</button>
+                <button id="saveProjectBtn" class="top-btn" title="Save Project"><i class="fas fa-save"></i> Save</button>
+                <button id="loadProjectBtn" class="top-btn" title="Load Project"><i class="fas fa-folder-open"></i> Load</button>
+                <div class="separator"></div>
+                <button id="exportBtn" class="top-btn export-btn"><i class="fas fa-download"></i> Export Video</button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Left Panel - Media & Tools -->
+            <aside class="left-panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-tab="media"><i class="fas fa-photo-video"></i> Media</button>
+                    <button class="panel-tab" data-tab="text"><i class="fas fa-font"></i> Text</button>
+                    <button class="panel-tab" data-tab="effects"><i class="fas fa-magic"></i> Effects</button>
+                    <button class="panel-tab" data-tab="audio"><i class="fas fa-music"></i> Audio</button>
+                </div>
+
+                <!-- Media Tab -->
+                <div class="panel-content active" id="media-tab">
+                    <div class="import-area" id="importArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drop files here or click to import</p>
+                        <span>Video, Audio, Images</span>
+                        <input type="file" id="fileInput" multiple accept="video/*,audio/*,image/*" hidden>
+                    </div>
+                    <div class="media-library" id="mediaLibrary">
+                        <!-- Imported media items appear here -->
+                    </div>
+                </div>
+
+                <!-- Text Tab -->
+                <div class="panel-content" id="text-tab">
+                    <h3>Add Text</h3>
+                    <div class="tool-group">
+                        <label>Text Content</label>
+                        <textarea id="textContent" rows="3" placeholder="Enter your text...">Hello World</textarea>
+                    </div>
+                    <div class="tool-group">
+                        <label>Font Family</label>
+                        <select id="textFont">
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="tool-row">
+                        <div class="tool-group half">
+                            <label>Size</label>
+                            <input type="number" id="textSize" value="48" min="8" max="200">
+                        </div>
+                        <div class="tool-group half">
+                            <label>Color</label>
+                            <input type="color" id="textColor" value="#ffffff">
+                        </div>
+                    </div>
+                    <div class="tool-row">
+                        <div class="tool-group half">
+                            <label>Stroke</label>
+                            <input type="color" id="textStroke" value="#000000">
+                        </div>
+                        <div class="tool-group half">
+                            <label>Stroke Width</label>
+                            <input type="number" id="textStrokeWidth" value="0" min="0" max="20">
+                        </div>
+                    </div>
+                    <div class="tool-group">
+                        <label>Background</label>
+                        <div class="tool-row">
+                            <input type="color" id="textBgColor" value="#000000">
+                            <input type="range" id="textBgOpacity" min="0" max="100" value="0">
+                            <span id="textBgOpacityVal">0%</span>
+                        </div>
+                    </div>
+                    <div class="tool-group">
+                        <label>Alignment</label>
+                        <div class="btn-group">
+                            <button class="align-btn active" data-align="left"><i class="fas fa-align-left"></i></button>
+                            <button class="align-btn" data-align="center"><i class="fas fa-align-center"></i></button>
+                            <button class="align-btn" data-align="right"><i class="fas fa-align-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="tool-group">
+                        <label>Style</label>
+                        <div class="btn-group">
+                            <button class="style-btn" id="textBold" data-style="bold"><i class="fas fa-bold"></i></button>
+                            <button class="style-btn" id="textItalic" data-style="italic"><i class="fas fa-italic"></i></button>
+                        </div>
+                    </div>
+                    <div class="tool-group">
+                        <label>Animation</label>
+                        <select id="textAnimation">
+                            <option value="none">None</option>
+                            <option value="fadeIn">Fade In</option>
+                            <option value="slideUp">Slide Up</option>
+                            <option value="slideLeft">Slide Left</option>
+                            <option value="typewriter">Typewriter</option>
+                            <option value="scale">Scale In</option>
+                        </select>
+                    </div>
+                    <button id="addTextBtn" class="action-btn"><i class="fas fa-plus"></i> Add Text to Timeline</button>
+                </div>
+
+                <!-- Effects Tab -->
+                <div class="panel-content" id="effects-tab">
+                    <h3>Video Effects</h3>
+                    <div class="effects-grid" id="effectsGrid">
+                        <div class="effect-card" data-effect="brightness">
+                            <i class="fas fa-sun"></i>
+                            <span>Brightness</span>
+                        </div>
+                        <div class="effect-card" data-effect="contrast">
+                            <i class="fas fa-adjust"></i>
+                            <span>Contrast</span>
+                        </div>
+                        <div class="effect-card" data-effect="saturation">
+                            <i class="fas fa-palette"></i>
+                            <span>Saturation</span>
+                        </div>
+                        <div class="effect-card" data-effect="blur">
+                            <i class="fas fa-eye-slash"></i>
+                            <span>Blur</span>
+                        </div>
+                        <div class="effect-card" data-effect="grayscale">
+                            <i class="fas fa-chess-board"></i>
+                            <span>Grayscale</span>
+                        </div>
+                        <div class="effect-card" data-effect="sepia">
+                            <i class="fas fa-image"></i>
+                            <span>Sepia</span>
+                        </div>
+                        <div class="effect-card" data-effect="invert">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Invert</span>
+                        </div>
+                        <div class="effect-card" data-effect="hue-rotate">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Hue Rotate</span>
+                        </div>
+                        <div class="effect-card" data-effect="vignette">
+                            <i class="fas fa-circle"></i>
+                            <span>Vignette</span>
+                        </div>
+                        <div class="effect-card" data-effect="sharpen">
+                            <i class="fas fa-crosshairs"></i>
+                            <span>Sharpen</span>
+                        </div>
+                    </div>
+                    <div id="effectControls" class="effect-controls" style="display:none;">
+                        <h4 id="effectName"></h4>
+                        <input type="range" id="effectIntensity" min="0" max="200" value="100">
+                        <span id="effectIntensityVal">100%</span>
+                        <button id="applyEffectBtn" class="action-btn"><i class="fas fa-check"></i> Apply to Selected</button>
+                    </div>
+
+                    <h3 style="margin-top:20px;">Transitions</h3>
+                    <div class="effects-grid">
+                        <div class="effect-card transition-card" data-transition="fade">
+                            <i class="fas fa-ghost"></i>
+                            <span>Fade</span>
+                        </div>
+                        <div class="effect-card transition-card" data-transition="wipeLeft">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Wipe Left</span>
+                        </div>
+                        <div class="effect-card transition-card" data-transition="wipeRight">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Wipe Right</span>
+                        </div>
+                        <div class="effect-card transition-card" data-transition="dissolve">
+                            <i class="fas fa-water"></i>
+                            <span>Dissolve</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Tab -->
+                <div class="panel-content" id="audio-tab">
+                    <h3>Audio Controls</h3>
+                    <div class="tool-group">
+                        <label>Master Volume</label>
+                        <input type="range" id="masterVolume" min="0" max="100" value="100">
+                        <span id="masterVolumeVal">100%</span>
+                    </div>
+                    <div id="trackVolumeControls">
+                        <!-- Per-track volume controls appear here -->
+                    </div>
+                    <h3>Audio Effects</h3>
+                    <div class="tool-group">
+                        <label>Fade In (seconds)</label>
+                        <input type="number" id="audioFadeIn" value="0" min="0" max="10" step="0.1">
+                    </div>
+                    <div class="tool-group">
+                        <label>Fade Out (seconds)</label>
+                        <input type="number" id="audioFadeOut" value="0" min="0" max="10" step="0.1">
+                    </div>
+                    <button id="applyAudioEffects" class="action-btn"><i class="fas fa-check"></i> Apply to Selected</button>
+                </div>
+            </aside>
+
+            <!-- Center - Preview -->
+            <main class="center-panel">
+                <div class="preview-container">
+                    <div class="canvas-wrapper" id="canvasWrapper">
+                        <canvas id="previewCanvas" width="1280" height="720"></canvas>
+                        <!-- Text overlay for dragging -->
+                        <div id="textOverlays"></div>
+                    </div>
+                </div>
+                <div class="preview-controls">
+                    <div class="time-display">
+                        <span id="currentTime">00:00.000</span>
+                        <span>/</span>
+                        <span id="totalTime">00:00.000</span>
+                    </div>
+                    <div class="playback-controls">
+                        <button id="skipStartBtn" title="Skip to Start"><i class="fas fa-step-backward"></i></button>
+                        <button id="playBtn" title="Play/Pause"><i class="fas fa-play"></i></button>
+                        <button id="stopBtn" title="Stop"><i class="fas fa-stop"></i></button>
+                        <button id="skipEndBtn" title="Skip to End"><i class="fas fa-step-forward"></i></button>
+                    </div>
+                    <div class="zoom-controls">
+                        <label>Canvas:</label>
+                        <select id="canvasSize">
+                            <option value="1920x1080">1920×1080</option>
+                            <option value="1280x720" selected>1280×720</option>
+                            <option value="854x480">854×480</option>
+                            <option value="1080x1920">1080×1920 (Vertical)</option>
+                            <option value="1080x1080">1080×1080 (Square)</option>
+                        </select>
+                        <label>FPS:</label>
+                        <select id="fpsSelect">
+                            <option value="24">24</option>
+                            <option value="30" selected>30</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Panel - Properties -->
+            <aside class="right-panel" id="propertiesPanel">
+                <h3><i class="fas fa-sliders-h"></i> Properties</h3>
+                <div id="propertiesContent">
+                    <p class="placeholder-text">Select a clip on the timeline to edit its properties.</p>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-section">
+            <div class="timeline-toolbar">
+                <button id="zoomInBtn" title="Zoom In"><i class="fas fa-search-plus"></i></button>
+                <button id="zoomOutBtn" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
+                <button id="fitTimelineBtn" title="Fit to View"><i class="fas fa-expand"></i></button>
+                <div class="separator"></div>
+                <button id="splitBtn" title="Split Clip"><i class="fas fa-cut"></i> Split</button>
+                <button id="deleteBtn" title="Delete Selected"><i class="fas fa-trash"></i> Delete</button>
+                <button id="duplicateBtn" title="Duplicate"><i class="fas fa-copy"></i> Duplicate</button>
+                <div class="separator"></div>
+                <button id="addTrackBtn" title="Add Track"><i class="fas fa-plus"></i> Add Track</button>
+                <div class="separator"></div>
+                <span class="snap-toggle">
+                    <input type="checkbox" id="snapToggle" checked>
+                    <label for="snapToggle"><i class="fas fa-magnet"></i> Snap</label>
+                </span>
+            </div>
+            <div class="timeline-container" id="timelineContainer">
+                <div class="timeline-labels" id="timelineLabels">
+                    <!-- Track labels -->
+                </div>
+                <div class="timeline-scroll" id="timelineScroll">
+                    <div class="timeline-ruler" id="timelineRuler"></div>
+                    <div class="playhead" id="playhead">
+                        <div class="playhead-handle"></div>
+                        <div class="playhead-line"></div>
+                    </div>
+                    <div class="timeline-tracks" id="timelineTracks">
+                        <!-- Timeline tracks -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-download"></i> Export Video</h2>
+                <button class="modal-close" id="closeExportModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="tool-group">
+                    <label>Format</label>
+                    <select id="exportFormat">
+                        <option value="webm">WebM (VP8)</option>
+                        <option value="mp4">MP4 (H.264 - if supported)</option>
+                    </select>
+                </div>
+                <div class="tool-group">
+                    <label>Quality</label>
+                    <select id="exportQuality">
+                        <option value="high">High (8 Mbps)</option>
+                        <option value="medium" selected>Medium (4 Mbps)</option>
+                        <option value="low">Low (2 Mbps)</option>
+                    </select>
+                </div>
+                <div class="tool-group">
+                    <label>Include Audio</label>
+                    <input type="checkbox" id="exportAudio" checked>
+                </div>
+                <div class="progress-bar" id="exportProgress" style="display:none;">
+                    <div class="progress-fill" id="exportProgressFill"></div>
+                    <span id="exportProgressText">0%</span>
+                </div>
+                <button id="startExportBtn" class="action-btn full-width"><i class="fas fa-download"></i> Start Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+        <div class="spinner"></div>
+        <p id="loadingText">Processing...</p>
+    </div>
+
+    <!-- Hidden file input for project load -->
+    <input type="file" id="loadProjectInput" accept=".json" hidden>
+
+    <script src="js/effects.js"></script>
+    <script src="js/canvas-renderer.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
