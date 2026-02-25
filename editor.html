@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WasmForge — Video Editor</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -33,7 +34,6 @@
         .sep{width:1px;height:22px;background:var(--border);margin:0 5px}
 
         .main-layout{display:flex;flex:1;min-height:0;overflow:hidden}
-
         .left-panel{width:264px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
         .panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
         .panel-tab{flex:1;padding:7px 2px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--t3);cursor:pointer;font-size:9px;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s}
@@ -45,12 +45,12 @@
 
         .import-area{border:2px dashed var(--border);border-radius:var(--radius);padding:18px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px}
         .import-area:hover,.import-area.drag-over{border-color:var(--accent);background:rgba(124,58,237,.08)}
-        .import-area i.upload-icon{font-size:26px;color:var(--t3);margin-bottom:4px;display:block}
+        .import-area .upload-icon{font-size:26px;color:var(--t3);margin-bottom:4px;display:block}
         .import-area p{font-size:11px;color:var(--t2)}
         .import-area span{font-size:9px;color:var(--t3)}
 
         .media-library{display:flex;flex-direction:column;gap:3px}
-        .media-item{display:flex;align-items:center;gap:7px;padding:5px 7px;background:var(--bg3);border-radius:var(--rs);cursor:grab;transition:all .15s;border:1px solid transparent}
+        .media-item{display:flex;align-items:center;gap:7px;padding:5px 7px;background:var(--bg3);border-radius:var(--rs);cursor:grab;border:1px solid transparent;transition:all .15s}
         .media-item:hover{border-color:var(--border);background:var(--bg4)}
         .media-thumb{width:42px;height:30px;background:var(--bg1);border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .media-thumb img,.media-thumb video{width:100%;height:100%;object-fit:cover}
@@ -71,7 +71,7 @@
         .tool-row{display:flex;gap:5px;align-items:flex-end}
         .tool-group.half{flex:1}
         .btn-group{display:flex;gap:2px}
-        .align-btn,.style-btn{padding:5px 9px;background:var(--bg3);border:1px solid var(--border);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .15s;font-size:11px}
+        .align-btn,.style-btn{padding:5px 9px;background:var(--bg3);border:1px solid var(--border);color:var(--t2);cursor:pointer;border-radius:3px;font-size:11px;transition:all .15s}
         .align-btn:hover,.style-btn:hover{border-color:var(--accent);color:var(--t1)}
         .align-btn.active,.style-btn.active{background:var(--accent);border-color:var(--accent);color:white}
         .action-btn{width:100%;padding:7px;background:linear-gradient(135deg,var(--accent),var(--blue));border:none;border-radius:var(--radius);color:white;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:filter .15s;margin-top:5px}
@@ -79,7 +79,7 @@
         .action-btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
 
         .effects-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-bottom:8px}
-        .effect-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 5px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;font-size:9px}
+        .effect-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 5px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:9px;transition:all .15s}
         .effect-card:hover{border-color:var(--accent);background:var(--bg4)}
         .effect-card.active{border-color:var(--accent2);background:rgba(124,58,237,.15)}
         .effect-card i{font-size:15px;color:var(--cyan)}
@@ -169,7 +169,7 @@
         .context-menu-divider{height:1px;background:var(--border);margin:2px 0}
 
         .format-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px}
-        .format-card{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;font-size:10px;font-weight:600}
+        .format-card{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;background:var(--bg3);border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:10px;font-weight:600;transition:all .15s}
         .format-card:hover{border-color:var(--accent)}
         .format-card.active{border-color:var(--accent2);background:rgba(124,58,237,.15)}
         .format-card i{font-size:18px;color:var(--accent3)}
@@ -178,7 +178,7 @@
         .ffmpeg-status{font-size:10px;padding:6px 8px;border-radius:var(--rs);margin-bottom:10px;display:flex;align-items:center;gap:6px}
         .ffmpeg-status.loading{background:rgba(245,158,11,.1);color:var(--yellow)}
         .ffmpeg-status.ready{background:rgba(16,185,129,.1);color:var(--green)}
-        .ffmpeg-status.error{background:rgba(239,68,68,.1);color:var(--red)}
+        .ffmpeg-status.err{background:rgba(239,68,68,.1);color:var(--red)}
         .ffmpeg-status.info{background:rgba(59,130,246,.1);color:var(--blue)}
 
         @media(max-width:1100px){.right-panel{display:none}.left-panel{width:230px}}
@@ -190,8 +190,8 @@
     <header class="top-bar">
         <div class="logo"><i class="fas fa-microchip"></i><span>WasmForge</span></div>
         <div class="top-actions">
-            <button id="undoBtn" class="top-btn" title="Undo Ctrl+Z"><i class="fas fa-undo"></i></button>
-            <button id="redoBtn" class="top-btn" title="Redo Ctrl+Y"><i class="fas fa-redo"></i></button>
+            <button id="undoBtn" class="top-btn" title="Undo"><i class="fas fa-undo"></i></button>
+            <button id="redoBtn" class="top-btn" title="Redo"><i class="fas fa-redo"></i></button>
             <div class="sep"></div>
             <button id="newProjectBtn" class="top-btn"><i class="fas fa-file"></i> New</button>
             <button id="saveProjectBtn" class="top-btn"><i class="fas fa-save"></i> Save</button>
@@ -268,10 +268,10 @@
             <div class="preview-controls">
                 <div class="time-display"><span id="currentTime">00:00.000</span> / <span id="totalTime">00:00.000</span></div>
                 <div class="playback-controls">
-                    <button id="skipStartBtn" title="Start"><i class="fas fa-step-backward"></i></button>
-                    <button id="playBtn" title="Play Space"><i class="fas fa-play" id="playIcon"></i></button>
-                    <button id="stopBtn" title="Stop"><i class="fas fa-stop"></i></button>
-                    <button id="skipEndBtn" title="End"><i class="fas fa-step-forward"></i></button>
+                    <button id="skipStartBtn"><i class="fas fa-step-backward"></i></button>
+                    <button id="playBtn"><i class="fas fa-play" id="playIcon"></i></button>
+                    <button id="stopBtn"><i class="fas fa-stop"></i></button>
+                    <button id="skipEndBtn"><i class="fas fa-step-forward"></i></button>
                 </div>
                 <div class="zoom-controls">
                     <select id="canvasSize"><option value="1920x1080">1920×1080</option><option value="1280x720" selected>1280×720</option><option value="854x480">854×480</option><option value="1080x1920">1080×1920</option><option value="1080x1080">1080×1080</option></select>
@@ -309,16 +309,17 @@
     </div>
 </div>
 
+<!-- Export Modal -->
 <div class="modal-overlay" id="exportModal" style="display:none">
     <div class="modal">
         <div class="modal-header"><h2><i class="fas fa-download"></i> Export Video</h2><button class="modal-close" id="closeExportModal"><i class="fas fa-times"></i></button></div>
         <div class="modal-body">
-            <div id="ffmpegStatus" class="ffmpeg-status info"><i class="fas fa-info-circle"></i> FFmpeg loads when you pick a format that needs it.</div>
+            <div id="ffmpegStatus" class="ffmpeg-status info"><i class="fas fa-info-circle"></i> Select a format and click export.</div>
             <div class="tool-group"><label>Format</label>
                 <div class="format-grid" id="formatGrid">
-                    <div class="format-card" data-format="webm-fast"><i class="fas fa-bolt"></i>WebM<span class="fmt-ext">Fast • Native</span></div>
-                    <div class="format-card active" data-format="mp4"><i class="fas fa-film"></i>MP4<span class="fmt-ext">H.264 • FFmpeg</span></div>
-                    <div class="format-card" data-format="webm"><i class="fas fa-globe"></i>WebM<span class="fmt-ext">VP8 • FFmpeg</span></div>
+                    <div class="format-card active" data-format="webm-fast"><i class="fas fa-bolt"></i>WebM<span class="fmt-ext">Fast • Native</span></div>
+                    <div class="format-card" data-format="mp4"><i class="fas fa-film"></i>MP4<span class="fmt-ext">H.264 • FFmpeg</span></div>
+                    <div class="format-card" data-format="webm-hq"><i class="fas fa-globe"></i>WebM HQ<span class="fmt-ext">VP8 • FFmpeg</span></div>
                     <div class="format-card" data-format="gif"><i class="fas fa-images"></i>GIF<span class="fmt-ext">Animated</span></div>
                     <div class="format-card" data-format="mov"><i class="fab fa-apple"></i>MOV<span class="fmt-ext">QuickTime</span></div>
                     <div class="format-card" data-format="avi"><i class="fas fa-video"></i>AVI<span class="fmt-ext">Legacy</span></div>
@@ -335,692 +336,410 @@
 
 <script>
 // =====================================================================
-// RENDERER — double-buffered, optimized
+// RENDERER
 // =====================================================================
-class Renderer {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d', { alpha: false });
-        this.off = document.createElement('canvas');
-        this.oc = this.off.getContext('2d', { alpha: false });
-        this.off.width = canvas.width;
-        this.off.height = canvas.height;
+class R {
+    constructor(c){this.c=c;this.x=c.getContext('2d',{alpha:false});this.o=document.createElement('canvas');this.ox=this.o.getContext('2d',{alpha:false});this.o.width=c.width;this.o.height=c.height}
+    resize(w,h){this.c.width=w;this.c.height=h;this.o.width=w;this.o.height=h}
+    get canvas(){return this.c}
+    renderFrame(t,tracks,assets){
+        const W=this.o.width,H=this.o.height,c=this.ox;
+        c.fillStyle='#000';c.fillRect(0,0,W,H);
+        const v=[];
+        for(let i=0;i<tracks.length;i++){if(tracks[i].hidden)continue;for(const cl of tracks[i].clips)if(t>=cl.startTime&&t<cl.startTime+cl.duration)v.push({cl,i})}
+        v.sort((a,b)=>a.i-b.i);
+        for(const x of v)this._r(c,x.cl,t,assets,W,H);
+        this.x.drawImage(this.o,0,0);
     }
-    resize(w, h) { this.canvas.width = w; this.canvas.height = h; this.off.width = w; this.off.height = h; }
-
-    renderFrame(t, tracks, assets) {
-        const W = this.off.width, H = this.off.height, c = this.oc;
-        c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
-        const vis = [];
-        for (let ti = 0; ti < tracks.length; ti++) {
-            if (tracks[ti].hidden) continue;
-            for (const cl of tracks[ti].clips)
-                if (t >= cl.startTime && t < cl.startTime + cl.duration) vis.push({ cl, ti });
-        }
-        vis.sort((a, b) => a.ti - b.ti);
-        for (const v of vis) this._clip(c, v.cl, t, assets, W, H);
-        this.ctx.drawImage(this.off, 0, 0);
-    }
-
-    _clip(c, cl, t, assets, W, H) {
-        const p = t - cl.startTime;
-        let tp = 1;
-        if (cl.transition && cl.transitionDuration && p < cl.transitionDuration) tp = p / cl.transitionDuration;
-
-        if (cl.type === 'video' || cl.type === 'image') {
-            const a = assets[cl.assetId]; if (!a?.element) return;
-            const el = a.element;
-            let sw, sh;
-            if (cl.type === 'video') {
-                sw = el.videoWidth || W; sh = el.videoHeight || H;
-                const mt = p + (cl.trimStart || 0);
-                if (Math.abs(el.currentTime - mt) > 0.1) el.currentTime = mt;
-            } else { sw = el.naturalWidth || W; sh = el.naturalHeight || H; }
-            const f = this._fit(sw, sh, W, H);
-            c.save();
-            if (cl.transition) {
-                if (cl.transition === 'fade' || cl.transition === 'dissolve') c.globalAlpha = tp;
-                else if (cl.transition === 'wipeLeft') { c.beginPath(); c.rect(0, 0, W * tp, H); c.clip(); }
-                else if (cl.transition === 'wipeRight') { c.beginPath(); c.rect(W * (1 - tp), 0, W * tp, H); c.clip(); }
-            }
-            c.globalAlpha *= (cl.opacity ?? 1);
-            c.filter = this._filt(cl.effects);
-            try { c.drawImage(el, f.x, f.y, f.w, f.h); } catch (e) {}
-            c.restore();
-        } else if (cl.type === 'text') {
-            const td = cl.textData; if (!td) return;
-            const an = this._anim(td.animation || 'none', p);
-            c.save();
-            c.globalAlpha = an.op * (cl.opacity ?? 1);
-            const x = (td.x ?? W / 2) + an.ox, y = (td.y ?? H / 2) + an.oy;
-            if (an.sc !== 1) { c.translate(x, y); c.scale(an.sc, an.sc); c.translate(-x, -y); }
-            const sz = td.fontSize || 48;
-            c.font = `${td.italic ? 'italic ' : ''}${td.bold ? 'bold ' : ''}${sz}px "${td.fontFamily || 'Inter'}",sans-serif`;
-            c.textAlign = td.align || 'center'; c.textBaseline = 'middle';
-            let txt = td.text || '';
-            if (an.ch >= 0) txt = txt.substring(0, Math.floor(an.ch / 100 * txt.length));
-            const lines = txt.split('\n');
-            if (td.bgOpacity > 0) {
-                const mw = Math.max(...lines.map(l => c.measureText(l).width)), th = lines.length * sz * 1.3;
-                let bx = x; if (td.align === 'center') bx -= mw / 2; else if (td.align === 'right') bx -= mw;
-                c.save(); c.globalAlpha *= td.bgOpacity / 100; c.fillStyle = td.bgColor || '#000';
-                c.fillRect(bx - 8, y - th / 2 - 4, mw + 16, th + 8); c.restore();
-            }
-            lines.forEach((ln, li) => {
-                const ly = y + (li - (lines.length - 1) / 2) * sz * 1.3;
-                if (td.strokeWidth > 0) { c.strokeStyle = td.strokeColor || '#000'; c.lineWidth = td.strokeWidth; c.lineJoin = 'round'; c.strokeText(ln, x, ly); }
-                c.fillStyle = td.color || '#fff'; c.fillText(ln, x, ly);
-            });
-            c.restore();
+    _r(c,cl,t,a,W,H){
+        const p=t-cl.startTime;let tp=1;
+        if(cl.transition&&cl.transitionDuration&&p<cl.transitionDuration)tp=p/cl.transitionDuration;
+        if(cl.type==='video'||cl.type==='image'){
+            const as=a[cl.assetId];if(!as?.element)return;const el=as.element;
+            let sw,sh;
+            if(cl.type==='video'){sw=el.videoWidth||W;sh=el.videoHeight||H;const mt=p+(cl.trimStart||0);if(Math.abs(el.currentTime-mt)>.1)el.currentTime=mt}
+            else{sw=el.naturalWidth||W;sh=el.naturalHeight||H}
+            const f=this._f(sw,sh,W,H);c.save();
+            if(cl.transition){if(cl.transition==='fade'||cl.transition==='dissolve')c.globalAlpha=tp;else if(cl.transition==='wipeLeft'){c.beginPath();c.rect(0,0,W*tp,H);c.clip()}else if(cl.transition==='wipeRight'){c.beginPath();c.rect(W*(1-tp),0,W*tp,H);c.clip()}}
+            c.globalAlpha*=(cl.opacity??1);c.filter=this._fl(cl.effects);
+            try{c.drawImage(el,f.x,f.y,f.w,f.h)}catch(e){}c.restore()
+        }else if(cl.type==='text'){
+            const td=cl.textData;if(!td)return;const an=this._a(td.animation||'none',p);
+            c.save();c.globalAlpha=an.o*(cl.opacity??1);
+            const x=(td.x??W/2)+an.x,y=(td.y??H/2)+an.y;
+            if(an.s!==1){c.translate(x,y);c.scale(an.s,an.s);c.translate(-x,-y)}
+            const sz=td.fontSize||48;
+            c.font=`${td.italic?'italic ':''}${td.bold?'bold ':''}${sz}px "${td.fontFamily||'Inter'}",sans-serif`;
+            c.textAlign=td.align||'center';c.textBaseline='middle';
+            let txt=td.text||'';if(an.c>=0)txt=txt.substring(0,Math.floor(an.c/100*txt.length));
+            const lines=txt.split('\n');
+            if(td.bgOpacity>0){const mw=Math.max(...lines.map(l=>c.measureText(l).width)),th=lines.length*sz*1.3;let bx=x;if(td.align==='center')bx-=mw/2;else if(td.align==='right')bx-=mw;c.save();c.globalAlpha*=td.bgOpacity/100;c.fillStyle=td.bgColor||'#000';c.fillRect(bx-8,y-th/2-4,mw+16,th+8);c.restore()}
+            lines.forEach((ln,li)=>{const ly=y+(li-(lines.length-1)/2)*sz*1.3;if(td.strokeWidth>0){c.strokeStyle=td.strokeColor||'#000';c.lineWidth=td.strokeWidth;c.lineJoin='round';c.strokeText(ln,x,ly)}c.fillStyle=td.color||'#fff';c.fillText(ln,x,ly)});
+            c.restore()
         }
     }
-
-    _fit(sw, sh, dw, dh) {
-        const sr = sw / sh, dr = dw / dh;
-        let w, h;
-        if (sr > dr) { w = dw; h = w / sr; } else { h = dh; w = h * sr; }
-        return { x: (dw - w) / 2, y: (dh - h) / 2, w, h };
-    }
-
-    _filt(fx) {
-        if (!fx?.length) return 'none';
-        return fx.map(e => {
-            switch (e.type) {
-                case 'brightness': return `brightness(${e.intensity}%)`;
-                case 'contrast': return `contrast(${e.intensity}%)`;
-                case 'saturate': return `saturate(${e.intensity}%)`;
-                case 'grayscale': return `grayscale(${Math.min(e.intensity, 100)}%)`;
-                case 'sepia': return `sepia(${Math.min(e.intensity, 100)}%)`;
-                case 'invert': return `invert(${Math.min(e.intensity, 100)}%)`;
-                case 'hue-rotate': return `hue-rotate(${e.intensity * 3.6}deg)`;
-                case 'blur': return `blur(${e.intensity / 10}px)`;
-                default: return '';
-            }
-        }).filter(Boolean).join(' ') || 'none';
-    }
-
-    _anim(type, p) {
-        const t = Math.min(1, p / .5), e = 1 - (1 - t) ** 3;
-        switch (type) {
-            case 'fadeIn': return { op: e, ox: 0, oy: 0, sc: 1, ch: -1 };
-            case 'slideUp': return { op: e, ox: 0, oy: 60 * (1 - e), sc: 1, ch: -1 };
-            case 'slideLeft': return { op: e, ox: 120 * (1 - e), oy: 0, sc: 1, ch: -1 };
-            case 'scale': return { op: e, ox: 0, oy: 0, sc: .2 + .8 * e, ch: -1 };
-            case 'typewriter': return { op: 1, ox: 0, oy: 0, sc: 1, ch: Math.floor(t * 100) };
-            default: return { op: 1, ox: 0, oy: 0, sc: 1, ch: -1 };
-        }
-    }
+    _f(sw,sh,dw,dh){const sr=sw/sh,dr=dw/dh;let w,h;if(sr>dr){w=dw;h=w/sr}else{h=dh;w=h*sr}return{x:(dw-w)/2,y:(dh-h)/2,w,h}}
+    _fl(fx){if(!fx?.length)return'none';return fx.map(e=>{switch(e.type){case'brightness':return`brightness(${e.intensity}%)`;case'contrast':return`contrast(${e.intensity}%)`;case'saturate':return`saturate(${e.intensity}%)`;case'grayscale':return`grayscale(${Math.min(e.intensity,100)}%)`;case'sepia':return`sepia(${Math.min(e.intensity,100)}%)`;case'invert':return`invert(${Math.min(e.intensity,100)}%)`;case'hue-rotate':return`hue-rotate(${e.intensity*3.6}deg)`;case'blur':return`blur(${e.intensity/10}px)`;default:return''}}).filter(Boolean).join(' ')||'none'}
+    _a(type,p){const t=Math.min(1,p/.5),e=1-(1-t)**3;switch(type){case'fadeIn':return{o:e,x:0,y:0,s:1,c:-1};case'slideUp':return{o:e,x:0,y:60*(1-e),s:1,c:-1};case'slideLeft':return{o:e,x:120*(1-e),y:0,s:1,c:-1};case'scale':return{o:e,x:0,y:0,s:.2+.8*e,c:-1};case'typewriter':return{o:1,x:0,y:0,s:1,c:Math.floor(t*100)};default:return{o:1,x:0,y:0,s:1,c:-1}}}
 }
 
 // =====================================================================
 // TIMELINE
 // =====================================================================
-class Timeline {
-    constructor(app) {
-        this.app = app; this.tracks = []; this.selectedClip = null; this.zoom = 80; this.clipId = 0; this.snap = true;
-        this.labelsEl = document.getElementById('timelineLabels');
-        this.tracksEl = document.getElementById('timelineTracks');
-        this.rulerEl = document.getElementById('timelineRuler');
-        this.scrollEl = document.getElementById('timelineScroll');
-        this.playheadEl = document.getElementById('playhead');
-        this._init(); this._bindControls(); this.render();
+class TL {
+    constructor(app){
+        this.app=app;this.tracks=[];this.selectedClip=null;this.zoom=80;this.clipId=0;this.snap=true;
+        this.lEl=document.getElementById('timelineLabels');this.tEl=document.getElementById('timelineTracks');
+        this.rEl=document.getElementById('timelineRuler');this.sEl=document.getElementById('timelineScroll');
+        this.pH=document.getElementById('playhead');this._init();this._bc();this.render()
     }
-    _init() { this.tracks = [{ name:'Video 1',type:'video',clips:[],muted:false,hidden:false },{ name:'Video 2',type:'video',clips:[],muted:false,hidden:false },{ name:'Text',type:'text',clips:[],muted:false,hidden:false },{ name:'Audio 1',type:'audio',clips:[],muted:false,hidden:false }]; }
-    addTrack(n,t) { this.tracks.push({ name:n||'Track',type:t||'video',clips:[],muted:false,hidden:false }); this.render(); }
-    dur() { let m=5; for(const t of this.tracks) for(const c of t.clips) m=Math.max(m,c.startTime+c.duration); return m+3; }
-    t2p(t) { return t*this.zoom; }
-    p2t(p) { return p/this.zoom; }
-    sn(t) {
-        if(!this.snap) return t; const th=5/this.zoom;
-        for(const tr of this.tracks) for(const c of tr.clips) { if(Math.abs(t-c.startTime)<th) return c.startTime; if(Math.abs(t-(c.startTime+c.duration))<th) return c.startTime+c.duration; }
-        const r=Math.round(t*2)/2; if(Math.abs(t-r)<th/2) return r; return t;
-    }
-    ov(ti,id,st,d) { return this.tracks[ti].clips.some(c=>c.id!==id&&st<c.startTime+c.duration&&st+d>c.startTime); }
-    add(ti,d) { const c={id:this.clipId++,effects:[],opacity:1,volume:1,transition:null,transitionDuration:.5,fadeIn:0,fadeOut:0,trimStart:0,...d}; this.tracks[ti].clips.push(c); this.tracks[ti].clips.sort((a,b)=>a.startTime-b.startTime); this.render(); return c; }
-    rm(id) { for(const t of this.tracks){const i=t.clips.findIndex(c=>c.id===id);if(i!==-1){t.clips.splice(i,1);if(this.selectedClip?.id===id)this.selectedClip=null;this.render();return;}} }
-    find(id) { for(let ti=0;ti<this.tracks.length;ti++){const c=this.tracks[ti].clips.find(c=>c.id===id);if(c)return{clip:c,ti};} return null; }
-    split(id,time) { const f=this.find(id);if(!f)return;const{clip:c,ti}=f;const sp=time-c.startTime;if(sp<=.05||sp>=c.duration-.05)return;const n=JSON.parse(JSON.stringify(c));n.id=this.clipId++;n.startTime=time;n.duration=c.duration-sp;n.trimStart=(c.trimStart||0)+sp;c.duration=sp;this.tracks[ti].clips.push(n);this.tracks[ti].clips.sort((a,b)=>a.startTime-b.startTime);this.render(); }
-    dup(id) { const f=this.find(id);if(!f)return;const n=JSON.parse(JSON.stringify(f.clip));n.id=this.clipId++;n.startTime=f.clip.startTime+f.clip.duration+.1;this.tracks[f.ti].clips.push(n);this.tracks[f.ti].clips.sort((a,b)=>a.startTime-b.startTime);this.render(); }
-    sel(c) { this.selectedClip=c; this.render(); this.app.showProps(c); }
-    desel() { this.selectedClip=null; this.render(); this.app.hideProps(); }
-    render() { this._labels(); this._tracks(); this._ruler(); this.upd(); }
-
-    _labels() {
+    _init(){this.tracks=[{name:'Video 1',type:'video',clips:[],muted:false,hidden:false},{name:'Video 2',type:'video',clips:[],muted:false,hidden:false},{name:'Text',type:'text',clips:[],muted:false,hidden:false},{name:'Audio 1',type:'audio',clips:[],muted:false,hidden:false}]}
+    addTrack(n,t){this.tracks.push({name:n||'Track',type:t||'video',clips:[],muted:false,hidden:false});this.render()}
+    dur(){let m=5;for(const t of this.tracks)for(const c of t.clips)m=Math.max(m,c.startTime+c.duration);return m+3}
+    t2p(t){return t*this.zoom}p2t(p){return p/this.zoom}
+    sn(t){if(!this.snap)return t;const th=5/this.zoom;for(const tr of this.tracks)for(const c of tr.clips){if(Math.abs(t-c.startTime)<th)return c.startTime;if(Math.abs(t-(c.startTime+c.duration))<th)return c.startTime+c.duration}const r=Math.round(t*2)/2;if(Math.abs(t-r)<th/2)return r;return t}
+    ov(ti,id,st,d){return this.tracks[ti].clips.some(c=>c.id!==id&&st<c.startTime+c.duration&&st+d>c.startTime)}
+    add(ti,d){const c={id:this.clipId++,effects:[],opacity:1,volume:1,transition:null,transitionDuration:.5,fadeIn:0,fadeOut:0,trimStart:0,...d};this.tracks[ti].clips.push(c);this.tracks[ti].clips.sort((a,b)=>a.startTime-b.startTime);this.render();return c}
+    rm(id){for(const t of this.tracks){const i=t.clips.findIndex(c=>c.id===id);if(i!==-1){t.clips.splice(i,1);if(this.selectedClip?.id===id)this.selectedClip=null;this.render();return}}}
+    find(id){for(let i=0;i<this.tracks.length;i++){const c=this.tracks[i].clips.find(c=>c.id===id);if(c)return{clip:c,ti:i}}return null}
+    split(id,time){const f=this.find(id);if(!f)return;const{clip:c,ti}=f;const sp=time-c.startTime;if(sp<=.05||sp>=c.duration-.05)return;const n=JSON.parse(JSON.stringify(c));n.id=this.clipId++;n.startTime=time;n.duration=c.duration-sp;n.trimStart=(c.trimStart||0)+sp;c.duration=sp;this.tracks[ti].clips.push(n);this.tracks[ti].clips.sort((a,b)=>a.startTime-b.startTime);this.render()}
+    dup(id){const f=this.find(id);if(!f)return;const n=JSON.parse(JSON.stringify(f.clip));n.id=this.clipId++;n.startTime=f.clip.startTime+f.clip.duration+.1;this.tracks[f.ti].clips.push(n);this.tracks[f.ti].clips.sort((a,b)=>a.startTime-b.startTime);this.render()}
+    sel(c){this.selectedClip=c;this.render();this.app.showProps(c)}
+    desel(){this.selectedClip=null;this.render();this.app.hideProps()}
+    render(){this._rl();this._rt();this._rr();this.upd()}
+    _rl(){
         const col={video:'#3b82f6',audio:'#10b981',text:'#f59e0b',image:'#8b5cf6'};
-        this.labelsEl.innerHTML=this.tracks.map((t,i)=>`<div class="track-label"><div class="track-label-info"><div class="track-type-dot" style="background:${col[t.type]||'#888'}"></div><span>${t.name}</span></div><div class="track-label-actions"><button data-a="m" data-i="${i}" class="${t.muted?'warn':''}" title="Mute"><i class="fas fa-volume-${t.muted?'mute':'up'}"></i></button><button data-a="h" data-i="${i}" class="${t.hidden?'warn':''}" title="Vis"><i class="fas fa-eye${t.hidden?'-slash':''}"></i></button><button data-a="x" data-i="${i}" title="Remove"><i class="fas fa-times"></i></button></div></div>`).join('');
-        this.labelsEl.querySelectorAll('button').forEach(b=>{b.onclick=()=>{const i=+b.dataset.i;if(b.dataset.a==='m')this.tracks[i].muted=!this.tracks[i].muted;else if(b.dataset.a==='h')this.tracks[i].hidden=!this.tracks[i].hidden;else if(b.dataset.a==='x'&&this.tracks.length>1)this.tracks.splice(i,1);this.render();};});
+        this.lEl.innerHTML=this.tracks.map((t,i)=>`<div class="track-label"><div class="track-label-info"><div class="track-type-dot" style="background:${col[t.type]||'#888'}"></div><span>${t.name}</span></div><div class="track-label-actions"><button data-a="m" data-i="${i}" class="${t.muted?'warn':''}" title="Mute"><i class="fas fa-volume-${t.muted?'mute':'up'}"></i></button><button data-a="h" data-i="${i}" class="${t.hidden?'warn':''}" title="Vis"><i class="fas fa-eye${t.hidden?'-slash':''}"></i></button><button data-a="x" data-i="${i}" title="Del"><i class="fas fa-times"></i></button></div></div>`).join('');
+        this.lEl.querySelectorAll('button').forEach(b=>{b.onclick=()=>{const i=+b.dataset.i;if(b.dataset.a==='m')this.tracks[i].muted=!this.tracks[i].muted;else if(b.dataset.a==='h')this.tracks[i].hidden=!this.tracks[i].hidden;else if(b.dataset.a==='x'&&this.tracks.length>1)this.tracks.splice(i,1);this.render()}})
     }
-
-    _tracks() {
-        const d=this.dur(),w=this.t2p(d); this.tracksEl.style.width=w+'px'; this.tracksEl.innerHTML='';
+    _rt(){
+        const d=this.dur(),w=this.t2p(d);this.tEl.style.width=w+'px';this.tEl.innerHTML='';
         const ic={video:'fa-film',audio:'fa-music',image:'fa-image',text:'fa-font'};
         this.tracks.forEach((track,ti)=>{
             const el=document.createElement('div');el.className='timeline-track';el.style.width=w+'px';
             track.clips.forEach(cl=>{
-                const ce=document.createElement('div');
-                ce.className=`timeline-clip ${cl.type}${this.selectedClip?.id===cl.id?' selected':''}`;
+                const ce=document.createElement('div');ce.className=`timeline-clip ${cl.type}${this.selectedClip?.id===cl.id?' selected':''}`;
                 ce.style.left=this.t2p(cl.startTime)+'px';ce.style.width=Math.max(14,this.t2p(cl.duration))+'px';
                 ce.innerHTML=`<div class="clip-handle clip-handle-left"></div><span class="clip-label"><i class="fas ${ic[cl.type]||'fa-file'}"></i> ${cl.name||''}</span><div class="clip-handle clip-handle-right"></div>`;
-                ce.onmousedown=e=>{e.stopPropagation();if(e.target.classList.contains('clip-handle-left'))this._rsz(e,cl,ti,'L');else if(e.target.classList.contains('clip-handle-right'))this._rsz(e,cl,ti,'R');else{this.sel(cl);this._drg(e,cl,ti);}};
-                ce.oncontextmenu=e=>{e.preventDefault();this.sel(cl);this._cm(e,cl);};
-                el.appendChild(ce);
+                ce.onmousedown=e=>{e.stopPropagation();if(e.target.classList.contains('clip-handle-left'))this._rsz(e,cl,ti,'L');else if(e.target.classList.contains('clip-handle-right'))this._rsz(e,cl,ti,'R');else{this.sel(cl);this._drg(e,cl,ti)}};
+                ce.oncontextmenu=e=>{e.preventDefault();this.sel(cl);this._cm(e,cl)};
+                el.appendChild(ce)
             });
-            el.ondragover=e=>{e.preventDefault();el.classList.add('drag-over');};
-            el.ondragleave=()=>el.classList.remove('drag-over');
-            el.ondrop=e=>{e.preventDefault();el.classList.remove('drag-over');this._drop(e,ti);};
-            el.onmousedown=e=>{if(e.target===el)this.desel();};
-            this.tracksEl.appendChild(el);
-        });
+            el.ondragover=e=>{e.preventDefault();el.classList.add('drag-over')};el.ondragleave=()=>el.classList.remove('drag-over');
+            el.ondrop=e=>{e.preventDefault();el.classList.remove('drag-over');this._drop(e,ti)};
+            el.onmousedown=e=>{if(e.target===el)this.desel()};
+            this.tEl.appendChild(el)
+        })
     }
-
-    _ruler() {
-        const d=this.dur(),w=this.t2p(d);this.rulerEl.style.width=w+'px';this.rulerEl.innerHTML='';
-        const s=this.zoom>=60?1:this.zoom>=30?2:5;
-        for(let t=0;t<=d;t+=s){const m=document.createElement('div');m.className='ruler-mark major';m.style.left=this.t2p(t)+'px';m.textContent=`${Math.floor(t/60)}:${Math.floor(t%60).toString().padStart(2,'0')}`;this.rulerEl.appendChild(m);}
+    _rr(){const d=this.dur(),w=this.t2p(d);this.rEl.style.width=w+'px';this.rEl.innerHTML='';const s=this.zoom>=60?1:this.zoom>=30?2:5;for(let t=0;t<=d;t+=s){const m=document.createElement('div');m.className='ruler-mark major';m.style.left=this.t2p(t)+'px';m.textContent=`${Math.floor(t/60)}:${Math.floor(t%60).toString().padStart(2,'0')}`;this.rEl.appendChild(m)}}
+    upd(){this.pH.style.left=this.t2p(this.app.currentTime)+'px'}
+    _drg(e,cl,ti){const sx=e.clientX,st=cl.startTime;const mv=e2=>{let nt=Math.max(0,this.sn(st+this.p2t(e2.clientX-sx)));if(!this.ov(ti,cl.id,nt,cl.duration)){cl.startTime=nt;this.render()}};const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);this.app.saveState()};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)}
+    _rsz(e,cl,ti,side){const sx=e.clientX,sSt=cl.startTime,sDur=cl.duration,sTr=cl.trimStart||0;const mv=e2=>{const dt=this.p2t(e2.clientX-sx);if(side==='L'){let ns=Math.max(0,this.sn(sSt+dt)),nd=sDur-(ns-sSt);if(nd<.1)return;if(!this.ov(ti,cl.id,ns,nd)){cl.startTime=ns;cl.duration=nd;cl.trimStart=sTr+(ns-sSt);this.render()}}else{let nd=Math.max(.1,sDur+dt);const a=this.app.mediaAssets[cl.assetId];if(a?.duration)nd=Math.min(nd,a.duration-(cl.trimStart||0));nd=Math.max(.1,nd);if(!this.ov(ti,cl.id,cl.startTime,nd)){cl.duration=nd;this.render()}}};const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);this.app.saveState()};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)}
+    _drop(e,ti){const mid=e.dataTransfer.getData('mediaId');if(!mid)return;const a=this.app.mediaAssets[mid];if(!a)return;const rect=this.sEl.getBoundingClientRect();let st=Math.max(0,this.sn(this.p2t(e.clientX-rect.left+this.sEl.scrollLeft)));if(!this.ov(ti,-1,st,a.duration||5)){this.add(ti,{type:a.type,name:a.name,assetId:mid,startTime:st,duration:a.duration||5});this.app.saveState()}}
+    _cm(e,cl){document.querySelectorAll('.context-menu').forEach(m=>m.remove());const menu=document.createElement('div');menu.className='context-menu';menu.style.left=e.clientX+'px';menu.style.top=e.clientY+'px';menu.innerHTML=`<div class="context-menu-item" data-a="s"><i class="fas fa-cut"></i> Split</div><div class="context-menu-item" data-a="d"><i class="fas fa-copy"></i> Duplicate</div><div class="context-menu-divider"></div><div class="context-menu-item danger" data-a="x"><i class="fas fa-trash"></i> Delete</div>`;document.body.appendChild(menu);menu.querySelectorAll('.context-menu-item').forEach(it=>{it.onclick=()=>{if(it.dataset.a==='s'){this.split(cl.id,this.app.currentTime);this.app.saveState()}else if(it.dataset.a==='d'){this.dup(cl.id);this.app.saveState()}else{this.rm(cl.id);this.app.saveState()}menu.remove()}});setTimeout(()=>{const fn=e2=>{if(!menu.contains(e2.target)){menu.remove();document.removeEventListener('mousedown',fn)}};document.addEventListener('mousedown',fn)},0)}
+    _bc(){
+        this.rEl.onmousedown=e=>{const r=this.sEl.getBoundingClientRect();const sk=e2=>this.app.seek(Math.max(0,this.p2t(e2.clientX-r.left+this.sEl.scrollLeft)));sk(e);const up=()=>{document.removeEventListener('mousemove',sk);document.removeEventListener('mouseup',up)};document.addEventListener('mousemove',sk);document.addEventListener('mouseup',up)};
+        this.pH.querySelector('.playhead-handle').onmousedown=e=>{e.stopPropagation();const r=this.sEl.getBoundingClientRect();const mv=e2=>this.app.seek(Math.max(0,this.p2t(e2.clientX-r.left+this.sEl.scrollLeft)));const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)};
+        this.sEl.onscroll=()=>{this.lEl.scrollTop=this.sEl.scrollTop};
+        document.getElementById('snapToggle').onchange=e=>{this.snap=e.target.checked};
+        document.getElementById('zoomInBtn').onclick=()=>{this.zoom=Math.min(400,this.zoom*1.3);this.render()};
+        document.getElementById('zoomOutBtn').onclick=()=>{this.zoom=Math.max(10,this.zoom/1.3);this.render()};
+        document.getElementById('fitBtn').onclick=()=>{this.zoom=Math.max(10,(this.sEl.clientWidth-40)/this.dur());this.render()};
+        document.getElementById('splitBtn').onclick=()=>{if(this.selectedClip){this.split(this.selectedClip.id,this.app.currentTime);this.app.saveState()}};
+        document.getElementById('deleteBtn').onclick=()=>{if(this.selectedClip){this.rm(this.selectedClip.id);this.app.saveState()}};
+        document.getElementById('duplicateBtn').onclick=()=>{if(this.selectedClip){this.dup(this.selectedClip.id);this.app.saveState()}};
+        document.getElementById('addTrackBtn').onclick=()=>{const n=prompt('Name:',`Track ${this.tracks.length+1}`);if(n){this.addTrack(n,prompt('Type (video/audio/text):','video')||'video');this.app.saveState()}}
     }
-
-    upd() { this.playheadEl.style.left=this.t2p(this.app.currentTime)+'px'; }
-
-    _drg(e,cl,ti) {
-        const sx=e.clientX,st=cl.startTime;
-        const mv=e2=>{let nt=Math.max(0,this.sn(st+this.p2t(e2.clientX-sx)));if(!this.ov(ti,cl.id,nt,cl.duration)){cl.startTime=nt;this.render();}};
-        const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);this.app.saveState();};
-        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-    }
-
-    _rsz(e,cl,ti,side) {
-        const sx=e.clientX,sSt=cl.startTime,sDur=cl.duration,sTr=cl.trimStart||0;
-        const mv=e2=>{
-            const dt=this.p2t(e2.clientX-sx);
-            if(side==='L'){let ns=Math.max(0,this.sn(sSt+dt)),nd=sDur-(ns-sSt);if(nd<.1)return;if(!this.ov(ti,cl.id,ns,nd)){cl.startTime=ns;cl.duration=nd;cl.trimStart=sTr+(ns-sSt);this.render();}}
-            else{let nd=Math.max(.1,sDur+dt);const a=this.app.mediaAssets[cl.assetId];if(a?.duration)nd=Math.min(nd,a.duration-(cl.trimStart||0));nd=Math.max(.1,nd);if(!this.ov(ti,cl.id,cl.startTime,nd)){cl.duration=nd;this.render();}}
-        };
-        const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);this.app.saveState();};
-        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-    }
-
-    _drop(e,ti) {
-        const mid=e.dataTransfer.getData('mediaId');if(!mid)return;const a=this.app.mediaAssets[mid];if(!a)return;
-        const rect=this.scrollEl.getBoundingClientRect();let st=Math.max(0,this.sn(this.p2t(e.clientX-rect.left+this.scrollEl.scrollLeft)));
-        if(!this.ov(ti,-1,st,a.duration||5)){this.add(ti,{type:a.type,name:a.name,assetId:mid,startTime:st,duration:a.duration||5});this.app.saveState();}
-    }
-
-    _cm(e,cl) {
-        document.querySelectorAll('.context-menu').forEach(m=>m.remove());
-        const menu=document.createElement('div');menu.className='context-menu';menu.style.left=e.clientX+'px';menu.style.top=e.clientY+'px';
-        menu.innerHTML=`<div class="context-menu-item" data-a="s"><i class="fas fa-cut"></i> Split</div><div class="context-menu-item" data-a="d"><i class="fas fa-copy"></i> Duplicate</div><div class="context-menu-divider"></div><div class="context-menu-item danger" data-a="x"><i class="fas fa-trash"></i> Delete</div>`;
-        document.body.appendChild(menu);
-        menu.querySelectorAll('.context-menu-item').forEach(it=>{it.onclick=()=>{if(it.dataset.a==='s'){this.split(cl.id,this.app.currentTime);this.app.saveState();}else if(it.dataset.a==='d'){this.dup(cl.id);this.app.saveState();}else{this.rm(cl.id);this.app.saveState();}menu.remove();};});
-        setTimeout(()=>{const cl2=e2=>{if(!menu.contains(e2.target)){menu.remove();document.removeEventListener('mousedown',cl2);}};document.addEventListener('mousedown',cl2);},0);
-    }
-
-    _bindControls() {
-        this.rulerEl.onmousedown=e=>{const r=this.scrollEl.getBoundingClientRect();const sk=e2=>this.app.seek(Math.max(0,this.p2t(e2.clientX-r.left+this.scrollEl.scrollLeft)));sk(e);const up=()=>{document.removeEventListener('mousemove',sk);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',sk);document.addEventListener('mouseup',up);};
-        this.playheadEl.querySelector('.playhead-handle').onmousedown=e=>{e.stopPropagation();const r=this.scrollEl.getBoundingClientRect();const mv=e2=>this.app.seek(Math.max(0,this.p2t(e2.clientX-r.left+this.scrollEl.scrollLeft)));const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);};
-        this.scrollEl.onscroll=()=>{this.labelsEl.scrollTop=this.scrollEl.scrollTop;};
-        document.getElementById('snapToggle').onchange=e=>{this.snap=e.target.checked;};
-        document.getElementById('zoomInBtn').onclick=()=>{this.zoom=Math.min(400,this.zoom*1.3);this.render();};
-        document.getElementById('zoomOutBtn').onclick=()=>{this.zoom=Math.max(10,this.zoom/1.3);this.render();};
-        document.getElementById('fitBtn').onclick=()=>{this.zoom=Math.max(10,(this.scrollEl.clientWidth-40)/this.dur());this.render();};
-        document.getElementById('splitBtn').onclick=()=>{if(this.selectedClip){this.split(this.selectedClip.id,this.app.currentTime);this.app.saveState();}};
-        document.getElementById('deleteBtn').onclick=()=>{if(this.selectedClip){this.rm(this.selectedClip.id);this.app.saveState();}};
-        document.getElementById('duplicateBtn').onclick=()=>{if(this.selectedClip){this.dup(this.selectedClip.id);this.app.saveState();}};
-        document.getElementById('addTrackBtn').onclick=()=>{const n=prompt('Name:',`Track ${this.tracks.length+1}`);if(n){this.addTrack(n,prompt('Type (video/audio/text):','video')||'video');this.app.saveState();}};
-    }
-
-    getState() { return {tracks:JSON.parse(JSON.stringify(this.tracks)),zoom:this.zoom,clipId:this.clipId}; }
-    loadState(s) { this.tracks=s.tracks;this.zoom=s.zoom;this.clipId=s.clipId;this.selectedClip=null;this.render(); }
+    getState(){return{tracks:JSON.parse(JSON.stringify(this.tracks)),zoom:this.zoom,clipId:this.clipId}}
+    loadState(s){this.tracks=s.tracks;this.zoom=s.zoom;this.clipId=s.clipId;this.selectedClip=null;this.render()}
 }
 
 // =====================================================================
-// EXPORTER — with cross-origin Worker fix for FFmpeg.wasm
+// EXPORTER — all fetch-based, no <script> injection
 // =====================================================================
 class Exporter {
-    constructor(app) { this.app = app; this.ffmpeg = null; this.ready = false; this.loading = false; }
+    constructor(app){this.app=app;this.ffmpeg=null;this.ready=false;this.loading=false}
 
-    async loadFFmpeg() {
-        if (this.ready || this.loading) return this.ready;
-        this.loading = true;
-        const status = document.getElementById('ffmpegStatus');
-        status.className = 'ffmpeg-status loading';
-        status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading FFmpeg.wasm (≈25MB)...';
+    async loadFFmpeg(){
+        if(this.ready)return true;
+        if(this.loading)return new Promise(r=>{const iv=setInterval(()=>{if(!this.loading){clearInterval(iv);r(this.ready)}},200)});
+        this.loading=true;
+        const st=document.getElementById('ffmpegStatus');
+        st.className='ffmpeg-status loading';
+        st.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading FFmpeg.wasm (~25MB)...';
 
-        try {
-            // Fetch the worker script as blob to avoid cross-origin Worker restriction
-            const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        try{
+            // Step 1: fetch the ffmpeg wrapper JS via fetch+blob (avoids cross-origin script block)
+            const ffmpegJS=await fetch('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js').then(r=>{if(!r.ok)throw new Error('Failed to fetch ffmpeg.js');return r.text()});
+            const utilJS=await fetch('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/util.js').then(r=>{if(!r.ok)throw new Error('Failed to fetch util.js');return r.text()});
 
-            const coreResponse = await fetch(`${baseURL}/ffmpeg-core.js`);
-            const coreBlob = new Blob([await coreResponse.text()], { type: 'text/javascript' });
-            const coreURL = URL.createObjectURL(coreBlob);
-
-            const wasmURL = `${baseURL}/ffmpeg-core.wasm`;
-
-            // Dynamically load ffmpeg library
-            if (!window.FFmpegWASM) {
-                await new Promise((res, rej) => {
-                    const s = document.createElement('script');
-                    s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-                    s.onload = res; s.onerror = rej;
-                    document.head.appendChild(s);
-                });
-            }
-            if (!window.FFmpegUtil) {
-                await new Promise((res, rej) => {
-                    const s = document.createElement('script');
-                    s.src = 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/util.js';
-                    s.onload = res; s.onerror = rej;
-                    document.head.appendChild(s);
-                });
-            }
-
-            const { FFmpeg } = FFmpegWASM;
-            this.ffmpeg = new FFmpeg();
-
-            this.ffmpeg.on('log', ({ message }) => {
-                const log = document.getElementById('exportLog');
-                if (log) { log.textContent += message + '\n'; log.scrollTop = log.scrollHeight; }
+            // Execute in global scope via blob URL
+            const execScript=(code)=>new Promise((res,rej)=>{
+                const blob=new Blob([code],{type:'application/javascript'});
+                const url=URL.createObjectURL(blob);
+                const s=document.createElement('script');
+                s.src=url;s.onload=()=>{URL.revokeObjectURL(url);res()};s.onerror=rej;
+                document.head.appendChild(s);
             });
 
-            this.ffmpeg.on('progress', ({ progress }) => {
-                if (progress > 0 && progress <= 1) {
-                    const fill = document.getElementById('exportProgressFill');
-                    const txt = document.getElementById('exportProgressText');
-                    const pct = 50 + Math.round(progress * 50);
-                    if (fill) fill.style.width = pct + '%';
-                    if (txt) txt.textContent = pct + '% encoding';
+            await execScript(ffmpegJS);
+            await execScript(utilJS);
+
+            // Step 2: fetch ffmpeg-core.js as blob URL for the Worker
+            const baseURL='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+            const coreJS=await fetch(baseURL+'/ffmpeg-core.js').then(r=>{if(!r.ok)throw new Error('Failed to fetch core');return r.text()});
+            const coreBlob=new Blob([coreJS],{type:'application/javascript'});
+            const coreURL=URL.createObjectURL(coreBlob);
+            const wasmURL=baseURL+'/ffmpeg-core.wasm';
+
+            // Step 3: also fetch the worker JS (814.ffmpeg.js) as blob
+            const workerJS=await fetch('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js').then(r=>{if(!r.ok)throw new Error('Failed to fetch worker');return r.text()});
+            const workerBlob=new Blob([workerJS],{type:'application/javascript'});
+            const workerURL=URL.createObjectURL(workerBlob);
+
+            const{FFmpeg}=FFmpegWASM;
+            this.ffmpeg=new FFmpeg();
+
+            this.ffmpeg.on('log',({message})=>{
+                const log=document.getElementById('exportLog');
+                if(log){log.textContent+=message+'\n';log.scrollTop=log.scrollHeight}
+            });
+            this.ffmpeg.on('progress',({progress})=>{
+                if(progress>0&&progress<=1){
+                    const fill=document.getElementById('exportProgressFill');
+                    const txt=document.getElementById('exportProgressText');
+                    const pct=50+Math.round(progress*50);
+                    if(fill)fill.style.width=pct+'%';
+                    if(txt)txt.textContent=pct+'% encoding'
                 }
             });
 
-            // Use blob URL for the core to avoid Worker cross-origin issues
-            await this.ffmpeg.load({ coreURL, wasmURL });
+            await this.ffmpeg.load({coreURL,wasmURL,workerURL});
 
             URL.revokeObjectURL(coreURL);
-            this.ready = true;
-            status.className = 'ffmpeg-status ready';
-            status.innerHTML = '<i class="fas fa-check-circle"></i> FFmpeg ready — all formats available';
-        } catch (err) {
-            console.warn('FFmpeg load failed:', err);
-            status.className = 'ffmpeg-status error';
-            status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> FFmpeg failed: ' + (err.message || err) + '. Use "WebM Fast" instead.';
+            URL.revokeObjectURL(workerURL);
+
+            this.ready=true;
+            st.className='ffmpeg-status ready';
+            st.innerHTML='<i class="fas fa-check-circle"></i> FFmpeg ready — all formats available'
+        }catch(err){
+            console.warn('FFmpeg load error:',err);
+            st.className='ffmpeg-status err';
+            st.innerHTML='<i class="fas fa-exclamation-triangle"></i> FFmpeg unavailable: '+String(err.message||err).substring(0,80)+'. Use WebM Fast.'
         }
-        this.loading = false;
-        return this.ready;
+        this.loading=false;
+        return this.ready
     }
 
-    async doExport(format, bitrate) {
-        const btn = document.getElementById('startExportBtn');
-        const bar = document.getElementById('exportProgress');
-        const fill = document.getElementById('exportProgressFill');
-        const txt = document.getElementById('exportProgressText');
-        const log = document.getElementById('exportLog');
-        btn.disabled = true;
-        bar.style.display = 'block'; fill.style.width = '0'; txt.textContent = '0%';
-        log.style.display = 'block'; log.textContent = '';
+    async doExport(format,bitrate){
+        const btn=document.getElementById('startExportBtn');
+        const bar=document.getElementById('exportProgress');
+        const fill=document.getElementById('exportProgressFill');
+        const txt=document.getElementById('exportProgressText');
+        const log=document.getElementById('exportLog');
+        btn.disabled=true;bar.style.display='block';fill.style.width='0';txt.textContent='0%';
+        log.style.display='block';log.textContent='';
 
-        try {
-            if (format === 'webm-fast') {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording...';
-                await this._directExport(bitrate, fill, txt, log);
-            } else {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading FFmpeg...';
-                const ok = await this.loadFFmpeg();
-                if (!ok) { alert('FFmpeg not available. Try "WebM Fast" format.'); return; }
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering frames...';
-                await this._ffmpegExport(format, bitrate, fill, txt, log);
+        try{
+            if(format==='webm-fast'){
+                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Recording...';
+                await this._direct(bitrate,fill,txt,log)
+            }else{
+                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Loading FFmpeg...';
+                const ok=await this.loadFFmpeg();
+                if(!ok){alert('FFmpeg not available. Use "WebM Fast".');return}
+                btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Rendering...';
+                await this._ffmpeg(format,bitrate,fill,txt,log)
             }
-        } catch (err) {
-            alert('Export failed: ' + err.message);
-            console.error(err);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-download"></i> Start Export';
-            setTimeout(() => { bar.style.display = 'none'; fill.style.width = '0'; }, 3000);
-        }
+        }catch(err){alert('Export failed: '+err.message);console.error(err)}
+        finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-download"></i> Start Export';setTimeout(()=>{bar.style.display='none';fill.style.width='0'},3000)}
     }
 
-    async _directExport(bitrate, fill, txt, log) {
-        const app = this.app;
-        const canvas = app.renderer.canvas;
-        const fps = +document.getElementById('fpsSelect').value || 30;
-        const duration = app.timeline.dur() - 3;
-
-        const stream = canvas.captureStream(fps);
-        let mime = 'video/webm;codecs=vp9';
-        if (!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm;codecs=vp8';
-        if (!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm';
-
-        const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
-        const chunks = [];
-        rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-        const done = new Promise(r => { rec.onstop = r; });
-
-        if (app.isPlaying) app.pause();
-        rec.start(50);
-        log.textContent += `Recording ${Math.ceil(duration)}s at ${fps}fps (${mime})...\n`;
-
-        const totalFrames = Math.ceil(duration * fps);
-        for (let f = 0; f <= totalFrames; f++) {
-            app.currentTime = f / fps;
-            app.renderer.renderFrame(app.currentTime, app.timeline.tracks, app.mediaAssets);
-            fill.style.width = Math.round(f / totalFrames * 100) + '%';
-            txt.textContent = Math.round(f / totalFrames * 100) + '%';
-            if (f % 3 === 0) await new Promise(r => setTimeout(r, 0));
+    async _direct(bitrate,fill,txt,log){
+        const app=this.app,canvas=app.renderer.canvas,fps=+document.getElementById('fpsSelect').value||30;
+        const duration=app.timeline.dur()-3;
+        const stream=canvas.captureStream(fps);
+        let mime='video/webm;codecs=vp9';
+        if(!MediaRecorder.isTypeSupported(mime))mime='video/webm;codecs=vp8';
+        if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+        const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:bitrate});
+        const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+        const done=new Promise(r=>{rec.onstop=r});
+        if(app.isPlaying)app.pause();rec.start(50);
+        log.textContent+=`Recording ${Math.ceil(duration)}s at ${fps}fps...\n`;
+        const tot=Math.ceil(duration*fps);
+        for(let f=0;f<=tot;f++){
+            app.currentTime=f/fps;app.renderer.renderFrame(app.currentTime,app.timeline.tracks,app.mediaAssets);
+            fill.style.width=Math.round(f/tot*100)+'%';txt.textContent=Math.round(f/tot*100)+'%';
+            if(f%3===0)await new Promise(r=>setTimeout(r,0))
         }
-
-        rec.stop(); app._pauseAll(); await done;
-        const blob = new Blob(chunks, { type: mime });
-        this._dl(blob, 'wasmforge_export.webm');
-        fill.style.width = '100%'; txt.textContent = 'Done!';
-        log.textContent += `Exported ${(blob.size / 1048576).toFixed(1)}MB\n`;
+        rec.stop();app._pauseAll();await done;
+        const blob=new Blob(chunks,{type:mime});this._dl(blob,'wasmforge_export.webm');
+        fill.style.width='100%';txt.textContent='Done!';log.textContent+=`Exported ${(blob.size/1048576).toFixed(1)}MB\n`
     }
 
-    async _ffmpegExport(format, bitrate, fill, txt, log) {
-        const app = this.app;
-        const canvas = app.renderer.canvas;
-        const fps = +document.getElementById('fpsSelect').value || 30;
-        const duration = app.timeline.dur() - 3;
-        const totalFrames = Math.ceil(duration * fps);
-
-        if (app.isPlaying) app.pause();
-        log.textContent += `Rendering ${totalFrames} frames...\n`;
-
-        // Render frames to PNGs
-        for (let f = 0; f <= totalFrames; f++) {
-            app.currentTime = f / fps;
-            app.renderer.renderFrame(app.currentTime, app.timeline.tracks, app.mediaAssets);
-
-            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-            const buf = await blob.arrayBuffer();
-            await this.ffmpeg.writeFile(`f${String(f).padStart(6, '0')}.png`, new Uint8Array(buf));
-
-            fill.style.width = Math.round(f / totalFrames * 50) + '%';
-            txt.textContent = Math.round(f / totalFrames * 50) + '% frames';
-            if (f % 4 === 0) await new Promise(r => setTimeout(r, 0));
+    async _ffmpeg(format,bitrate,fill,txt,log){
+        const app=this.app,canvas=app.renderer.canvas,fps=+document.getElementById('fpsSelect').value||30;
+        const duration=app.timeline.dur()-3,tot=Math.ceil(duration*fps);
+        if(app.isPlaying)app.pause();
+        log.textContent+=`Rendering ${tot} frames...\n`;
+        for(let f=0;f<=tot;f++){
+            app.currentTime=f/fps;app.renderer.renderFrame(app.currentTime,app.timeline.tracks,app.mediaAssets);
+            const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+            const buf=await blob.arrayBuffer();
+            await this.ffmpeg.writeFile(`f${String(f).padStart(6,'0')}.png`,new Uint8Array(buf));
+            fill.style.width=Math.round(f/tot*50)+'%';txt.textContent=Math.round(f/tot*50)+'% frames';
+            if(f%4===0)await new Promise(r=>setTimeout(r,0))
         }
-
-        app._pauseAll();
-        fill.style.width = '50%'; txt.textContent = '50% encoding...';
-        log.textContent += 'Encoding with FFmpeg...\n';
-
-        const br = Math.round(bitrate / 1000) + 'k';
-        let out, args;
-        switch (format) {
-            case 'mp4':
-                out = 'out.mp4';
-                args = ['-framerate', `${fps}`, '-i', 'f%06d.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-b:v', br, '-preset', 'fast', '-y', out];
-                break;
-            case 'webm':
-                out = 'out.webm';
-                args = ['-framerate', `${fps}`, '-i', 'f%06d.png', '-c:v', 'libvpx', '-b:v', br, '-pix_fmt', 'yuv420p', '-y', out];
-                break;
-            case 'mov':
-                out = 'out.mov';
-                args = ['-framerate', `${fps}`, '-i', 'f%06d.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-b:v', br, '-y', out];
-                break;
-            case 'avi':
-                out = 'out.avi';
-                args = ['-framerate', `${fps}`, '-i', 'f%06d.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-b:v', br, '-y', out];
-                break;
-            case 'gif':
-                out = 'out.gif';
-                const gfps = Math.min(fps, 15);
-                args = ['-framerate', `${fps}`, '-i', 'f%06d.png', '-vf', `fps=${gfps},scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`, '-y', out];
-                break;
-            default:
-                out = 'out.mp4';
-                args = ['-framerate', `${fps}`, '-i', 'f%06d.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-b:v', br, '-y', out];
+        app._pauseAll();fill.style.width='50%';txt.textContent='50% encoding...';log.textContent+='Encoding...\n';
+        const br=Math.round(bitrate/1000)+'k';let out,args;
+        switch(format){
+            case'mp4':out='out.mp4';args=['-framerate',`${fps}`,'-i','f%06d.png','-c:v','libx264','-pix_fmt','yuv420p','-b:v',br,'-preset','fast','-y',out];break;
+            case'webm-hq':out='out.webm';args=['-framerate',`${fps}`,'-i','f%06d.png','-c:v','libvpx','-b:v',br,'-pix_fmt','yuv420p','-y',out];break;
+            case'mov':out='out.mov';args=['-framerate',`${fps}`,'-i','f%06d.png','-c:v','libx264','-pix_fmt','yuv420p','-b:v',br,'-y',out];break;
+            case'avi':out='out.avi';args=['-framerate',`${fps}`,'-i','f%06d.png','-c:v','libx264','-pix_fmt','yuv420p','-b:v',br,'-y',out];break;
+            case'gif':out='out.gif';args=['-framerate',`${fps}`,'-i','f%06d.png','-vf',`fps=${Math.min(fps,15)},scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,'-y',out];break;
+            default:out='out.mp4';args=['-framerate',`${fps}`,'-i','f%06d.png','-c:v','libx264','-pix_fmt','yuv420p','-b:v',br,'-y',out]
         }
-
-        log.textContent += `ffmpeg ${args.join(' ')}\n`;
+        log.textContent+=`ffmpeg ${args.join(' ')}\n`;
         await this.ffmpeg.exec(args);
-
-        const result = await this.ffmpeg.readFile(out);
-        const mimes = { mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', avi: 'video/x-msvideo', gif: 'image/gif' };
-        const blob = new Blob([result.buffer], { type: mimes[format] || 'application/octet-stream' });
-
-        // Cleanup
-        for (let f = 0; f <= totalFrames; f++) {
-            try { await this.ffmpeg.deleteFile(`f${String(f).padStart(6, '0')}.png`); } catch (e) {}
-        }
-        try { await this.ffmpeg.deleteFile(out); } catch (e) {}
-
-        this._dl(blob, `wasmforge_export.${format}`);
-        fill.style.width = '100%'; txt.textContent = 'Done!';
-        log.textContent += `Done! ${(blob.size / 1048576).toFixed(1)}MB\n`;
+        const result=await this.ffmpeg.readFile(out);
+        const mimes={mp4:'video/mp4','webm-hq':'video/webm',mov:'video/quicktime',avi:'video/x-msvideo',gif:'image/gif'};
+        const blob=new Blob([result.buffer],{type:mimes[format]||'application/octet-stream'});
+        for(let f=0;f<=tot;f++){try{await this.ffmpeg.deleteFile(`f${String(f).padStart(6,'0')}.png`)}catch(e){}}
+        try{await this.ffmpeg.deleteFile(out)}catch(e){}
+        const ext=format==='webm-hq'?'webm':format;
+        this._dl(blob,`wasmforge_export.${ext}`);
+        fill.style.width='100%';txt.textContent='Done!';log.textContent+=`Done! ${(blob.size/1048576).toFixed(1)}MB\n`
     }
 
-    _dl(blob, name) {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = name; a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    }
+    _dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),10000)}
 }
 
 // =====================================================================
 // APP
 // =====================================================================
 class WasmForge {
-    constructor() {
-        this.mediaAssets = {}; this.mediaId = 0; this.currentTime = 0; this.isPlaying = false;
-        this.lastTick = 0; this.raf = null; this.undoStack = []; this.redoStack = [];
-        this.masterVolume = 1; this._pf = 0; this._pt = 0;
-        this.canvas = document.getElementById('previewCanvas');
-        this.renderer = new Renderer(this.canvas);
-        this.timeline = new Timeline(this);
-        this.exporter = new Exporter(this);
-        this._bindAll(); this.render();
+    constructor(){
+        this.mediaAssets={};this.mediaId=0;this.currentTime=0;this.isPlaying=false;this.lastTick=0;this.raf=null;
+        this.undoStack=[];this.redoStack=[];this.masterVolume=1;this._pf=0;this._pt=0;
+        this.canvas=document.getElementById('previewCanvas');
+        this.renderer=new R(this.canvas);this.timeline=new TL(this);this.exporter=new Exporter(this);
+        this._bind();this.render()
     }
-
-    async importFile(file) {
-        const id = 'M' + (this.mediaId++);
-        const type = file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : file.type.startsWith('image/') ? 'image' : null;
-        if (!type) return;
-        const url = URL.createObjectURL(file);
-        const asset = { id, name: file.name, type, url, duration: type === 'image' ? 5 : 0, element: null };
-        await new Promise((res, rej) => {
-            if (type === 'video') { const v = document.createElement('video'); v.src = url; v.preload = 'auto'; v.muted = true; v.playsInline = true; v.onloadedmetadata = () => { asset.duration = v.duration; asset.element = v; res(); }; v.onerror = rej; }
-            else if (type === 'audio') { const a = document.createElement('audio'); a.src = url; a.preload = 'auto'; a.onloadedmetadata = () => { asset.duration = a.duration; asset.element = a; res(); }; a.onerror = rej; }
-            else { const img = new Image(); img.src = url; img.onload = () => { asset.element = img; res(); }; img.onerror = rej; }
+    async importFile(file){
+        const id='M'+(this.mediaId++);
+        const type=file.type.startsWith('video/')?'video':file.type.startsWith('audio/')?'audio':file.type.startsWith('image/')?'image':null;
+        if(!type)return;const url=URL.createObjectURL(file);
+        const asset={id,name:file.name,type,url,duration:type==='image'?5:0,element:null};
+        await new Promise((res,rej)=>{
+            if(type==='video'){const v=document.createElement('video');v.src=url;v.preload='auto';v.muted=true;v.playsInline=true;v.onloadedmetadata=()=>{asset.duration=v.duration;asset.element=v;res()};v.onerror=rej}
+            else if(type==='audio'){const a=document.createElement('audio');a.src=url;a.preload='auto';a.onloadedmetadata=()=>{asset.duration=a.duration;asset.element=a;res()};a.onerror=rej}
+            else{const img=new Image();img.src=url;img.onload=()=>{asset.element=img;res()};img.onerror=rej}
         });
-        this.mediaAssets[id] = asset; this._lib(); return asset;
+        this.mediaAssets[id]=asset;this._lib();return asset
     }
-
-    _lib() {
-        const lib = document.getElementById('mediaLibrary'); lib.innerHTML = '';
-        Object.values(this.mediaAssets).forEach(a => {
-            const el = document.createElement('div'); el.className = 'media-item'; el.draggable = true;
-            let th = '<i class="fas fa-music"></i>';
-            if (a.type === 'video') th = `<video src="${a.url}" muted preload="metadata"></video>`;
-            else if (a.type === 'image') th = `<img src="${a.url}">`;
-            el.innerHTML = `<div class="media-thumb">${th}</div><div class="media-info"><div class="name">${a.name}</div><div class="meta">${a.type}${a.duration ? ' • ' + this._fmt(a.duration) : ''}</div></div><div class="media-item-actions"><button class="ab" title="Add"><i class="fas fa-plus"></i></button><button class="db" title="Del"><i class="fas fa-trash"></i></button></div>`;
-            el.ondragstart = e => e.dataTransfer.setData('mediaId', a.id);
-            el.querySelector('.ab').onclick = () => this._autoAdd(a.id);
-            el.querySelector('.db').onclick = () => { URL.revokeObjectURL(a.url); delete this.mediaAssets[a.id]; this._lib(); };
-            lib.appendChild(el);
-        });
+    _lib(){
+        const lib=document.getElementById('mediaLibrary');lib.innerHTML='';
+        Object.values(this.mediaAssets).forEach(a=>{
+            const el=document.createElement('div');el.className='media-item';el.draggable=true;
+            let th='<i class="fas fa-music"></i>';
+            if(a.type==='video')th=`<video src="${a.url}" muted preload="metadata"></video>`;
+            else if(a.type==='image')th=`<img src="${a.url}">`;
+            el.innerHTML=`<div class="media-thumb">${th}</div><div class="media-info"><div class="name">${a.name}</div><div class="meta">${a.type}${a.duration?' • '+this._fmt(a.duration):''}</div></div><div class="media-item-actions"><button class="ab" title="Add"><i class="fas fa-plus"></i></button><button class="db" title="Del"><i class="fas fa-trash"></i></button></div>`;
+            el.ondragstart=e=>e.dataTransfer.setData('mediaId',a.id);
+            el.querySelector('.ab').onclick=()=>this._autoAdd(a.id);
+            el.querySelector('.db').onclick=()=>{URL.revokeObjectURL(a.url);delete this.mediaAssets[a.id];this._lib()};
+            lib.appendChild(el)
+        })
     }
-
-    _autoAdd(mid) {
-        const a = this.mediaAssets[mid]; if (!a) return;
-        let ti = this.timeline.tracks.findIndex(t => t.type === (a.type === 'audio' ? 'audio' : 'video'));
-        if (ti === -1) { this.timeline.addTrack(a.type, a.type); ti = this.timeline.tracks.length - 1; }
-        let st = 0; const cl = this.timeline.tracks[ti].clips;
-        if (cl.length) st = cl[cl.length - 1].startTime + cl[cl.length - 1].duration;
-        this.timeline.add(ti, { type: a.type, name: a.name, assetId: mid, startTime: st, duration: a.duration || 5 });
-        this.saveState();
+    _autoAdd(mid){const a=this.mediaAssets[mid];if(!a)return;let ti=this.timeline.tracks.findIndex(t=>t.type===(a.type==='audio'?'audio':'video'));if(ti===-1){this.timeline.addTrack(a.type,a.type);ti=this.timeline.tracks.length-1}let st=0;const cl=this.timeline.tracks[ti].clips;if(cl.length)st=cl[cl.length-1].startTime+cl[cl.length-1].duration;this.timeline.add(ti,{type:a.type,name:a.name,assetId:mid,startTime:st,duration:a.duration||5});this.saveState()}
+    addText(){const td={text:document.getElementById('textContent').value||'Text',fontFamily:document.getElementById('textFont').value,fontSize:+document.getElementById('textSize').value||48,color:document.getElementById('textColor').value,strokeColor:document.getElementById('textStroke').value,strokeWidth:+document.getElementById('textStrokeWidth').value||0,bgColor:document.getElementById('textBgColor').value,bgOpacity:+document.getElementById('textBgOpacity').value||0,align:document.querySelector('.align-btn.active')?.dataset.align||'center',bold:document.getElementById('textBold').classList.contains('active'),italic:document.getElementById('textItalic').classList.contains('active'),animation:document.getElementById('textAnimation').value,x:this.canvas.width/2,y:this.canvas.height/2};let ti=this.timeline.tracks.findIndex(t=>t.type==='text');if(ti===-1){this.timeline.addTrack('Text','text');ti=this.timeline.tracks.length-1}let st=this.currentTime;if(this.timeline.ov(ti,-1,st,5)){const cl=this.timeline.tracks[ti].clips;if(cl.length)st=cl[cl.length-1].startTime+cl[cl.length-1].duration}this.timeline.add(ti,{type:'text',name:td.text.substring(0,20),startTime:st,duration:5,textData:td});this.saveState()}
+    play(){if(this.isPlaying)return;this.isPlaying=true;this.lastTick=performance.now();document.getElementById('playIcon').className='fas fa-pause';this._tick()}
+    pause(){this.isPlaying=false;if(this.raf){cancelAnimationFrame(this.raf);this.raf=null}document.getElementById('playIcon').className='fas fa-play';this._pauseAll()}
+    stop(){this.pause();this.currentTime=0;this.render();this._updt()}
+    seek(t){this.currentTime=Math.max(0,t);this.render();this._updt();this.timeline.upd();if(this.isPlaying)this._sync()}
+    _tick(){
+        if(!this.isPlaying)return;const now=performance.now(),dt=(now-this.lastTick)/1000;this.lastTick=now;this.currentTime+=dt;
+        this._pf++;this._pt+=dt;if(this._pt>=1){document.getElementById('perfLabel').textContent=this._pf+' fps';this._pf=0;this._pt=0}
+        if(this.currentTime>=this.timeline.dur()-3){this.currentTime=this.timeline.dur()-3;this.pause();return}
+        this.render();this._sync();this._updt();this.timeline.upd();this.raf=requestAnimationFrame(()=>this._tick())
     }
+    render(){this.renderer.renderFrame(this.currentTime,this.timeline.tracks,this.mediaAssets)}
+    _sync(){for(const tr of this.timeline.tracks){if(tr.muted)continue;for(const cl of tr.clips){if(cl.type!=='audio'&&cl.type!=='video')continue;const a=this.mediaAssets[cl.assetId];if(!a?.element)continue;const el=a.element,end=cl.startTime+cl.duration;if(this.currentTime>=cl.startTime&&this.currentTime<end){const mt=(this.currentTime-cl.startTime)+(cl.trimStart||0);if(Math.abs(el.currentTime-mt)>.3)el.currentTime=mt;let vol=(cl.volume??1)*this.masterVolume;if(cl.fadeIn&&this.currentTime-cl.startTime<cl.fadeIn)vol*=(this.currentTime-cl.startTime)/cl.fadeIn;if(cl.fadeOut&&end-this.currentTime<cl.fadeOut)vol*=(end-this.currentTime)/cl.fadeOut;el.volume=Math.max(0,Math.min(1,vol));if(cl.type==='audio')el.muted=false;if(el.paused&&this.isPlaying)el.play().catch(()=>{})}else{if(!el.paused)el.pause()}}}}
+    _pauseAll(){Object.values(this.mediaAssets).forEach(a=>{if(a.element?.pause)a.element.pause()})}
+    _updt(){document.getElementById('currentTime').textContent=this._fmt(this.currentTime);document.getElementById('totalTime').textContent=this._fmt(Math.max(0,this.timeline.dur()-3))}
+    _fmt(s){return`${Math.floor(s/60).toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}.${Math.floor((s%1)*1000).toString().padStart(3,'0')}`}
 
-    addText() {
-        const td = { text: document.getElementById('textContent').value || 'Text', fontFamily: document.getElementById('textFont').value, fontSize: +document.getElementById('textSize').value || 48, color: document.getElementById('textColor').value, strokeColor: document.getElementById('textStroke').value, strokeWidth: +document.getElementById('textStrokeWidth').value || 0, bgColor: document.getElementById('textBgColor').value, bgOpacity: +document.getElementById('textBgOpacity').value || 0, align: document.querySelector('.align-btn.active')?.dataset.align || 'center', bold: document.getElementById('textBold').classList.contains('active'), italic: document.getElementById('textItalic').classList.contains('active'), animation: document.getElementById('textAnimation').value, x: this.canvas.width / 2, y: this.canvas.height / 2 };
-        let ti = this.timeline.tracks.findIndex(t => t.type === 'text');
-        if (ti === -1) { this.timeline.addTrack('Text', 'text'); ti = this.timeline.tracks.length - 1; }
-        let st = this.currentTime;
-        if (this.timeline.ov(ti, -1, st, 5)) { const cl = this.timeline.tracks[ti].clips; if (cl.length) st = cl[cl.length - 1].startTime + cl[cl.length - 1].duration; }
-        this.timeline.add(ti, { type: 'text', name: td.text.substring(0, 20), startTime: st, duration: 5, textData: td });
-        this.saveState();
+    showProps(cl){
+        const p=document.getElementById('propertiesContent');let h=`<h4 style="margin-bottom:8px;font-size:12px">${cl.name||'Clip'} <span style="color:var(--t3);font-size:9px">${cl.type}</span></h4>`;
+        h+=`<div class="tool-group"><label>Start</label><input type="number" id="pSt" value="${cl.startTime.toFixed(2)}" step="0.1" min="0"></div>`;
+        h+=`<div class="tool-group"><label>Duration</label><input type="number" id="pDur" value="${cl.duration.toFixed(2)}" step="0.1" min="0.1"></div>`;
+        h+=`<div class="tool-group"><label>Opacity</label><div class="tool-row" style="align-items:center"><input type="range" id="pOp" min="0" max="100" value="${Math.round((cl.opacity??1)*100)}" style="flex:1"><span id="pOpV" style="font-size:10px;min-width:28px;text-align:right">${Math.round((cl.opacity??1)*100)}%</span></div></div>`;
+        if(cl.type==='video'||cl.type==='audio'){h+=`<div class="tool-group"><label>Volume</label><div class="tool-row" style="align-items:center"><input type="range" id="pVol" min="0" max="100" value="${Math.round((cl.volume??1)*100)}" style="flex:1"><span id="pVolV" style="font-size:10px;min-width:28px;text-align:right">${Math.round((cl.volume??1)*100)}%</span></div></div>`;h+=`<div class="tool-group"><label>Trim Start</label><input type="number" id="pTrim" value="${(cl.trimStart||0).toFixed(2)}" step="0.1" min="0"></div>`;h+=`<div class="tool-group"><label>Fade In</label><input type="number" id="pFI" value="${cl.fadeIn||0}" step="0.1" min="0"></div>`;h+=`<div class="tool-group"><label>Fade Out</label><input type="number" id="pFO" value="${cl.fadeOut||0}" step="0.1" min="0"></div>`}
+        if(cl.type==='video'||cl.type==='image'){h+=`<div class="tool-group"><label>Transition</label><select id="pTrans"><option value="">None</option><option value="fade"${cl.transition==='fade'?' selected':''}>Fade</option><option value="wipeLeft"${cl.transition==='wipeLeft'?' selected':''}>Wipe L</option><option value="wipeRight"${cl.transition==='wipeRight'?' selected':''}>Wipe R</option><option value="dissolve"${cl.transition==='dissolve'?' selected':''}>Dissolve</option></select></div>`;h+=`<div class="tool-group"><label>Trans Dur</label><input type="number" id="pTD" value="${cl.transitionDuration||.5}" step="0.1" min="0.1"></div>`;h+=`<p style="font-size:9px;color:var(--t3);margin:6px 0 2px">EFFECTS</p>`;if(cl.effects?.length)cl.effects.forEach((e,i)=>{h+=`<div class="tool-row" style="margin-bottom:2px;align-items:center"><span style="flex:1;font-size:10px">${e.type} ${e.intensity}%</span><button class="rfx" data-i="${i}" style="background:none;border:none;color:var(--red);cursor:pointer"><i class="fas fa-times"></i></button></div>`});else h+=`<p style="font-size:10px;color:var(--t3)">None</p>`}
+        if(cl.type==='text'&&cl.textData){const td=cl.textData;h+=`<div class="tool-group"><label>Text</label><textarea id="pTxt" rows="2">${td.text}</textarea></div>`;h+=`<div class="tool-row"><div class="tool-group half"><label>X</label><input type="number" id="pTX" value="${Math.round(td.x||0)}"></div><div class="tool-group half"><label>Y</label><input type="number" id="pTY" value="${Math.round(td.y||0)}"></div></div>`;h+=`<div class="tool-row"><div class="tool-group half"><label>Size</label><input type="number" id="pFS" value="${td.fontSize||48}"></div><div class="tool-group half"><label>Color</label><input type="color" id="pTC" value="${td.color||'#fff'}"></div></div>`}
+        p.innerHTML=h;
+        const bn=(id,fn)=>{const e=document.getElementById(id);if(e){e.oninput=()=>{fn(e);this.render();this.timeline.render()};e.onchange=()=>this.saveState()}};
+        bn('pSt',e=>{cl.startTime=Math.max(0,+e.value||0)});bn('pDur',e=>{cl.duration=Math.max(.1,+e.value||1)});
+        bn('pOp',e=>{cl.opacity=+e.value/100;document.getElementById('pOpV').textContent=e.value+'%'});
+        bn('pVol',e=>{cl.volume=+e.value/100;document.getElementById('pVolV').textContent=e.value+'%'});
+        bn('pTrim',e=>{cl.trimStart=Math.max(0,+e.value||0)});bn('pFI',e=>{cl.fadeIn=+e.value||0});bn('pFO',e=>{cl.fadeOut=+e.value||0});
+        bn('pTrans',e=>{cl.transition=e.value||null});bn('pTD',e=>{cl.transitionDuration=+e.value||.5});
+        bn('pTxt',e=>{if(cl.textData){cl.textData.text=e.value;cl.name=e.value.substring(0,20)}});
+        bn('pTX',e=>{if(cl.textData)cl.textData.x=+e.value||0});bn('pTY',e=>{if(cl.textData)cl.textData.y=+e.value||0});
+        bn('pFS',e=>{if(cl.textData)cl.textData.fontSize=+e.value||48});bn('pTC',e=>{if(cl.textData)cl.textData.color=e.value});
+        p.querySelectorAll('.rfx').forEach(b=>{b.onclick=()=>{cl.effects.splice(+b.dataset.i,1);this.showProps(cl);this.render();this.saveState()}})
     }
+    hideProps(){document.getElementById('propertiesContent').innerHTML='<p class="placeholder-text">Select a clip to edit properties.</p>'}
+    applyFx(type,val){const c=this.timeline.selectedClip;if(!c)return alert('Select clip');if(c.type!=='video'&&c.type!=='image')return alert('FX for video/image');if(!c.effects)c.effects=[];c.effects.push({type,intensity:val});this.render();this.showProps(c);this.saveState()}
+    applyTrans(type){const c=this.timeline.selectedClip;if(!c)return alert('Select clip');c.transition=type;c.transitionDuration=.5;this.render();this.showProps(c);this.saveState()}
+    saveState(){this.undoStack.push(JSON.stringify(this.timeline.getState()));if(this.undoStack.length>50)this.undoStack.shift();this.redoStack=[]}
+    undo(){if(!this.undoStack.length)return;this.redoStack.push(JSON.stringify(this.timeline.getState()));this.timeline.loadState(JSON.parse(this.undoStack.pop()));this.render()}
+    redo(){if(!this.redoStack.length)return;this.undoStack.push(JSON.stringify(this.timeline.getState()));this.timeline.loadState(JSON.parse(this.redoStack.pop()));this.render()}
+    saveProject(){const d={v:1,app:'WasmForge',canvas:document.getElementById('canvasSize').value,fps:document.getElementById('fpsSelect').value,tl:this.timeline.getState()};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d)]));a.download='wasmforge.json';a.click()}
+    loadProject(file){const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);if(d.canvas){document.getElementById('canvasSize').value=d.canvas;const[w,h]=d.canvas.split('x').map(Number);this.renderer.resize(w,h)}if(d.fps)document.getElementById('fpsSelect').value=d.fps;if(d.tl)this.timeline.loadState(d.tl);this.render();alert('Loaded! Re-import media.')}catch(er){alert('Failed: '+er.message)}};r.readAsText(file)}
+    newProject(){if(!confirm('New project?'))return;Object.values(this.mediaAssets).forEach(a=>{if(a.url)URL.revokeObjectURL(a.url)});this.mediaAssets={};this.mediaId=0;this.currentTime=0;this.pause();this.undoStack=[];this.redoStack=[];this.timeline._init();this.timeline.clipId=0;this.timeline.render();this._lib();this.render();this._updt();this.hideProps()}
 
-    play() { if (this.isPlaying) return; this.isPlaying = true; this.lastTick = performance.now(); document.getElementById('playIcon').className = 'fas fa-pause'; this._tick(); }
-    pause() { this.isPlaying = false; if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; } document.getElementById('playIcon').className = 'fas fa-play'; this._pauseAll(); }
-    stop() { this.pause(); this.currentTime = 0; this.render(); this._updt(); }
-    seek(t) { this.currentTime = Math.max(0, t); this.render(); this._updt(); this.timeline.upd(); if (this.isPlaying) this._sync(); }
-
-    _tick() {
-        if (!this.isPlaying) return;
-        const now = performance.now(), dt = (now - this.lastTick) / 1000; this.lastTick = now;
-        this.currentTime += dt;
-        this._pf++; this._pt += dt;
-        if (this._pt >= 1) { document.getElementById('perfLabel').textContent = this._pf + ' fps'; this._pf = 0; this._pt = 0; }
-        if (this.currentTime >= this.timeline.dur() - 3) { this.currentTime = this.timeline.dur() - 3; this.pause(); return; }
-        this.render(); this._sync(); this._updt(); this.timeline.upd();
-        this.raf = requestAnimationFrame(() => this._tick());
-    }
-
-    render() { this.renderer.renderFrame(this.currentTime, this.timeline.tracks, this.mediaAssets); }
-
-    _sync() {
-        for (const tr of this.timeline.tracks) {
-            if (tr.muted) continue;
-            for (const cl of tr.clips) {
-                if (cl.type !== 'audio' && cl.type !== 'video') continue;
-                const a = this.mediaAssets[cl.assetId]; if (!a?.element) continue;
-                const el = a.element, end = cl.startTime + cl.duration;
-                if (this.currentTime >= cl.startTime && this.currentTime < end) {
-                    const mt = (this.currentTime - cl.startTime) + (cl.trimStart || 0);
-                    if (Math.abs(el.currentTime - mt) > .3) el.currentTime = mt;
-                    let vol = (cl.volume ?? 1) * this.masterVolume;
-                    if (cl.fadeIn && this.currentTime - cl.startTime < cl.fadeIn) vol *= (this.currentTime - cl.startTime) / cl.fadeIn;
-                    if (cl.fadeOut && end - this.currentTime < cl.fadeOut) vol *= (end - this.currentTime) / cl.fadeOut;
-                    el.volume = Math.max(0, Math.min(1, vol));
-                    if (cl.type === 'audio') el.muted = false;
-                    if (el.paused && this.isPlaying) el.play().catch(() => {});
-                } else { if (!el.paused) el.pause(); }
-            }
-        }
-    }
-
-    _pauseAll() { Object.values(this.mediaAssets).forEach(a => { if (a.element?.pause) a.element.pause(); }); }
-    _updt() { document.getElementById('currentTime').textContent = this._fmt(this.currentTime); document.getElementById('totalTime').textContent = this._fmt(Math.max(0, this.timeline.dur() - 3)); }
-    _fmt(s) { return `${Math.floor(s / 60).toString().padStart(2, '0')}:${Math.floor(s % 60).toString().padStart(2, '0')}.${Math.floor((s % 1) * 1000).toString().padStart(3, '0')}`; }
-
-    showProps(cl) {
-        const p = document.getElementById('propertiesContent');
-        let h = `<h4 style="margin-bottom:8px;font-size:12px">${cl.name || 'Clip'} <span style="color:var(--t3);font-size:9px">${cl.type}</span></h4>`;
-        h += `<div class="tool-group"><label>Start</label><input type="number" id="pSt" value="${cl.startTime.toFixed(2)}" step="0.1" min="0"></div>`;
-        h += `<div class="tool-group"><label>Duration</label><input type="number" id="pDur" value="${cl.duration.toFixed(2)}" step="0.1" min="0.1"></div>`;
-        h += `<div class="tool-group"><label>Opacity</label><div class="tool-row" style="align-items:center"><input type="range" id="pOp" min="0" max="100" value="${Math.round((cl.opacity??1)*100)}" style="flex:1"><span id="pOpV" style="font-size:10px;min-width:28px;text-align:right">${Math.round((cl.opacity??1)*100)}%</span></div></div>`;
-        if (cl.type === 'video' || cl.type === 'audio') {
-            h += `<div class="tool-group"><label>Volume</label><div class="tool-row" style="align-items:center"><input type="range" id="pVol" min="0" max="100" value="${Math.round((cl.volume??1)*100)}" style="flex:1"><span id="pVolV" style="font-size:10px;min-width:28px;text-align:right">${Math.round((cl.volume??1)*100)}%</span></div></div>`;
-            h += `<div class="tool-group"><label>Trim Start</label><input type="number" id="pTrim" value="${(cl.trimStart||0).toFixed(2)}" step="0.1" min="0"></div>`;
-            h += `<div class="tool-group"><label>Fade In</label><input type="number" id="pFI" value="${cl.fadeIn||0}" step="0.1" min="0"></div>`;
-            h += `<div class="tool-group"><label>Fade Out</label><input type="number" id="pFO" value="${cl.fadeOut||0}" step="0.1" min="0"></div>`;
-        }
-        if (cl.type === 'video' || cl.type === 'image') {
-            h += `<div class="tool-group"><label>Transition</label><select id="pTrans"><option value="">None</option><option value="fade"${cl.transition==='fade'?' selected':''}>Fade</option><option value="wipeLeft"${cl.transition==='wipeLeft'?' selected':''}>Wipe L</option><option value="wipeRight"${cl.transition==='wipeRight'?' selected':''}>Wipe R</option><option value="dissolve"${cl.transition==='dissolve'?' selected':''}>Dissolve</option></select></div>`;
-            h += `<div class="tool-group"><label>Trans Dur</label><input type="number" id="pTD" value="${cl.transitionDuration||.5}" step="0.1" min="0.1"></div>`;
-            h += `<p style="font-size:9px;color:var(--t3);margin:6px 0 2px">EFFECTS</p>`;
-            if (cl.effects?.length) cl.effects.forEach((e, i) => { h += `<div class="tool-row" style="margin-bottom:2px;align-items:center"><span style="flex:1;font-size:10px">${e.type} ${e.intensity}%</span><button class="rfx" data-i="${i}" style="background:none;border:none;color:var(--red);cursor:pointer"><i class="fas fa-times"></i></button></div>`; });
-            else h += `<p style="font-size:10px;color:var(--t3)">None</p>`;
-        }
-        if (cl.type === 'text' && cl.textData) {
-            const td = cl.textData;
-            h += `<div class="tool-group"><label>Text</label><textarea id="pTxt" rows="2">${td.text}</textarea></div>`;
-            h += `<div class="tool-row"><div class="tool-group half"><label>X</label><input type="number" id="pTX" value="${Math.round(td.x||0)}"></div><div class="tool-group half"><label>Y</label><input type="number" id="pTY" value="${Math.round(td.y||0)}"></div></div>`;
-            h += `<div class="tool-row"><div class="tool-group half"><label>Size</label><input type="number" id="pFS" value="${td.fontSize||48}"></div><div class="tool-group half"><label>Color</label><input type="color" id="pTC" value="${td.color||'#fff'}"></div></div>`;
-        }
-        p.innerHTML = h;
-        const bn = (id, fn) => { const e = document.getElementById(id); if (e) { e.oninput = () => { fn(e); this.render(); this.timeline.render(); }; e.onchange = () => this.saveState(); } };
-        bn('pSt', e => { cl.startTime = Math.max(0, +e.value || 0); });
-        bn('pDur', e => { cl.duration = Math.max(.1, +e.value || 1); });
-        bn('pOp', e => { cl.opacity = +e.value / 100; document.getElementById('pOpV').textContent = e.value + '%'; });
-        bn('pVol', e => { cl.volume = +e.value / 100; document.getElementById('pVolV').textContent = e.value + '%'; });
-        bn('pTrim', e => { cl.trimStart = Math.max(0, +e.value || 0); });
-        bn('pFI', e => { cl.fadeIn = +e.value || 0; }); bn('pFO', e => { cl.fadeOut = +e.value || 0; });
-        bn('pTrans', e => { cl.transition = e.value || null; }); bn('pTD', e => { cl.transitionDuration = +e.value || .5; });
-        bn('pTxt', e => { if (cl.textData) { cl.textData.text = e.value; cl.name = e.value.substring(0, 20); } });
-        bn('pTX', e => { if (cl.textData) cl.textData.x = +e.value || 0; });
-        bn('pTY', e => { if (cl.textData) cl.textData.y = +e.value || 0; });
-        bn('pFS', e => { if (cl.textData) cl.textData.fontSize = +e.value || 48; });
-        bn('pTC', e => { if (cl.textData) cl.textData.color = e.value; });
-        p.querySelectorAll('.rfx').forEach(b => { b.onclick = () => { cl.effects.splice(+b.dataset.i, 1); this.showProps(cl); this.render(); this.saveState(); }; });
-    }
-
-    hideProps() { document.getElementById('propertiesContent').innerHTML = '<p class="placeholder-text">Select a clip to edit properties.</p>'; }
-
-    applyFx(type, val) { const c = this.timeline.selectedClip; if (!c) return alert('Select clip first'); if (c.type !== 'video' && c.type !== 'image') return alert('FX for video/image only'); if (!c.effects) c.effects = []; c.effects.push({ type, intensity: val }); this.render(); this.showProps(c); this.saveState(); }
-    applyTrans(type) { const c = this.timeline.selectedClip; if (!c) return alert('Select clip'); c.transition = type; c.transitionDuration = .5; this.render(); this.showProps(c); this.saveState(); }
-
-    saveState() { this.undoStack.push(JSON.stringify(this.timeline.getState())); if (this.undoStack.length > 50) this.undoStack.shift(); this.redoStack = []; }
-    undo() { if (!this.undoStack.length) return; this.redoStack.push(JSON.stringify(this.timeline.getState())); this.timeline.loadState(JSON.parse(this.undoStack.pop())); this.render(); }
-    redo() { if (!this.redoStack.length) return; this.undoStack.push(JSON.stringify(this.timeline.getState())); this.timeline.loadState(JSON.parse(this.redoStack.pop())); this.render(); }
-
-    saveProject() { const d = { v: 1, app: 'WasmForge', canvas: document.getElementById('canvasSize').value, fps: document.getElementById('fpsSelect').value, tl: this.timeline.getState() }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)])); a.download = 'wasmforge.json'; a.click(); }
-    loadProject(file) { const r = new FileReader(); r.onload = e => { try { const d = JSON.parse(e.target.result); if (d.canvas) { document.getElementById('canvasSize').value = d.canvas; const [w, h] = d.canvas.split('x').map(Number); this.renderer.resize(w, h); } if (d.fps) document.getElementById('fpsSelect').value = d.fps; if (d.tl) this.timeline.loadState(d.tl); this.render(); alert('Loaded! Re-import media.'); } catch (er) { alert('Failed: ' + er.message); } }; r.readAsText(file); }
-    newProject() { if (!confirm('New project?')) return; Object.values(this.mediaAssets).forEach(a => { if (a.url) URL.revokeObjectURL(a.url); }); this.mediaAssets = {}; this.mediaId = 0; this.currentTime = 0; this.pause(); this.undoStack = []; this.redoStack = []; this.timeline._init(); this.timeline.clipId = 0; this.timeline.render(); this._lib(); this.render(); this._updt(); this.hideProps(); }
-
-    _bindAll() {
-        const ia = document.getElementById('importArea'), fi = document.getElementById('fileInput');
-        ia.onclick = () => fi.click();
-        ia.ondragover = e => { e.preventDefault(); ia.classList.add('drag-over'); };
-        ia.ondragleave = () => ia.classList.remove('drag-over');
-        ia.ondrop = e => { e.preventDefault(); ia.classList.remove('drag-over'); [...e.dataTransfer.files].forEach(f => this.importFile(f).catch(console.error)); };
-        fi.onchange = e => { [...e.target.files].forEach(f => this.importFile(f).catch(console.error)); fi.value = ''; };
-
-        document.querySelectorAll('.panel-tab').forEach(t => { t.onclick = () => { document.querySelectorAll('.panel-tab').forEach(x => x.classList.remove('active')); document.querySelectorAll('.panel-content').forEach(x => x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.tab + '-tab').classList.add('active'); }; });
-
-        document.getElementById('playBtn').onclick = () => { this.isPlaying ? this.pause() : this.play(); };
-        document.getElementById('stopBtn').onclick = () => this.stop();
-        document.getElementById('skipStartBtn').onclick = () => this.seek(0);
-        document.getElementById('skipEndBtn').onclick = () => this.seek(this.timeline.dur() - 3);
-
-        document.onkeydown = e => {
-            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-            if (e.key === ' ') { e.preventDefault(); this.isPlaying ? this.pause() : this.play(); }
-            else if (e.key === 'Delete' || e.key === 'Backspace') { if (this.timeline.selectedClip) { this.timeline.rm(this.timeline.selectedClip.id); this.saveState(); } }
-            else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); }
-            else if (e.key === 'y' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.redo(); }
-            else if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.saveProject(); }
-            else if (e.key === 'ArrowLeft') this.seek(this.currentTime - (e.shiftKey ? 1 : .1));
-            else if (e.key === 'ArrowRight') this.seek(this.currentTime + (e.shiftKey ? 1 : .1));
-        };
-
-        document.getElementById('canvasSize').onchange = e => { const [w, h] = e.target.value.split('x').map(Number); this.renderer.resize(w, h); this.render(); };
-        document.getElementById('addTextBtn').onclick = () => this.addText();
-        document.querySelectorAll('.align-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('.align-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
-        document.querySelectorAll('.style-btn').forEach(b => { b.onclick = () => b.classList.toggle('active'); });
-        document.getElementById('textBgOpacity').oninput = e => { document.getElementById('textBgOpacityVal').textContent = e.target.value + '%'; };
-
-        let sfx = null;
-        document.querySelectorAll('.effect-card:not(.transition-card)').forEach(c => { c.onclick = () => { document.querySelectorAll('.effect-card:not(.transition-card)').forEach(x => x.classList.remove('active')); c.classList.add('active'); sfx = c.dataset.effect; document.getElementById('effectControls').style.display = 'block'; document.getElementById('effectName').textContent = sfx; document.getElementById('effectIntensity').value = 100; document.getElementById('effectIntensityVal').textContent = '100'; }; });
-        document.getElementById('effectIntensity').oninput = e => { document.getElementById('effectIntensityVal').textContent = e.target.value; };
-        document.getElementById('applyEffectBtn').onclick = () => { if (sfx) this.applyFx(sfx, +document.getElementById('effectIntensity').value); };
-        document.querySelectorAll('.transition-card').forEach(c => { c.onclick = () => this.applyTrans(c.dataset.transition); });
-
-        document.getElementById('masterVolume').oninput = e => { this.masterVolume = +e.target.value / 100; document.getElementById('masterVolumeVal').textContent = e.target.value + '%'; };
-        document.getElementById('applyAudioEffects').onclick = () => { const c = this.timeline.selectedClip; if (!c || (c.type !== 'audio' && c.type !== 'video')) return alert('Select audio/video clip'); c.fadeIn = +document.getElementById('audioFadeIn').value || 0; c.fadeOut = +document.getElementById('audioFadeOut').value || 0; this.showProps(c); this.saveState(); };
-
-        document.getElementById('undoBtn').onclick = () => this.undo();
-        document.getElementById('redoBtn').onclick = () => this.redo();
-        document.getElementById('newProjectBtn').onclick = () => this.newProject();
-        document.getElementById('saveProjectBtn').onclick = () => this.saveProject();
-        document.getElementById('loadProjectBtn').onclick = () => document.getElementById('loadProjectInput').click();
-        document.getElementById('loadProjectInput').onchange = e => { if (e.target.files[0]) { this.loadProject(e.target.files[0]); e.target.value = ''; } };
-
-        // Export
-        let selFmt = 'mp4';
-        document.getElementById('exportBtn').onclick = () => { document.getElementById('exportModal').style.display = 'flex'; };
-        document.getElementById('closeExportModal').onclick = () => { document.getElementById('exportModal').style.display = 'none'; };
-        document.getElementById('exportModal').onclick = e => { if (e.target.id === 'exportModal') e.target.style.display = 'none'; };
-        document.querySelectorAll('.format-card').forEach(c => { c.onclick = () => { document.querySelectorAll('.format-card').forEach(x => x.classList.remove('active')); c.classList.add('active'); selFmt = c.dataset.format; }; });
-        document.getElementById('startExportBtn').onclick = () => { this.exporter.doExport(selFmt, +document.getElementById('exportQuality').value); };
-
-        document.body.ondragover = e => e.preventDefault();
-        document.body.ondrop = e => e.preventDefault();
+    _bind(){
+        const ia=document.getElementById('importArea'),fi=document.getElementById('fileInput');
+        ia.onclick=()=>fi.click();
+        ia.ondragover=e=>{e.preventDefault();ia.classList.add('drag-over')};ia.ondragleave=()=>ia.classList.remove('drag-over');
+        ia.ondrop=e=>{e.preventDefault();ia.classList.remove('drag-over');[...e.dataTransfer.files].forEach(f=>this.importFile(f).catch(console.error))};
+        fi.onchange=e=>{[...e.target.files].forEach(f=>this.importFile(f).catch(console.error));fi.value=''};
+        document.querySelectorAll('.panel-tab').forEach(t=>{t.onclick=()=>{document.querySelectorAll('.panel-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel-content').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById(t.dataset.tab+'-tab').classList.add('active')}});
+        document.getElementById('playBtn').onclick=()=>{this.isPlaying?this.pause():this.play()};
+        document.getElementById('stopBtn').onclick=()=>this.stop();
+        document.getElementById('skipStartBtn').onclick=()=>this.seek(0);
+        document.getElementById('skipEndBtn').onclick=()=>this.seek(this.timeline.dur()-3);
+        document.onkeydown=e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;if(e.key===' '){e.preventDefault();this.isPlaying?this.pause():this.play()}else if(e.key==='Delete'||e.key==='Backspace'){if(this.timeline.selectedClip){this.timeline.rm(this.timeline.selectedClip.id);this.saveState()}}else if(e.key==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();e.shiftKey?this.redo():this.undo()}else if(e.key==='y'&&(e.ctrlKey||e.metaKey)){e.preventDefault();this.redo()}else if(e.key==='s'&&(e.ctrlKey||e.metaKey)){e.preventDefault();this.saveProject()}else if(e.key==='ArrowLeft')this.seek(this.currentTime-(e.shiftKey?1:.1));else if(e.key==='ArrowRight')this.seek(this.currentTime+(e.shiftKey?1:.1))};
+        document.getElementById('canvasSize').onchange=e=>{const[w,h]=e.target.value.split('x').map(Number);this.renderer.resize(w,h);this.render()};
+        document.getElementById('addTextBtn').onclick=()=>this.addText();
+        document.querySelectorAll('.align-btn').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.align-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}});
+        document.querySelectorAll('.style-btn').forEach(b=>{b.onclick=()=>b.classList.toggle('active')});
+        document.getElementById('textBgOpacity').oninput=e=>{document.getElementById('textBgOpacityVal').textContent=e.target.value+'%'};
+        let sfx=null;
+        document.querySelectorAll('.effect-card:not(.transition-card)').forEach(c=>{c.onclick=()=>{document.querySelectorAll('.effect-card:not(.transition-card)').forEach(x=>x.classList.remove('active'));c.classList.add('active');sfx=c.dataset.effect;document.getElementById('effectControls').style.display='block';document.getElementById('effectName').textContent=sfx;document.getElementById('effectIntensity').value=100;document.getElementById('effectIntensityVal').textContent='100'}});
+        document.getElementById('effectIntensity').oninput=e=>{document.getElementById('effectIntensityVal').textContent=e.target.value};
+        document.getElementById('applyEffectBtn').onclick=()=>{if(sfx)this.applyFx(sfx,+document.getElementById('effectIntensity').value)};
+        document.querySelectorAll('.transition-card').forEach(c=>{c.onclick=()=>this.applyTrans(c.dataset.transition)});
+        document.getElementById('masterVolume').oninput=e=>{this.masterVolume=+e.target.value/100;document.getElementById('masterVolumeVal').textContent=e.target.value+'%'};
+        document.getElementById('applyAudioEffects').onclick=()=>{const c=this.timeline.selectedClip;if(!c||(c.type!=='audio'&&c.type!=='video'))return alert('Select audio/video');c.fadeIn=+document.getElementById('audioFadeIn').value||0;c.fadeOut=+document.getElementById('audioFadeOut').value||0;this.showProps(c);this.saveState()};
+        document.getElementById('undoBtn').onclick=()=>this.undo();document.getElementById('redoBtn').onclick=()=>this.redo();
+        document.getElementById('newProjectBtn').onclick=()=>this.newProject();document.getElementById('saveProjectBtn').onclick=()=>this.saveProject();
+        document.getElementById('loadProjectBtn').onclick=()=>document.getElementById('loadProjectInput').click();
+        document.getElementById('loadProjectInput').onchange=e=>{if(e.target.files[0]){this.loadProject(e.target.files[0]);e.target.value=''}};
+        let selFmt='webm-fast';
+        document.getElementById('exportBtn').onclick=()=>{document.getElementById('exportModal').style.display='flex'};
+        document.getElementById('closeExportModal').onclick=()=>{document.getElementById('exportModal').style.display='none'};
+        document.getElementById('exportModal').onclick=e=>{if(e.target.id==='exportModal')e.target.style.display='none'};
+        document.querySelectorAll('.format-card').forEach(c=>{c.onclick=()=>{document.querySelectorAll('.format-card').forEach(x=>x.classList.remove('active'));c.classList.add('active');selFmt=c.dataset.format}});
+        document.getElementById('startExportBtn').onclick=()=>{this.exporter.doExport(selFmt,+document.getElementById('exportQuality').value)};
+        document.body.ondragover=e=>e.preventDefault();document.body.ondrop=e=>e.preventDefault()
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { window.app = new WasmForge(); });
+document.addEventListener('DOMContentLoaded',()=>{window.app=new WasmForge()});
 </script>
 </body>
 </html>
