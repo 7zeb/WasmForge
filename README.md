@@ -1,3 +1,6 @@
+# This is still in development, currently FFmpeg doesn't work.
+If anyone has a way to fix the FFmpeg issue, make a PR in the repository.
+
 # WasmForge
 An Open Source Video Editor based on WASM, a better version of RVE
 
