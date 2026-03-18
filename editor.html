@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WasmForge v10</title>
+  <link rel="stylesheet" href="./assets/css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">WasmForge v10</div>
+
+    <div class="actions">
+      <input id="fileInput" type="file" multiple accept="video/*,audio/*,image/*" />
+      <button id="playBtn">Play</button>
+      <button id="stopBtn">Stop</button>
+      <button id="exportBtn">Export WebM</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="preview">
+      <canvas id="previewCanvas" width="1280" height="720"></canvas>
+      <div class="hud">
+        <span id="timeLabel">00:00.000</span>
+        <input id="scrub" type="range" min="0" max="10" value="0" step="0.001" />
+      </div>
+      <pre id="log" class="log"></pre>
+    </section>
+
+    <section class="library">
+      <h2>Media</h2>
+      <div id="mediaList"></div>
+      <p class="hint">Tip: click an asset to auto-add it to the timeline.</p>
+    </section>
+
+    <section class="timeline">
+      <h2>Timeline</h2>
+      <div id="timelineView"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./assets/js/main.js"></script>
+</body>
+</html>
