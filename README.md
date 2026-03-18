@@ -1,8 +1,2 @@
-# This is still in development, currently FFmpeg doesn't work.
-If anyone has a way to fix the FFmpeg issue, make a PR in the repository.
-
 # WasmForge
-An Open Source Video Editor based on WASM, a better version of RVE
-
-## Other Open Source (this part is still in development, I will continue adding these as we go)
-This project uses [FFMpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)
+An Open Source Video Editor based on WASM, a better version of RVE, this program will only export to WebM due to other issues, but you will still be able to use the video in many different enviorments and you can convert it to MP4 later if you want to.
